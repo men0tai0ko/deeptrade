@@ -1,0 +1,20 @@
+{
+  "name": "深淵商会",
+  "short_name": "深淵商会",
+  "description": "ダンジョンを潜り、装備を売る。転生を重ねるほど深まる放置型ループRPG。",
+  "start_url": "/deeptrade/",
+  "scope": "/deeptrade/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7b5ea7",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "ogp.png",
+      "sizes": "1280x640",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

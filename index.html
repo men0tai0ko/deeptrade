@@ -6,6 +6,9 @@
 <title>深淵商会</title>
 <!-- favicon (SVG dataURI・追加ファイル不要) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔</text></svg>">
+<!-- PWA manifest (A2) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7b5ea7">
 <!-- OGP / SNSカードメタタグ (S49-OGP / A1更新: summary_large_image化) -->
 <meta name="description"         content="ダンジョンを潜り、装備を売る。転生を重ねるほど深まる放置型ループRPG。">
 <meta property="og:type"         content="website">
@@ -15652,6 +15655,15 @@ function init() {
 }
 
 init();
+</script>
+<!-- PWA: ServiceWorker登録 (A2) -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: '/deeptrade/' })
+      .catch(() => {});  // 登録失敗はサイレントに無視（ゲーム本体に影響しない）
+  });
+}
 </script>
 </body>
 </html>
