@@ -6,23 +6,16 @@
 <title>深淵商会</title>
 <!-- favicon (SVG dataURI・追加ファイル不要) -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔</text></svg>">
-<!-- PWA manifest (A2) -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7b5ea7">
-<!-- OGP / SNSカードメタタグ (S49-OGP / A1更新: summary_large_image化) -->
+<!-- OGP / SNSカードメタタグ (S49-OGP) -->
 <meta name="description"         content="ダンジョンを潜り、装備を売る。転生を重ねるほど深まる放置型ループRPG。">
 <meta property="og:type"         content="website">
 <meta property="og:url"          content="https://men0tai0ko.github.io/deeptrade/">
 <meta property="og:title"        content="深淵商会 — 冒険×放置ショップRPG">
 <meta property="og:description"  content="ダンジョンを潜り、装備を売る。転生を重ねるほど深まる放置型ループRPG。">
 <meta property="og:locale"       content="ja_JP">
-<meta property="og:image"        content="https://men0tai0ko.github.io/deeptrade/ogp.png">
-<meta property="og:image:width"  content="1280">
-<meta property="og:image:height" content="640">
-<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:card"        content="summary">
 <meta name="twitter:title"       content="深淵商会 — 冒険×放置ショップRPG">
 <meta name="twitter:description" content="ダンジョンを潜り、装備を売る。転生を重ねるほど深まる放置型ループRPG。">
-<meta name="twitter:image"       content="https://men0tai0ko.github.io/deeptrade/ogp.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=Cinzel:wght@400;700&display=swap');
 
@@ -4357,6 +4350,9 @@ function loadGame() {
       retroCheckAchievements();
       // 既存セーブにisFirstPlayがない場合はfalseを補完（既存プレイヤーはガイド不要）
       if(gs.meta.isFirstPlay === undefined) gs.meta.isFirstPlay = false;
+      // B1-DAILY: デイリーミッション補完（旧セーブ互換）
+      if(!Array.isArray(gs.meta.dailyMissions)) gs.meta.dailyMissions = [];
+      if(!gs.meta.dailyResetAt) gs.meta.dailyResetAt = 0;
       return true;
     }
   } catch(e){}
@@ -4493,6 +4489,131 @@ const QUEST_TYPES = {
   },
 };
 
+// ─────────────────────────────────────────
+// B1-DAILY: デイリーミッションシステム
+// ─────────────────────────────────────────
+
+// デイリーミッションのマスターデータ（3種固定・軽量なトリガーのみ）
+const DAILY_MISSION_TYPES = {
+  daily_sell_gold: {
+    icon: "💰", label: "売上",
+    gen() {
+      const target = [500, 1000, 2000][Math.floor(Math.random() * 3)];
+      const reward = Math.floor(target * 0.15 + 100);
+      return { type:"daily_sell_gold", target, progress:0, reward, claimed:false,
+               desc:`本日の売上 ${target.toLocaleString()}G 達成` };
+    },
+    // triggerがsell・payloadにgoldがある場合に進捗加算
+    update(m, trigger, payload) {
+      if(trigger === "sell" && payload.gold) {
+        return { ...m, progress: m.progress + payload.gold };
+      }
+      return m;
+    },
+    isDone(m) { return m.progress >= m.target; },
+    progressText(m) { return `${m.progress.toLocaleString()}/${m.target.toLocaleString()}G`; },
+  },
+  daily_enter_dungeon: {
+    icon: "⚔", label: "探索",
+    gen() {
+      const target = [1, 2, 3][Math.floor(Math.random() * 3)];
+      const reward = 100 + target * 80;
+      return { type:"daily_enter_dungeon", target, progress:0, reward, claimed:false,
+               desc:`ダンジョンに${target}回潜入する` };
+    },
+    update(m, trigger, payload) {
+      if(trigger === "dungeon_enter") {
+        return { ...m, progress: Math.min(m.progress + 1, m.target) };
+      }
+      return m;
+    },
+    isDone(m) { return m.progress >= m.target; },
+    progressText(m) { return `${m.progress}/${m.target}回`; },
+  },
+  daily_enhance: {
+    icon: "⚒", label: "強化",
+    gen() {
+      const target = [3, 5, 8][Math.floor(Math.random() * 3)];
+      const reward = 100 + target * 25;
+      return { type:"daily_enhance", target, progress:0, reward, claimed:false,
+               desc:`装備を${target}回強化する` };
+    },
+    update(m, trigger, payload) {
+      if(trigger === "enhance" && payload.count) {
+        return { ...m, progress: Math.min(m.progress + payload.count, m.target) };
+      }
+      return m;
+    },
+    isDone(m) { return m.progress >= m.target; },
+    progressText(m) { return `${m.progress}/${m.target}回`; },
+  },
+};
+
+// 翌00:00のタイムスタンプを返す（ローカル時刻基準）
+function _nextMidnight() {
+  const d = new Date();
+  d.setHours(24, 0, 0, 0);  // 翌日の00:00:00.000
+  return d.getTime();
+}
+
+// デイリーミッション初期化・リセット判定（init()から呼ぶ）
+function initDailyMissions() {
+  if(!gs || !gs.meta) return false;
+  // 未初期化ガード（loadGame補完が走らなかった場合の安全弁）
+  if(!Array.isArray(gs.meta.dailyMissions)) gs.meta.dailyMissions = [];
+  if(!gs.meta.dailyResetAt) gs.meta.dailyResetAt = 0;
+
+  const now = Date.now();
+  // リセット時刻を過ぎていたら新しいミッションを生成
+  if(now >= gs.meta.dailyResetAt) {
+    // 達成済みで未受取のミッションは自動付与（00:00をまたいで報酬が消えるのを防ぐ）
+    let autoClaimed = false;
+    (gs.meta.dailyMissions || []).forEach(m => {
+      const def = DAILY_MISSION_TYPES[m.type];
+      if(def && def.isDone(m) && !m.claimed) {
+        gs.player.gold += m.reward;
+        addLog("item", `📅 デイリー自動受取：「${m.desc}」→ ${goldSpan("+" + m.reward.toLocaleString() + "G")}`);
+        autoClaimed = true;
+      }
+    });
+    const types = Object.keys(DAILY_MISSION_TYPES);
+    gs.meta.dailyMissions = types.map(t => DAILY_MISSION_TYPES[t].gen());
+    gs.meta.dailyResetAt = _nextMidnight();
+    saveGame();
+    return autoClaimed; // 自動受取発生時はtrueを返す（呼び出し元でrender()を判断）
+  }
+  return false;
+}
+
+// デイリーミッション進捗チェック（トリガー発火時に呼ぶ）
+function checkDailyMissions(trigger, payload) {
+  if(!gs?.meta?.dailyMissions?.length) return;
+  let changed = false;
+  gs.meta.dailyMissions = gs.meta.dailyMissions.map(m => {
+    if(m.claimed) return m;  // 受取済みはスキップ
+    const def = DAILY_MISSION_TYPES[m.type];
+    if(!def) return m;
+    const updated = def.update(m, trigger, payload);
+    if(updated !== m) { changed = true; return updated; }
+    return m;
+  });
+  if(changed) saveGame();
+}
+
+// デイリーミッション報酬受取
+function claimDailyMission(idx) {
+  const m = gs.meta.dailyMissions?.[idx];
+  if(!m || m.claimed) return;
+  const def = DAILY_MISSION_TYPES[m.type];
+  if(!def || !def.isDone(m)) return;
+  gs.meta.dailyMissions[idx] = { ...m, claimed: true };
+  gs.player.gold += m.reward;
+  showGoldPop(m.reward);
+  addLog("item", `📅 デイリー達成！「${m.desc}」→ ${goldSpan("+" + m.reward.toLocaleString() + "G")}`);
+  saveGame();
+  render();
+}
+
 function generateQuest() {
   const ng = gs.dungeon.ng || 0;
   const allTypes = Object.keys(QUEST_TYPES);
@@ -4537,7 +4658,7 @@ function checkQuestProgress(trigger, payload={}) {
     }
     // bulk_enhance：一括強化の強化回数を加算
     if(q.type === "bulk_enhance" && trigger === "enhance" && payload.count) {
-      q = { ...q, progress: (q.progress||0) + payload.count };
+      q = { ...q, progress: (q.progress||0) + payload.count }
     }
     // shelf_rarity・explore・enhance_item・collect_theme はリアルタイムチェック
     if(QUEST_TYPES[q.type].check(q)) {
@@ -4556,6 +4677,8 @@ function checkQuestProgress(trigger, payload={}) {
     saveGame();
     render();
   }
+  // B1-DAILY: デイリーミッション進捗を同トリガーで更新（毎秒ループ起因の shelf_check は除外）
+  if(trigger !== "shelf_check") checkDailyMissions(trigger, payload);
 }
 
 function generateMap(floor) {
@@ -4813,6 +4936,8 @@ function enterDungeon(floor) {
   }
   addLog("item", `▶ ${targetFloor}階層に潜入した${ngLabel}${attemptLabel}`);
   Analytics.firstEnter(); // 初回潜入を記録
+  // B1-DAILY: 潜入トリガー
+  checkDailyMissions("dungeon_enter", {});
   saveGame();
   render();
 }
@@ -11777,6 +11902,12 @@ function updateIconDock(tab) {
 
   // 依頼alertFn（ショップ・ステータス共通）
   const _questAlertFn = () => {
+    // B1-DAILY: デイリーミッションに達成済み未受取があればバッジを表示
+    const hasDailyAlert = (gs.meta?.dailyMissions || []).some(m => {
+      const def = DAILY_MISSION_TYPES[m.type];
+      return def && def.isDone(m) && !m.claimed;
+    });
+    if(hasDailyAlert) return true;
     if(!gs.quests) return false;
     return gs.quests.some(q => {
       if(q.done) return false;
@@ -12221,6 +12352,39 @@ function openQuestModal() {
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
   initQuests();
+  if(initDailyMissions()) render(); // B1-DAILY: 自動受取発生時はgold表示を即更新
+
+  // ── B1-DAILY: デイリーミッション行を生成 ──
+  const now = Date.now();
+  const resetAt = gs.meta.dailyResetAt || 0;
+  const remainMs = Math.max(0, resetAt - now);
+  const remainH  = Math.floor(remainMs / 3600000);
+  const remainM  = Math.floor((remainMs % 3600000) / 60000);
+  const resetLabel = remainMs > 0 ? `リセットまで ${remainH}時間${remainM}分` : "まもなくリセット";
+  const dailyRows = (gs.meta.dailyMissions || []).map((m, idx) => {
+    const def    = DAILY_MISSION_TYPES[m.type];
+    if(!def) return '';
+    const done   = def.isDone(m);
+    const claimed = m.claimed;
+    const borderColor = claimed ? 'var(--muted)' : done ? 'var(--green)' : '#333';
+    const btnHtml = claimed
+      ? `<span style="font-size:10px;color:var(--muted)">受取済み</span>`
+      : done
+        ? `<button class="btn btn-secondary" style="padding:2px 10px;font-size:11px;border-color:var(--green);color:var(--green)"
+             onclick="claimDailyMission(${idx});this.closest('.modal-overlay').remove();openQuestModal();">受取</button>`
+        : `<span style="font-size:11px;color:var(--gold)">${def.progressText(m)}</span>`;
+    return `<div style="padding:8px;background:#111;border:1px solid ${borderColor};border-radius:8px;margin-bottom:6px;opacity:${claimed?'0.5':'1'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+        <span style="font-size:12px;flex:1">${def.icon} ${m.desc}</span>
+        <span style="font-size:11px;color:var(--gold);white-space:nowrap">+${m.reward.toLocaleString()}G</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+        <span style="font-size:11px;color:var(--muted)">${def.label}</span>
+        ${btnHtml}
+      </div>
+    </div>`;
+  }).join('');
+
   const rarityOrder = {normal:0,rare:1,epic:2,legendary:3};
   const questRows = gs.quests.map(q => {
     const def = QUEST_TYPES[q.type];
@@ -12243,12 +12407,20 @@ function openQuestModal() {
       </div>
     </div>`;
   }).join('');
+
   overlay.innerHTML = `
     <div class="modal-content" style="max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;">
       <div style="flex-shrink:0;padding:14px 16px 8px;border-bottom:1px solid var(--border)">
         <div class="modal-title">📋 依頼</div>
       </div>
       <div style="flex:1;overflow-y:auto;padding:10px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <span>📅 本日のミッション</span>
+          <span style="font-size:10px;color:var(--muted);font-weight:400">${resetLabel}</span>
+        </div>
+        ${dailyRows}
+        <div style="height:1px;background:var(--border);margin:10px 0"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px">📋 依頼</div>
         ${questRows}
         <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">達成すると自動で新しい依頼に更新されます</div>
       </div>
@@ -15623,6 +15795,9 @@ function init() {
   render();
   // 初回起動時のみファーストガイドを表示（render()後にDOMが確定してから呼ぶ）
   if(gs.meta.isFirstPlay) showFirstGuideModal();
+  // B1-DAILY: デイリーミッション初期化・リセット判定
+  // 自動受取が発生した場合はtopBar gold表示を更新するためrender()を追加呼び出し
+  if(initDailyMissions()) render();
   setInterval(()=>{
     checkShopSales();
     checkBlackmarket();
@@ -15631,6 +15806,13 @@ function init() {
     checkStaffIncome();
     checkInvestmentReturn();
     checkGuildReward();
+    // B1-DAILY: バックグラウンドリセット検出（開きっぱなしで日付変更された場合に対応）
+    // initDailyMissions()はsaveGame()を含むため、日付変更の瞬間だけ発火させる
+    if(Date.now() >= (gs.meta.dailyResetAt || 0)) {
+      const _dailyClaimed = initDailyMissions();
+      // ダンジョン戦闘中はrender()を抑制（00:00の瞬間に戦闘ログが消えるのを防ぐ）
+      if(_dailyClaimed && !gs.dungeon.active) render();
+    }
     if(currentTab==="shop") updateShopTick();
   }, 1000);
 
@@ -15655,15 +15837,6 @@ function init() {
 }
 
 init();
-</script>
-<!-- PWA: ServiceWorker登録 (A2) -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', { scope: '/deeptrade/' })
-      .catch(() => {});  // 登録失敗はサイレントに無視（ゲーム本体に影響しない）
-  });
-}
 </script>
 </body>
 </html>
