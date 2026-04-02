@@ -1959,6 +1959,22 @@ const REBIRTH_SKILL_MASTER = {
     desc:"全ステ +2%・売値 +3%",
     type:"passive_pct", effect:{ stat:"all", pct:2, sellPct:3 },
   },
+  // ── 深淵の覇道（worldRank50解禁） ──
+  rb_veteran: {
+    name:"深淵の覇気", icon:"👑", cost:3, requires:["rb_atk","rb_def"], unlockRank:50,
+    desc:"全ステ +5%",
+    type:"passive_pct", effect:{ stat:"all", pct:5 },
+  },
+  rb_fortune: {
+    name:"深淵の蓄財", icon:"💎", cost:3, requires:["rb_gold","rb_shelf"], unlockRank:50,
+    desc:"アイテム売値 +8%・陳列枠 +1",
+    type:"gameplay", effect:{ sellPct:8, extraShelf:1 },
+  },
+  rb_endurance: {
+    name:"深淵の不屈", icon:"🛡", cost:4, requires:["rb_veteran","rb_fortune"], unlockRank:50,
+    desc:"最大HP +10%・転生時SP +3 追加獲得",
+    type:"passive_pct", effect:{ maxHpPct:10, bonusSp:3 },
+  },
 };
 
 // ── ランダムOP（affix）マスターデータ ──
@@ -4089,7 +4105,18 @@ const Analytics = (() => {
     } catch(e) {}
   }
 
-  return { init, guideCompleted, guideSkipped, firstEnter, firstReturn, firstSale, tick };
+  // 帰還後「まとめて出品」ボタン使用を記録（KPI計測用）
+  function quickList(listedCount) {
+    try {
+      _update(r => {
+        if(!r.quickList) r.quickList = { used: 0, totalListed: 0 };
+        r.quickList.used++;
+        r.quickList.totalListed += listedCount || 0;
+      });
+    } catch(e) {}
+  }
+
+  return { init, guideCompleted, guideSkipped, firstEnter, firstReturn, firstSale, tick, quickList };
 })();
 
 // ─────────────────────────────────────────
@@ -4494,8 +4521,11 @@ const QUEST_TYPES = {
 // ─────────────────────────────────────────
 
 // デイリーミッションのマスターデータ（3種固定・軽量なトリガーのみ）
-const DAILY_MISSION_TYPES = {
-  daily_sell_gold: {
+// LOGIC-4: 配列形式に変更（5種定義・毎日ランダム2種を抽選）
+// 追加種別: daily_sell_rare（Rare以上を売る）/ daily_sell_count（何個でも売る）
+const DAILY_MISSION_TYPES = [
+  {
+    type: "daily_sell_gold",
     icon: "💰", label: "売上",
     gen() {
       const target = [500, 1000, 2000][Math.floor(Math.random() * 3)];
@@ -4503,17 +4533,17 @@ const DAILY_MISSION_TYPES = {
       return { type:"daily_sell_gold", target, progress:0, reward, claimed:false,
                desc:`本日の売上 ${target.toLocaleString()}G 達成` };
     },
-    // triggerがsell・payloadにgoldがある場合に進捗加算
     update(m, trigger, payload) {
       if(trigger === "sell" && payload.gold) {
-        return { ...m, progress: m.progress + payload.gold };
+        return { ...m, progress: Math.min(m.progress + payload.gold, m.target) };
       }
       return m;
     },
     isDone(m) { return m.progress >= m.target; },
-    progressText(m) { return `${m.progress.toLocaleString()}/${m.target.toLocaleString()}G`; },
+    progressText(m) { return `${Math.min(m.progress, m.target).toLocaleString()}/${m.target.toLocaleString()}G`; },
   },
-  daily_enter_dungeon: {
+  {
+    type: "daily_enter_dungeon",
     icon: "⚔", label: "探索",
     gen() {
       const target = [1, 2, 3][Math.floor(Math.random() * 3)];
@@ -4530,7 +4560,8 @@ const DAILY_MISSION_TYPES = {
     isDone(m) { return m.progress >= m.target; },
     progressText(m) { return `${m.progress}/${m.target}回`; },
   },
-  daily_enhance: {
+  {
+    type: "daily_enhance",
     icon: "⚒", label: "強化",
     gen() {
       const target = [3, 5, 8][Math.floor(Math.random() * 3)];
@@ -4547,7 +4578,52 @@ const DAILY_MISSION_TYPES = {
     isDone(m) { return m.progress >= m.target; },
     progressText(m) { return `${m.progress}/${m.target}回`; },
   },
-};
+  {
+    // 新種別①: Rare以上のアイテムをN個売却する
+    type: "daily_sell_rare",
+    icon: "💎", label: "希少売却",
+    gen() {
+      const target = [1, 2, 3][Math.floor(Math.random() * 3)];
+      const reward = 150 + target * 100;
+      return { type:"daily_sell_rare", target, progress:0, reward, claimed:false,
+               desc:`Rare以上の装備を${target}個売却する` };
+    },
+    update(m, trigger, payload) {
+      // sellトリガー・rarity が rare/epic/legendary のとき1件カウント
+      if(trigger === "sell" && ["rare","epic","legendary"].includes(payload.rarity)) {
+        return { ...m, progress: Math.min(m.progress + 1, m.target) };
+      }
+      return m;
+    },
+    isDone(m) { return m.progress >= m.target; },
+    progressText(m) { return `${m.progress}/${m.target}個`; },
+  },
+  {
+    // 新種別②: アイテムをN個売却する（レアリティ問わず）
+    type: "daily_sell_count",
+    icon: "🏪", label: "販売数",
+    gen() {
+      const target = [3, 5, 8][Math.floor(Math.random() * 3)];
+      const reward = 80 + target * 20;
+      return { type:"daily_sell_count", target, progress:0, reward, claimed:false,
+               desc:`アイテムを${target}個売却する` };
+    },
+    update(m, trigger, payload) {
+      // sellトリガー・goldが正値（実際の販売）のとき1件カウント
+      if(trigger === "sell" && payload.gold > 0) {
+        return { ...m, progress: Math.min(m.progress + 1, m.target) };
+      }
+      return m;
+    },
+    isDone(m) { return m.progress >= m.target; },
+    progressText(m) { return `${m.progress}/${m.target}個`; },
+  },
+];
+
+// DAILY_MISSION_TYPESをtypeキーで引くヘルパー（配列化に伴い全参照箇所で使用）
+function _getDailyDef(type) {
+  return DAILY_MISSION_TYPES.find(d => d.type === type) || null;
+}
 
 // 翌00:00のタイムスタンプを返す（ローカル時刻基準）
 function _nextMidnight() {
@@ -4569,15 +4645,17 @@ function initDailyMissions() {
     // 達成済みで未受取のミッションは自動付与（00:00をまたいで報酬が消えるのを防ぐ）
     let autoClaimed = false;
     (gs.meta.dailyMissions || []).forEach(m => {
-      const def = DAILY_MISSION_TYPES[m.type];
+      const def = _getDailyDef(m.type);
       if(def && def.isDone(m) && !m.claimed) {
         gs.player.gold += m.reward;
+        showGoldPop(m.reward); // UX-2: claimDailyMission（手動受取）と演出を統一
         addLog("item", `📅 デイリー自動受取：「${m.desc}」→ ${goldSpan("+" + m.reward.toLocaleString() + "G")}`);
         autoClaimed = true;
       }
     });
-    const types = Object.keys(DAILY_MISSION_TYPES);
-    gs.meta.dailyMissions = types.map(t => DAILY_MISSION_TYPES[t].gen());
+    // LOGIC-4: 5種からランダム2種を抽選して生成（毎日変化するミッション）
+    const shuffled = [...DAILY_MISSION_TYPES].sort(() => Math.random() - 0.5);
+    gs.meta.dailyMissions = shuffled.slice(0, 2).map(d => d.gen());
     gs.meta.dailyResetAt = _nextMidnight();
     saveGame();
     return autoClaimed; // 自動受取発生時はtrueを返す（呼び出し元でrender()を判断）
@@ -4591,7 +4669,7 @@ function checkDailyMissions(trigger, payload) {
   let changed = false;
   gs.meta.dailyMissions = gs.meta.dailyMissions.map(m => {
     if(m.claimed) return m;  // 受取済みはスキップ
-    const def = DAILY_MISSION_TYPES[m.type];
+    const def = _getDailyDef(m.type);
     if(!def) return m;
     const updated = def.update(m, trigger, payload);
     if(updated !== m) { changed = true; return updated; }
@@ -4604,7 +4682,7 @@ function checkDailyMissions(trigger, payload) {
 function claimDailyMission(idx) {
   const m = gs.meta.dailyMissions?.[idx];
   if(!m || m.claimed) return;
-  const def = DAILY_MISSION_TYPES[m.type];
+  const def = _getDailyDef(m.type);
   if(!def || !def.isDone(m)) return;
   gs.meta.dailyMissions[idx] = { ...m, claimed: true };
   gs.player.gold += m.reward;
@@ -5053,9 +5131,19 @@ function doRebirth() {
       addLog("item", "🌌 深淵の扉が震えている……次の転生で、何かが変わる");
     }, 500);
   } else if(wr === 50) {
-    setTimeout(() => {
-      addLog("item", "👁 深淵があなたを認識している……");
-    }, 500);
+    _showRebirthMilestoneModal({
+      icon: "👑",
+      title: "深淵の覇道が開かれた",
+      color: "var(--gold)",
+      lines: [
+        "転生50回——深淵はあなたの覇気を認め、",
+        "さらなる力の扉を解き放った。",
+        "",
+        "永続スキル「深淵の覇道」が解禁された。",
+        "スキルツリーの永続タブで確認せよ。",
+      ],
+      badge: "称号「深淵の覇者」",
+    });
   } else if(wr === 20) {
     _showRebirthMilestoneModal({
       icon: "🌌",
@@ -5890,6 +5978,75 @@ function makeNextActionHintEl() {
   return el;
 }
 
+// ── ワンタップ一括出品（帰還直後専用）──────────────────────────────
+// 帰還リザルトの「まとめて出品する」ボタンから呼び出す。
+// listItem()は内部でsaveGame()を毎回呼ぶため流用せず、
+// 同等のgs操作を直接行い最後に1回だけsaveGame+renderで完結させる。
+// identifyItem()はGold消費・Lv制限・render・モーダルremoveを含むため流用不可。
+function quickListAfterReturn() {
+  // ── 出品除外対象UIDを収集 ──
+  const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
+  const listedUids   = new Set(
+    gs.shop.shelves.filter(Boolean).map(s => s.item?.uid).filter(Boolean)
+  );
+  // 裏取引中アイテムはinventoryに残留したまま → UIDで除外
+  const bmUid = gs.shop.blackmarket?.slot?.item?.uid;
+  if(bmUid) listedUids.add(bmUid);
+
+  // ── 未鑑定品を全て無料鑑定（Gold消費なし・Lv制限なし）──
+  // 帰還直後の体験コスト削減が目的のため、通常の identifyItem() は使わない
+  let identifiedCount = 0;
+  gs.inventory.forEach(item => {
+    if(item.identified) return;
+    item.identified = true;
+    identifiedCount++;
+  });
+
+  // ── 出品候補を絞り込む ──
+  // 条件: 鑑定済み / 装備型 / 売却可能 / 装備中でない / 棚・裏取引出品中でない / ロック解除
+  const candidates = gs.inventory.filter(i => {
+    const m = ITEM_MASTER[i.itemId];
+    return i.identified
+      && m
+      && EQUIP_TYPES.has(m.type)
+      && !UNSELLABLE_ITEMS.has(i.itemId)
+      && !equippedUids.has(i.uid)
+      && !listedUids.has(i.uid)
+      && !i.locked;
+  });
+
+  // ── 空きスロットへ順番に出品 ──
+  // listItem()と同等のgs操作（saveGameのみ省略）
+  let listedCount = 0;
+  for(let idx = 0; idx < gs.shop.shelves.length; idx++) {
+    if(listedCount >= candidates.length) break;
+    const slot = gs.shop.shelves[idx];
+    // スロットが使用中（アイテムあり）はスキップ
+    if(slot && slot.item) continue;
+
+    const item = candidates[listedCount++];
+    // inventoryから除去
+    const invIdx = gs.inventory.findIndex(i => i.uid === item.uid);
+    if(invIdx < 0) { listedCount--; continue; } // 念のため存在確認
+    gs.inventory.splice(invIdx, 1);
+
+    // 棚に登録（specialTypeは既存スロット設定を引き継ぐ・onSaleはデフォルトfalse）
+    const specialType = slot?.specialType || null;
+    gs.shop.shelves[idx] = {
+      item,
+      listedAt:     Date.now(),
+      sellDuration: calcSellDuration(item),
+      onSale:       false,
+      ...(specialType ? { specialType } : {}),
+    };
+  }
+
+  // まとめて1回だけ保存
+  if(identifiedCount > 0 || listedCount > 0) saveGame();
+
+  return { identifiedCount, listedCount };
+}
+
 function showDungeonResult(session, items, defeated=false) {
   const earnedGold    = session ? Math.max(0, gs.player.gold - session.startGold) : 0;
   const lostGold      = session && defeated ? Math.max(0, session.startGold - gs.player.gold) : 0;
@@ -5975,12 +6132,33 @@ function showDungeonResult(session, items, defeated=false) {
       <div>${itemGrid}</div>` : ""}
     </div>
     <div style="flex-shrink:0;padding:10px 16px 14px;border-top:1px solid var(--border)">
+      ${!defeated ? `<button class="btn btn-secondary" style="width:100%;margin-bottom:8px" id="resultQuickListBtn">📦 まとめて出品する</button>` : ''}
       <button class="btn ${defeated ? 'btn-secondary' : 'btn-primary'}" style="width:100%" id="resultCloseBtn">${defeated ? '戻る' : '閉じる'}</button>
     </div>
   `;
 
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
+
+  // ── まとめて出品ボタン（帰還成功時のみ表示）──
+  const quickListBtn = overlay.querySelector("#resultQuickListBtn");
+  if(quickListBtn) {
+    quickListBtn.addEventListener("click", () => {
+      const { identifiedCount, listedCount } = quickListAfterReturn();
+      Analytics.quickList(listedCount); // ①: まとめて出品ボタン使用を計測
+      overlay.remove();
+      switchTab("shop");
+      render();
+      // 出品結果をショップログに記録
+      if(listedCount > 0) {
+        addShopLog("info", `📦 ${listedCount}個の装備をまとめて出品した${identifiedCount > 0 ? `（${identifiedCount}個を鑑定済み）` : ""}`);
+      } else if(identifiedCount > 0) {
+        addShopLog("info", `🔍 ${identifiedCount}個を鑑定した（出品可能な空き棚がありません）`);
+      }
+      // 次の一手ヒントはshopタブへ遷移するため不要（calcNextActionが「潜入しよう」を返す状態に自然に移行）
+    });
+  }
+
   overlay.querySelector("#resultCloseBtn").addEventListener("click", () => {
     overlay.remove();
     // 帰還成功時のみ「次の一手」ヒントを冒険タブに表示してから遷移
@@ -11735,6 +11913,154 @@ function renderTopBar() {
 // アイコンドック
 // ─────────────────────────────────────────
 // ─────────────────────────────────────────
+// Analytics 可視化モーダル
+// ─────────────────────────────────────────
+function openAnalyticsModal() {
+  // ── データ取得 ──
+  let sessions = [];
+  try {
+    const raw = localStorage.getItem("shinentrade_analytics");
+    sessions = raw ? (JSON.parse(raw).sessions || []) : [];
+  } catch(e) {}
+
+  // 新規プレイヤーセッションだけ抽出
+  const first = sessions.filter(s => s.isFirstSession);
+  const total = sessions.length;
+
+  // ── ファネル集計 ──
+  const fGuideShown     = first.filter(s => s.guide?.shown).length;
+  const fGuideCompleted = first.filter(s => s.guide?.completedAt).length;
+  const fEntered        = first.filter(s => s.firstLoop?.enterAt).length;
+  const fReturned       = first.filter(s => s.firstLoop?.returnAt).length;
+  const fSold           = first.filter(s => s.firstLoop?.firstSaleAt).length;
+  const fCompleted      = first.filter(s => s.firstLoop?.completed).length;
+
+  const pct = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + "%" : "—";
+  const avgMin = first.length > 0
+    ? (first.reduce((acc, s) => acc + (s.durationSec || 0), 0) / first.length / 60).toFixed(1)
+    : "—";
+
+  // ガイドスキップ分布（何ページ目でスキップしたか）
+  const skipDist = [0, 0, 0];
+  first.forEach(s => {
+    const p = s.guide?.skippedAtPage;
+    if(p != null && p >= 0 && p <= 2) skipDist[p]++;
+  });
+
+  // firstReturn→firstSale 完了率（本実装の主目的KPI）
+  const convReturnToSale = pct(fSold, fReturned);
+
+  // まとめて出品ボタン使用集計（①計測）
+  const fQuickListUsed  = first.filter(s => s.quickList?.used > 0).length;
+  const fQuickListRate  = pct(fQuickListUsed, fReturned);
+
+  // ── UI生成 ──
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+  const mc = document.createElement("div");
+  mc.className = "modal-content";
+  mc.style.cssText = "max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;";
+  overlay.appendChild(mc);
+
+  const row = (label, val, sub) => `
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--muted)">${label}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--text)">${val}
+        ${sub ? `<span style="font-size:10px;color:var(--muted);margin-left:4px">${sub}</span>` : ""}
+      </span>
+    </div>`;
+
+  const kpiRow = (label, val, note) => `
+    <div style="background:#1a1a26;border-radius:8px;padding:10px 12px;margin-bottom:6px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:2px">${label}</div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent2)">${val}
+        ${note ? `<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:4px">${note}</span>` : ""}
+      </div>
+    </div>`;
+
+  mc.innerHTML = `
+    <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)">
+      <div class="modal-title">📊 Analytics</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">
+        総セッション: ${total}件 / 新規: ${first.length}件
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px 16px">
+
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px">
+        🎯 初回ループ ファネル
+      </div>
+      ${kpiRow("帰還→販売完了率（主目的KPI）", convReturnToSale, `${fSold}/${fReturned}件`)}
+      ${kpiRow("ループ完結率", pct(fCompleted, first.length), `${fCompleted}/${first.length}件`)}
+      ${kpiRow("まとめて出品ボタン使用率", fQuickListRate, `${fQuickListUsed}/${fReturned}件`)}
+
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">
+        📋 ステップ別通過数
+      </div>
+      <div style="background:#111;border-radius:8px;padding:8px 12px">
+        ${row("ガイド表示", fGuideShown + "件")}
+        ${row("ガイド完読", fGuideCompleted + "件", `完読率 ${pct(fGuideCompleted, fGuideShown)}`)}
+        ${row("初回潜入", fEntered + "件", `潜入率 ${pct(fEntered, fGuideShown)}`)}
+        ${row("初回帰還", fReturned + "件", `帰還率 ${pct(fReturned, fEntered)}`)}
+        ${row("初回販売", fSold + "件", `販売率 ${pct(fSold, fReturned)}`)}
+        ${row("ループ完結", fCompleted + "件", `完結率 ${pct(fCompleted, fReturned)}`)}
+        ${row("平均プレイ時間", avgMin + " 分")}
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">
+        ⏭ ガイドスキップ分布
+      </div>
+      <div style="background:#111;border-radius:8px;padding:8px 12px">
+        ${row("STEP1でスキップ", skipDist[0] + "件")}
+        ${row("STEP2でスキップ", skipDist[1] + "件")}
+        ${row("STEP3でスキップ", skipDist[2] + "件")}
+      </div>
+
+      <div style="font-size:10px;color:var(--muted);margin-top:12px;line-height:1.6">
+        ※ このデータはこの端末のlocalStorageにのみ存在します。<br>
+        コンソールで <code style="color:var(--accent2)">_analyticsReport()</code> を実行すると詳細テーブルを確認できます。
+      </div>
+    </div>
+    <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%"
+        onclick="this.closest('.modal-overlay').remove()">閉じる</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+// コンソールから呼べる詳細レポート関数（開発・運用確認用）
+window._analyticsReport = function() {
+  try {
+    const d = JSON.parse(localStorage.getItem("shinentrade_analytics") || "{}");
+    const f = (d.sessions || []).filter(s => s.isFirstSession);
+    console.table({
+      total_sessions:  (d.sessions || []).length,
+      first_sessions:  f.length,
+      guide_completed: f.filter(s => s.guide?.completedAt).length,
+      entered:         f.filter(s => s.firstLoop?.enterAt).length,
+      returned:        f.filter(s => s.firstLoop?.returnAt).length,
+      first_sale:      f.filter(s => s.firstLoop?.firstSaleAt).length,
+      loop_completed:  f.filter(s => s.firstLoop?.completed).length,
+      return_to_sale_pct: (
+        f.filter(s=>s.firstLoop?.firstSaleAt).length /
+        Math.max(1, f.filter(s=>s.firstLoop?.returnAt).length) * 100
+      ).toFixed(1) + "%",
+      quicklist_used_rate: (
+        f.filter(s=>s.quickList?.used > 0).length /
+        Math.max(1, f.filter(s=>s.firstLoop?.returnAt).length) * 100
+      ).toFixed(1) + "%",
+      avg_minutes: (
+        f.reduce((a,b) => a + (b.durationSec||0), 0) /
+        Math.max(1, f.length) / 60
+      ).toFixed(1),
+    });
+  } catch(e) { console.error("Analytics read error:", e); }
+};
+
 // セーブデータ エクスポート/インポート (S48-SAVEDATA)
 // ─────────────────────────────────────────
 function openSaveDataModal() {
@@ -11904,7 +12230,7 @@ function updateIconDock(tab) {
   const _questAlertFn = () => {
     // B1-DAILY: デイリーミッションに達成済み未受取があればバッジを表示
     const hasDailyAlert = (gs.meta?.dailyMissions || []).some(m => {
-      const def = DAILY_MISSION_TYPES[m.type];
+      const def = _getDailyDef(m.type);
       return def && def.isDone(m) && !m.claimed;
     });
     if(hasDailyAlert) return true;
@@ -11965,6 +12291,7 @@ function updateIconDock(tab) {
       { icon:'🎒', label:'鞄拡張',   fn:'openBagModal()' },
       { icon:'🔁', label:'転生',     fn:'openRebirthModal()', alertFn: ()=> canRebirth() },
       { icon:'💾', label:'データ',   fn:'openSaveDataModal()' },
+      { icon:'📊', label:'分析',     fn:'openAnalyticsModal()' },
     ],
   };
 
@@ -12352,7 +12679,10 @@ function openQuestModal() {
   overlay.className = 'modal-overlay';
   overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
   initQuests();
-  if(initDailyMissions()) render(); // B1-DAILY: 自動受取発生時はgold表示を即更新
+  // LOGIC-1: モーダル開放時にリセット判定を実行（日付をまたいで開いた場合の即時リセット対応）
+  // initDailyMissions()はリセット判定・自動受取・saveGame()を複合的に行う。重複呼び出し可（冪等）。
+  // 戻り値trueの場合のみrender()を呼ぶ。ダンジョン戦闘中は !gs.dungeon.active で抑制。
+  if(initDailyMissions() && !gs.dungeon.active) render(); // B1-DAILY: 自動受取発生時はgold表示を即更新（ダンジョン戦闘中は抑制）
 
   // ── B1-DAILY: デイリーミッション行を生成 ──
   const now = Date.now();
@@ -12362,7 +12692,7 @@ function openQuestModal() {
   const remainM  = Math.floor((remainMs % 3600000) / 60000);
   const resetLabel = remainMs > 0 ? `リセットまで ${remainH}時間${remainM}分` : "まもなくリセット";
   const dailyRows = (gs.meta.dailyMissions || []).map((m, idx) => {
-    const def    = DAILY_MISSION_TYPES[m.type];
+    const def    = _getDailyDef(m.type);
     if(!def) return '';
     const done   = def.isDone(m);
     const claimed = m.claimed;
@@ -12414,10 +12744,11 @@ function openQuestModal() {
         <div class="modal-title">📋 依頼</div>
       </div>
       <div style="flex:1;overflow-y:auto;padding:10px 16px">
-        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center">
           <span>📅 本日のミッション</span>
           <span style="font-size:10px;color:var(--muted);font-weight:400">${resetLabel}</span>
         </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">毎日ランダムで2種類出題されます</div>
         ${dailyRows}
         <div style="height:1px;background:var(--border);margin:10px 0"></div>
         <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px">📋 依頼</div>
@@ -15356,6 +15687,35 @@ function openSkillTree(tabKey) {
           <div style="font-size:12px;color:var(--muted)">🔒 深淵の境地</div>
           <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/20 回で解禁</div>
         </div>`}
+        ${(() => {
+          const _haiwayUnlocked = _wr >= 50;
+          const haiwayIds = ["rb_veteran","rb_fortune","rb_endurance"];
+          if(_haiwayUnlocked) {
+            const nodes = haiwayIds.filter(id => REBIRTH_SKILL_MASTER[id]).map(id => {
+              const sk = REBIRTH_SKILL_MASTER[id];
+              const owned    = p.rebirthSkills.includes(id);
+              const reqsMet  = sk.requires.every(r => p.rebirthSkills.includes(r));
+              const canLearn = !owned && reqsMet && p.rebirthPoints >= sk.cost;
+              const locked   = !owned && !reqsMet;
+              const cls = owned ? "skill-node owned" : locked ? "skill-node locked" : canLearn ? "skill-node learnable" : "skill-node";
+              const onclick = canLearn ? `learnRebirthSkill('${id}')` : "";
+              return `<div class="${cls}" style="border-color:${owned?"#996600":locked?"":"#996600"}" ${onclick ? `onclick="${onclick}"` : ""}>
+                <div class="skill-icon">${sk.icon}</div>
+                <div class="skill-name">${sk.name}</div>
+                <div class="skill-desc">${sk.desc}</div>
+                <div class="skill-cost" style="color:var(--gold)">${owned ? "✅ 習得済" : locked ? "🔒" : `${sk.cost}RP`}</div>
+              </div>`;
+            }).join("");
+            return `<div style="margin-bottom:12px;border:1px solid #5a4a00;border-radius:8px;padding:10px;background:#120e00">
+              <div style="font-size:11px;color:var(--gold);margin-bottom:6px">👑 深淵の覇道 <span style="font-size:10px;color:var(--muted)">（転生50回解禁）</span></div>
+              <div class="skill-row">${nodes}</div>
+            </div>`;
+          }
+          return `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
+            <div style="font-size:12px;color:var(--muted)">🔒 深淵の覇道</div>
+            <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/50 回で解禁</div>
+          </div>`;
+        })()}
       `;
     }
     // 通常スキルタブ
@@ -15797,7 +16157,8 @@ function init() {
   if(gs.meta.isFirstPlay) showFirstGuideModal();
   // B1-DAILY: デイリーミッション初期化・リセット判定
   // 自動受取が発生した場合はtopBar gold表示を更新するためrender()を追加呼び出し
-  if(initDailyMissions()) render();
+  // BUG-3: ダンジョン戦闘中はrender()を抑制（openQuestModal側・setInterval側と条件を統一）
+  if(initDailyMissions() && !gs.dungeon.active) render();
   setInterval(()=>{
     checkShopSales();
     checkBlackmarket();

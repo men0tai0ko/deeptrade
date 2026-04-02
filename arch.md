@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S48
-**最終更新**: 2026-03-28
+**バージョン**: S50
+**最終更新**: 2026-03-29
 
 ---
 
@@ -11,17 +11,21 @@
 |---|---|
 | 言語 | HTML / CSS / Vanilla JavaScript |
 | フレームワーク | なし（単一ファイル構成） |
-| データ永続化 | localStorage（`shinentrade_v1`: ゲーム本体 / `shinentrade_logs`: ログ永続化） |
+| データ永続化 | localStorage（`shinentrade_v1`: ゲーム本体 / `shinentrade_logs`: ログ永続化 / `shinentrade_analytics`: 行動計測）|
 | フォント | Google Fonts（Cinzel） |
-| ファイル規模 | 約14,596行 / 約710KB |
+| ファイル規模 | 約15,842行 / 約780KB |
 
 ---
 
 ## 2. ファイル構成
 
-単一ファイル `index.html` にすべてを収録。
+`index.html` にゲーム本体、`manifest.json` / `sw.js` をリポジトリルートに配置。
 
 ```
+index.html
+manifest.json  ← PWA定義（A2-PWA）
+sw.js          ← ServiceWorker Cache First（A2-PWA）
+ogp.png        ← OGP画像 1280×640px（A1-OGP）
 index.html
 ├── <style>        CSS（変数・コンポーネント・アニメーション）
 ├── <body>         HTML骨格（app, topBar, tabBar, screen, iconDock, actionBar）
@@ -627,3 +631,225 @@ _achToastActive: boolean    // 処理中フラグ
 | B8 | トースト `bottom:90px` → actionBar 裏に隠れる → `142px` | `.ach-toast` CSS |
 | B9 | トーストタップ時モーダル二重表示 → タップ前に全クリア | `_showOneAchToast` |
 | B10 | キュー上限が処理中を含まない → `totalInFlight` で修正 | `showAchievementToast` |
+
+---
+
+## S49 アーキテクチャ追加事項
+
+### ホスティング
+- **GitHub Pages**: https://men0tai0ko.github.io/deeptrade/
+- デプロイ: index.html 単一ファイルをリポジトリにコミット → 自動公開
+
+### z-index体系（S49確定）
+
+| 要素 | z-index | 備考 |
+|---|---|---|
+| .modal-overlay | 100 | 通常モーダル（動的DOM追加で最前面にスタック） |
+| .lvup-overlay | 1000 | LvUp演出 |
+| .legendary-flash-overlay | 7999 | pointer-events:none |
+| .sale-banner | 8000 | top固定・pointer-events:none |
+| .ach-toast | 8200 | bottom:140px固定（S49-ACH） |
+| _showLegendaryShareModal overlay | 8500 | center配置（S49-SHARE） |
+| affixPoolModal | 9999 | 錬成モーダル内ポップアップ |
+
+### SNS共有モジュール（S49-SHARE）
+
+```javascript
+buildShareText(type, payload)   // シェアテキスト生成
+openShareDialog(type, payload)  // X投稿ウィンドウ（window.open noopener,noreferrer）
+_showLegendaryShareModal(item)  // legendary販売専用モーダル
+```
+
+### 実績トーストモジュール（S49-ACH）
+
+```javascript
+let _achToastQueue  = [];    // 待機中のID配列
+let _achToastActive = false; // 処理中フラグ
+
+showAchievementToast(id)       // claimAchievementから呼び出し
+_processAchToastQueue()        // キュー処理（再帰的に次を処理）
+_dismissAchToast(toast)        // フェードアウト → 次キューへ
+```
+
+### OGP / favicon（S49-OGP）
+
+headタグに静的metaタグを追加。JavaScriptによる動的変更なし（og:titleはdocument.titleと独立）。
+ogp.png追加後にtwitter:card=summary_large_imageに変更予定。
+---
+
+## S50 追加アーキテクチャ
+
+### A1-OGP: ogp.png + summary_large_image
+
+headタグのmetaタグのみ変更。JS/CSS変更なし。
+
+```html
+<meta property="og:image"        content="https://men0tai0ko.github.io/deeptrade/ogp.png">
+<meta property="og:image:width"  content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:image"       content="https://men0tai0ko.github.io/deeptrade/ogp.png">
+```
+
+### A2-PWA: manifest.json + sw.js
+
+```javascript
+// manifest.json（主要フィールド）
+{ name:"深淵商会", display:"standalone", orientation:"portrait",
+  start_url:"/deeptrade/", scope:"/deeptrade/",
+  background_color:"#0a0a0f", theme_color:"#7b5ea7" }
+
+// sw.js（Cache First）
+const CACHE_NAME = 'shinentrade-v1';
+const PRECACHE_URLS = ['/deeptrade/', '/deeptrade/index.html',
+                       '/deeptrade/ogp.png', '/deeptrade/manifest.json'];
+// install: addAll(PRECACHE_URLS) + skipWaiting
+// activate: 旧キャッシュ削除 + clients.claim
+// fetch: GETのみ対象。キャッシュヒット→返却。ミス→fetch→キャッシュ追加
+```
+
+SW登録（index.html body末尾）：
+```javascript
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: '/deeptrade/' })
+      .catch(() => {});  // 登録失敗はサイレント無視
+  });
+}
+```
+
+### B1-DAILY: デイリーミッションシステム
+
+#### gs.meta 追加フィールド
+
+```javascript
+gs.meta.dailyMissions: [  // 3件固定
+  { type: string, desc: string, target: number,
+    progress: number, reward: number, claimed: boolean }
+]
+gs.meta.dailyResetAt: number  // 翌00:00タイムスタンプ（ローカル時刻）
+```
+
+#### 新規関数
+
+| 関数 | 役割 |
+|---|---|
+| `DAILY_MISSION_TYPES` | マスターデータ定数（gen/update/isDone/progressText） |
+| `_nextMidnight()` | 翌00:00タイムスタンプ計算 |
+| `initDailyMissions()` | 初期化・リセット・自動受取。戻り値: boolean（自動受取発生） |
+| `checkDailyMissions(trigger, payload)` | トリガー別進捗更新 |
+| `claimDailyMission(idx)` | 手動受取（gold加算・log・render） |
+
+#### トリガー一覧
+
+| トリガー | 発火元 | 対象ミッション |
+|---|---|---|
+| `"sell"` | `checkQuestProgress` 経由 | daily_sell_gold |
+| `"enhance"` | `checkQuestProgress` 経由 | daily_enhance |
+| `"dungeon_enter"` | `enterDungeon()` 直接 | daily_enter_dungeon |
+| `"shelf_check"` | 1秒setInterval | **除外**（毎秒呼ばれるため） |
+
+#### initDailyMissions 呼び出し箇所（3箇所）
+
+```javascript
+// 1. init() — 起動時（自動受取発生時のみrender()）
+if(initDailyMissions()) render();
+
+// 2. openQuestModal() — モーダル開放時（自動受取発生時のみrender()）
+if(initDailyMissions()) render();
+
+// 3. 1秒setInterval — バックグラウンドリセット検出
+//    ダンジョン戦闘中(gs.dungeon.active)はrender()を抑制
+if(Date.now() >= (gs.meta.dailyResetAt || 0)) {
+  const _dailyClaimed = initDailyMissions();
+  if(_dailyClaimed && !gs.dungeon.active) render();
+}
+```
+
+---
+
+## S51 追加アーキテクチャ（2026-04-02）
+
+### DAILY_MISSION_TYPES の配列化
+
+S50まではオブジェクト形式だったが、ランダム抽選対応のため配列形式に変更。
+
+```javascript
+// 変更後（S51）
+const DAILY_MISSION_TYPES = [
+  { type: "daily_sell_gold",     gen(), update(), isDone(), progressText() },
+  { type: "daily_enter_dungeon", gen(), update(), isDone(), progressText() },
+  { type: "daily_enhance",       gen(), update(), isDone(), progressText() },
+  { type: "daily_sell_rare",     gen(), update(), isDone(), progressText() }, // 新規
+  { type: "daily_sell_count",    gen(), update(), isDone(), progressText() }, // 新規
+];
+
+// ヘルパー（全6参照箇所で使用。DAILY_MISSION_TYPES[m.type] 形式は廃止）
+function _getDailyDef(type) {
+  return DAILY_MISSION_TYPES.find(d => d.type === type) || null;
+}
+```
+
+生成ロジック:
+```javascript
+const shuffled = [...DAILY_MISSION_TYPES].sort(() => Math.random() - 0.5);
+gs.meta.dailyMissions = shuffled.slice(0, 2).map(d => d.gen());
+```
+
+### quickListAfterReturn()
+
+```javascript
+function quickListAfterReturn() {
+  // 除外UID収集: equippedUids / listedUids / bmUid（裏取引中）
+  // 全未鑑定品: item.identified = true（直接書き換え）
+  // 出品候補: inventory.filter（identified / EQUIP_TYPES / !UNSELLABLE / !equipped / !listed / !locked）
+  // 棚への登録: gs.shop.shelves をループ → 空きに { item, listedAt, sellDuration, onSale:false } をセット
+  // saveGame() は最後に1回のみ
+  return { identifiedCount, listedCount };
+}
+```
+
+### Analytics.quickList()
+
+```javascript
+function quickList(listedCount) {
+  _update(r => {
+    if(!r.quickList) r.quickList = { used: 0, totalListed: 0 };
+    r.quickList.used++;
+    r.quickList.totalListed += listedCount || 0;
+  });
+}
+// 公開API に追加: return { ..., quickList };
+```
+
+### openAnalyticsModal() / window._analyticsReport()
+
+ステータスタブ iconDock に追加:
+```javascript
+{ icon:'📊', label:'分析', fn:'openAnalyticsModal()' }
+```
+
+コンソール用グローバル関数:
+```javascript
+window._analyticsReport = function() { /* console.table でファネルデータ表示 */ };
+```
+
+### 転生スキル「深淵の覇道」（worldRank50解禁）
+
+```javascript
+// REBIRTH_SKILL_MASTER への追加
+rb_veteran:   { unlockRank:50, requires:["rb_atk","rb_def"],          effect:{ stat:"all", pct:5 } }
+rb_fortune:   { unlockRank:50, requires:["rb_gold","rb_shelf"],        effect:{ sellPct:8, extraShelf:1 } }
+rb_endurance: { unlockRank:50, requires:["rb_veteran","rb_fortune"],   effect:{ maxHpPct:10, bonusSp:3 } }
+```
+
+effectキーの参照箇所（既存コードで自動対応）:
+- `stat:"all" / pct:5` → `calcStats` 内 passive_pct ループ
+- `sellPct:8` → `itemPrice` 内 `rbSellPct` 集計（type無関係）
+- `extraShelf:1` → `learnRebirthSkill` 内の棚スロット更新
+- `maxHpPct:10` → `calcStats` 内 `rbHpPct` 集計
+- `bonusSp:3` → `calcRebirthPoints` 内 `bonusSp` 集計
+
+UI: `openSkillTree` rbタブに `haiwayIds = ["rb_veteran","rb_fortune","rb_endurance"]` の独立ブロックを追加。worldRank50未満は鍵アイコンで進捗（N/50）表示。
+
+演出: `wr===50` の分岐を `addLog` 1行から `_showRebirthMilestoneModal` モーダル演出に昇格。
