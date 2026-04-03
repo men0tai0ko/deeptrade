@@ -6457,18 +6457,17 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
     return              { icon:"✕",  color:"#ff6644", label:"失敗…",   sub:"罠が作動した…" };
   })();
 
-  // Phase1: ダイスが転がっている状態
-  mc.innerHTML = `
-    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">⚠ 罠を発見！ダイスを振る…</div>
-    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:16px">
-      <div id="trapDie1" style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
-      <div id="trapDie2" style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
-    </div>
-    <div style="font-size:12px;color:#666">…</div>
-  `;
+  // _applyTrapResultの二重呼び出し防止フラグ
+  let _applied = false;
+  const applyOnce = () => {
+    if(_applied) return;
+    _applied = true;
+    overlay.remove();
+    _applyTrapResult(isCritSuccess, isCritFail, isSuccess);
+  };
 
-  // Phase2: 1.5秒後にダイスの目を確定させて結果表示
-  setTimeout(() => {
+  // Phase2の結果HTMLを描画してイベントを設定する関数
+  const showResult = () => {
     const lukLine = lukBonus > 0
       ? `<span style="font-size:11px;color:var(--muted)"> + ${lukBonus}(luk)</span>` : "";
     const totalColor = isCritFail ? "#ff2244" : isCritSuccess ? "#ffdd44" : total >= successLine ? "#44dd88" : "#ff6644";
@@ -6490,11 +6489,28 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
       <button class="btn btn-secondary" style="width:100%" id="trapContinueBtn">続ける</button>
     `;
 
-    overlay.querySelector("#trapContinueBtn").addEventListener("click", () => {
-      overlay.remove();
-      _applyTrapResult(isCritSuccess, isCritFail, isSuccess);
-    });
-  }, 1500);
+    // 結果表示中: overlay外タップで閉じる & 続けるボタン
+    overlay.onclick = e => { if(e.target === overlay) applyOnce(); };
+    overlay.querySelector("#trapContinueBtn").addEventListener("click", applyOnce);
+  };
+
+  // Phase1: ダイスが転がっている状態
+  mc.innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">⚠ 罠を発見！ダイスを振る…</div>
+    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:16px">
+      <div id="trapDie1" style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
+      <div id="trapDie2" style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
+    </div>
+    <div style="font-size:12px;color:#666">…</div>
+  `;
+
+  // Phase1中: overlay外タップでアニメーションをスキップして即結果表示
+  const timer = setTimeout(showResult, 1500);
+  overlay.onclick = e => {
+    if(e.target !== overlay) return;
+    clearTimeout(timer);
+    showResult();
+  };
 }
 
 // 罠結果の実際の適用
@@ -6570,16 +6586,17 @@ function _showRestDiceModal(die1, die2, lukBonus, total, healRate) {
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
 
-  mc.innerHTML = `
-    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">💤 休息…どのくらい回復できるか？</div>
-    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:16px">
-      <div style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
-      <div style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
-    </div>
-    <div style="font-size:12px;color:#666">…</div>
-  `;
+  // _applyRestResultの二重呼び出し防止フラグ
+  let _applied = false;
+  const applyOnce = () => {
+    if(_applied) return;
+    _applied = true;
+    overlay.remove();
+    _applyRestResult(healRate);
+  };
 
-  setTimeout(() => {
+  // Phase2の結果HTMLを描画してイベントを設定する関数
+  const showResult = () => {
     const heal = Math.floor(gs.player.maxHp * healRate);
     const actual = Math.min(heal, gs.player.maxHp - gs.player.hp);
     // MP回復：HP回復率の50%をMP回復（最低10%）
@@ -6608,11 +6625,28 @@ function _showRestDiceModal(die1, die2, lukBonus, total, healRate) {
       <button class="btn btn-secondary" style="width:100%" id="restContinueBtn">続ける</button>
     `;
 
-    overlay.querySelector("#restContinueBtn").addEventListener("click", () => {
-      overlay.remove();
-      _applyRestResult(healRate);
-    });
-  }, 1500);
+    // 結果表示中: overlay外タップで閉じる & 続けるボタン
+    overlay.onclick = e => { if(e.target === overlay) applyOnce(); };
+    overlay.querySelector("#restContinueBtn").addEventListener("click", applyOnce);
+  };
+
+  // Phase1: ダイスが転がっている状態
+  mc.innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:16px">💤 休息…どのくらい回復できるか？</div>
+    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:16px">
+      <div style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
+      <div style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
+    </div>
+    <div style="font-size:12px;color:#666">…</div>
+  `;
+
+  // Phase1中: overlay外タップでアニメーションをスキップして即結果表示
+  const timer = setTimeout(showResult, 1500);
+  overlay.onclick = e => {
+    if(e.target !== overlay) return;
+    clearTimeout(timer);
+    showResult();
+  };
 }
 
 function _applyRestResult(healRate) {
@@ -12089,94 +12123,14 @@ function openSaveDataModal() {
     area.textContent = msg || "";
   }
 
-  // 初回描画は1回だけ実行
-  mc.innerHTML = `
-    <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)">
-      <div class="modal-title">💾 セーブデータ管理</div>
-    </div>
-    <div style="flex:1;overflow-y:auto;padding:12px 16px">
-
-      <div id="_sdMsgArea" style="display:none;margin-bottom:12px;padding:8px 12px;
-        border-radius:8px;border:1px solid;font-size:12px"></div>
-
-      <div style="margin-bottom:16px">
-        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">
-          📤 エクスポート（バックアップ）
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-          下のテキストをコピーして保存しておいてください。
-        </div>
-        <textarea id="_sdExportArea" readonly
-          style="width:100%;height:80px;background:#0a0a14;border:1px solid var(--border);
-            border-radius:6px;color:var(--text);font-size:10px;padding:6px;resize:none;
-            font-family:monospace"></textarea>
-        <button class="btn btn-secondary" style="width:100%;margin-top:6px" id="_sdCopyBtn">
-          📋 クリップボードにコピー
-        </button>
-      </div>
-
-      <div style="border-top:1px solid var(--border);padding-top:16px">
-        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">
-          📥 インポート（復元）
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
-          バックアップしたテキストを貼り付けて「復元する」を押してください。<br>
-          <span style="color:var(--red)">⚠ 現在のデータは上書きされます。</span>
-        </div>
-        <textarea id="_sdImportArea" placeholder="ここにセーブデータを貼り付け..."
-          style="width:100%;height:80px;background:#0a0a14;border:1px solid var(--border);
-            border-radius:6px;color:var(--text);font-size:10px;padding:6px;resize:none;
-            font-family:monospace"></textarea>
-        <button class="btn btn-danger" style="width:100%;margin-top:6px" id="_sdImportBtn"
-          ${gs.dungeon.active ? 'disabled style="opacity:0.4;pointer-events:none"' : ''}>
-          📥 復元する（現在のデータを上書き）
-        </button>
-        ${gs.dungeon.active
-          ? '<div style="font-size:11px;color:var(--red);margin-top:6px;text-align:center">⚠ 探索中はインポートできません</div>'
-          : ''}
-      </div>
-    </div>
-    <div style="flex-shrink:0;padding:10px 16px 14px;border-top:1px solid var(--border)">
-      <button class="btn btn-secondary" style="width:100%" id="_sdCloseBtn">閉じる</button>
-    </div>
-  `;
-
-  // B-2修正：textContentで設定（HTML injection防止）
-  mc.querySelector("#_sdExportArea").textContent = exportData;
-
-  // 閉じる
-  mc.querySelector("#_sdCloseBtn").onclick = () => overlay.remove();
-
-  // コピー（B-1修正：_showMsgのみ呼ぶ・DOMを再生成しない）
-  mc.querySelector("#_sdCopyBtn").onclick = () => {
-    if(!exportData) { _showMsg("エクスポートするデータがありません。", false); return; }
-    const area = mc.querySelector("#_sdExportArea");
-    if(navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(exportData)
-        .then(() => _showMsg("✅ クリップボードにコピーしました。テキストファイルに保存してください。", true))
-        .catch(() => {
-          area.select();
-          try { document.execCommand("copy"); _showMsg("✅ コピーしました。", true); }
-          catch(e2) { _showMsg("コピーできませんでした。テキストを手動で選択してコピーしてください。", false); }
-        });
-    } else {
-      area.select();
-      try { document.execCommand("copy"); _showMsg("✅ コピーしました。", true); }
-      catch(e) { _showMsg("コピーできませんでした。テキストを手動で選択してコピーしてください。", false); }
-    }
-  };
-
-  // インポート（B-4修正：ダンジョン中は無効化済み）
-  const importBtn = mc.querySelector("#_sdImportBtn");
-  if(importBtn) importBtn.onclick = () => {
-    const raw = mc.querySelector("#_sdImportArea").value.trim();
+  // インポート共通処理（テキスト貼り付け・ファイル読み込みで共用）
+  function _doImport(raw) {
     if(!raw) { _showMsg("テキストが入力されていません。", false); return; }
 
     let parsed;
     try { parsed = JSON.parse(raw); }
     catch(e) { _showMsg("❌ データの形式が正しくありません。コピーし直してください。", false); return; }
 
-    // 深淵商会のデータかどうか簡易チェック
     if(!parsed || typeof parsed !== "object" || !parsed.player || !parsed.meta) {
       _showMsg("❌ これは深淵商会のセーブデータではありません。", false); return;
     }
@@ -12185,7 +12139,6 @@ function openSaveDataModal() {
     const confirmOverlay = document.createElement("div");
     confirmOverlay.className = "modal-overlay";
     confirmOverlay.style.zIndex = "200";
-    // B-3修正：背景クリックで閉じる
     confirmOverlay.onclick = e => { if(e.target === confirmOverlay) confirmOverlay.remove(); };
     confirmOverlay.innerHTML = `
       <div class="modal-content" style="text-align:center;max-width:300px">
@@ -12215,6 +12168,133 @@ function openSaveDataModal() {
         _showMsg("❌ 保存に失敗しました（ストレージ容量不足の可能性）。", false);
       }
     };
+  }
+
+  // 初回描画は1回だけ実行
+  mc.innerHTML = `
+    <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)">
+      <div class="modal-title">💾 セーブデータ管理</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:12px 16px">
+
+      <div id="_sdMsgArea" style="display:none;margin-bottom:12px;padding:8px 12px;
+        border-radius:8px;border:1px solid;font-size:12px"></div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">
+          📤 エクスポート（バックアップ）
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+          ファイルに保存するか、テキストをコピーして保管してください。
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <button class="btn btn-secondary" style="flex:1" id="_sdDownloadBtn">
+            💾 ファイルに保存
+          </button>
+          <button class="btn btn-secondary" style="flex:1" id="_sdCopyBtn">
+            📋 コピー
+          </button>
+        </div>
+        <textarea id="_sdExportArea" readonly
+          style="width:100%;height:64px;background:#0a0a14;border:1px solid var(--border);
+            border-radius:6px;color:var(--text);font-size:10px;padding:6px;resize:none;
+            font-family:monospace"></textarea>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px">
+          📥 インポート（復元）
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+          保存したファイルを選択するか、テキストを貼り付けて復元してください。<br>
+          <span style="color:var(--red)">⚠ 現在のデータは上書きされます。</span>
+        </div>
+        <button class="btn btn-secondary" style="width:100%;margin-bottom:6px" id="_sdFileBtn"
+          ${gs.dungeon.active ? 'disabled style="opacity:0.4;pointer-events:none"' : ''}>
+          📂 ファイルから読み込む
+        </button>
+        <textarea id="_sdImportArea" placeholder="またはここにテキストを貼り付け..."
+          style="width:100%;height:64px;background:#0a0a14;border:1px solid var(--border);
+            border-radius:6px;color:var(--text);font-size:10px;padding:6px;resize:none;
+            font-family:monospace"></textarea>
+        <button class="btn btn-danger" style="width:100%;margin-top:6px" id="_sdImportBtn"
+          ${gs.dungeon.active ? 'disabled style="opacity:0.4;pointer-events:none"' : ''}>
+          📥 テキストから復元
+        </button>
+        ${gs.dungeon.active
+          ? '<div style="font-size:11px;color:var(--red);margin-top:6px;text-align:center">⚠ 探索中はインポートできません</div>'
+          : ''}
+      </div>
+    </div>
+    <div style="flex-shrink:0;padding:10px 16px 14px;border-top:1px solid var(--border)">
+      <button class="btn btn-secondary" style="width:100%" id="_sdCloseBtn">閉じる</button>
+    </div>
+  `;
+
+  // B-2修正：textContentで設定（HTML injection防止）
+  mc.querySelector("#_sdExportArea").textContent = exportData;
+
+  // 閉じる
+  mc.querySelector("#_sdCloseBtn").onclick = () => overlay.remove();
+
+  // ── ファイルに保存 ──
+  mc.querySelector("#_sdDownloadBtn").onclick = () => {
+    if(!exportData) { _showMsg("エクスポートするデータがありません。", false); return; }
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+    const filename = `shinentrade_backup_${stamp}.json`;
+    const blob = new Blob([exportData], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    _showMsg(`✅ ${filename} をダウンロードしました。`, true);
+  };
+
+  // ── クリップボードにコピー（B-1修正：_showMsgのみ呼ぶ・DOMを再生成しない）──
+  mc.querySelector("#_sdCopyBtn").onclick = () => {
+    if(!exportData) { _showMsg("エクスポートするデータがありません。", false); return; }
+    const area = mc.querySelector("#_sdExportArea");
+    if(navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(exportData)
+        .then(() => _showMsg("✅ クリップボードにコピーしました。", true))
+        .catch(() => {
+          area.select();
+          try { document.execCommand("copy"); _showMsg("✅ コピーしました。", true); }
+          catch(e2) { _showMsg("コピーできませんでした。テキストを手動で選択してコピーしてください。", false); }
+        });
+    } else {
+      area.select();
+      try { document.execCommand("copy"); _showMsg("✅ コピーしました。", true); }
+      catch(e) { _showMsg("コピーできませんでした。テキストを手動で選択してコピーしてください。", false); }
+    }
+  };
+
+  // ── ファイルから読み込む ──
+  const fileInput = document.createElement("input");
+  fileInput.type   = "file";
+  fileInput.accept = ".json,application/json";
+  fileInput.style.display = "none";
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => _doImport(e.target.result);
+    reader.onerror = () => _showMsg("❌ ファイルの読み込みに失敗しました。", false);
+    reader.readAsText(file, "utf-8");
+    fileInput.value = ""; // 同じファイルを再選択できるようリセット
+  });
+
+  const fileBtn = mc.querySelector("#_sdFileBtn");
+  if(fileBtn) fileBtn.onclick = () => fileInput.click();
+
+  // ── テキスト貼り付けからインポート（B-4修正：ダンジョン中は無効化済み）──
+  const importBtn = mc.querySelector("#_sdImportBtn");
+  if(importBtn) importBtn.onclick = () => {
+    _doImport(mc.querySelector("#_sdImportArea").value.trim());
   };
 }
 
