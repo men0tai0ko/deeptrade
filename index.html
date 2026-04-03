@@ -3466,6 +3466,7 @@ const DEFAULT_STATE = () => ({
     },
     staff:[],              // 雇用中スタッフ [{ id, hiredAt }]
     autoShelfRarities:[],  // 商品管理人：自動陳列する等級リスト
+    autoShelfTypes:[],     // 商品管理人：自動陳列する種別（"equip"/"consumable"、空=全種類）
     regulars:[],           // 常連客 [{ id, name, icon, lv, purchases, preferType, preferFixed, typeHistory, order, nextVisitAt, bonusPct }]
     investment:{ amount:0, lastReturnAt:0 }, // 投資
     guildReward:{ accumulated:0, lastTickAt:0 }, // ギルド時間報酬
@@ -4150,6 +4151,7 @@ function loadGame() {
       if(!gs.shop.earnings)    gs.shop.earnings = { shopIncome:0, staff:0, investment:0, guild:0 };
       if(gs.shop.earnings.guildItems === undefined) gs.shop.earnings.guildItems = 0;
       if(!gs.shop.autoShelfRarities) gs.shop.autoShelfRarities = [];
+      if(!gs.shop.autoShelfTypes)    gs.shop.autoShelfTypes    = [];
       gs.inventory.forEach(i=>{ if(i.enhLv===undefined) i.enhLv=0; if(i.statOverride===undefined) i.statOverride=null; });
       gs.shop.staff.forEach(s=>{ if(s.lv===undefined) s.lv=1; });
       if(!gs.shop.demandHistory) gs.shop.demandHistory = [];
@@ -9392,6 +9394,7 @@ function findBestShelfSlot(item) {
 
 function listItem(item, slotIdx) {
   if(UNSELLABLE_ITEMS.has(item.itemId)) return;
+  if(item.locked) return; // ロック中は出品不可（全経路共通ガード）
   const existing = gs.shop.shelves[slotIdx];
   if(existing && existing.item) return;
   const inv = gs.inventory.findIndex(i => i.uid === item.uid);
@@ -9800,34 +9803,51 @@ function checkStaffIncome() {
         }
       }
     }
-    // 商品管理人：等級指定自動陳列
-    if(s.id === "stockManager" && gs.shop.autoShelfRarities?.length > 0) {
-      if(!s.shelfTick) s.shelfTick = 0;
-      s.shelfTick++;
-      if(s.shelfTick >= 2) {  // 2分ごとにチェック
-        s.shelfTick = 0;
-        const emptySlots = gs.shop.shelves.filter(sl => sl === null || (sl && !sl.item)).length;
-        if(emptySlots > 0) {
-          const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
-          const listedUids   = new Set(gs.shop.shelves.filter(s=>s?.item).map(sl => sl.item.uid));
-          const candidates   = gs.inventory.filter(i =>
-            i.identified &&
-            !equippedUids.has(i.uid) &&
-            !listedUids.has(i.uid) &&
-            !i.locked &&
-            gs.shop.autoShelfRarities.includes(i.rarity)
-          );
-          if(candidates.length > 0) {
-            const item = candidates[0];
-            const emptyIdx = gs.shop.shelves.findIndex(s => s === null || (s && !s.item));
-            if(emptyIdx >= 0) {
-              gs.shop.shelves[emptyIdx] = {
-                item,
-                listedAt: Date.now(),
-                sellDuration: calcSellDuration(item),
-              };
-              const m = ITEM_MASTER[item.itemId];
-              addShopLog("item", `${def.icon} ${def.name}が${m.icon}${m.name}を棚に並べた`);
+    // 商品管理人：等級・種別指定自動陳列
+    if(s.id === "stockManager") {
+      const _rarities = gs.shop.autoShelfRarities || [];
+      const _types    = gs.shop.autoShelfTypes    || [];
+      // 等級が1つ以上選択されている場合のみ動作（種別は補助フィルタ）
+      if(_rarities.length > 0) {
+        if(!s.shelfTick) s.shelfTick = 0;
+        s.shelfTick++;
+        if(s.shelfTick >= 2) {  // 2分ごとにチェック
+          s.shelfTick = 0;
+          const emptySlots = gs.shop.shelves.filter(sl => sl === null || (sl && !sl.item)).length;
+          if(emptySlots > 0) {
+            const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
+            const listedUids   = new Set(gs.shop.shelves.filter(s=>s?.item).map(sl => sl.item.uid));
+            const candidates   = gs.inventory.filter(i => {
+              if(!i.identified)             return false;
+              if(equippedUids.has(i.uid))   return false;
+              if(listedUids.has(i.uid))     return false;
+              if(i.locked)                  return false;
+              // 等級フィルタ（設定あり時のみ適用）
+              if(_rarities.length > 0 && !_rarities.includes(i.rarity)) return false;
+              // 種別フィルタ（設定あり時のみ適用）
+              if(_types.length > 0) {
+                const m = ITEM_MASTER[i.itemId];
+                const isEquip       = m && EQUIP_TYPES.has(m.type);
+                const isConsumable  = m && (m.type === "consumable" || m.type === "material");
+                const wantEquip     = _types.includes("equip");
+                const wantConsumable = _types.includes("consumable");
+                if(wantEquip && !wantConsumable && !isEquip)      return false;
+                if(wantConsumable && !wantEquip && !isConsumable) return false;
+              }
+              return true;
+            });
+            if(candidates.length > 0) {
+              const item = candidates[0];
+              const emptyIdx = gs.shop.shelves.findIndex(s => s === null || (s && !s.item));
+              if(emptyIdx >= 0) {
+                gs.shop.shelves[emptyIdx] = {
+                  item,
+                  listedAt: Date.now(),
+                  sellDuration: calcSellDuration(item),
+                };
+                const m = ITEM_MASTER[item.itemId];
+                addShopLog("item", `${def.icon} ${def.name}が${m.icon}${m.name}を棚に並べた`);
+              }
             }
           }
         }
@@ -12510,15 +12530,35 @@ function openStaffModal() {
       if(eff.autoShelfSpeed)        effParts.push(`棚の自動補充`);
       if(eff.demandForecastTurns)   effParts.push(`需要予測+${Math.floor(eff.demandForecastTurns)}ターン`);
       const effDesc = effParts.join(' / ');
-      // 商品管理人：等級設定UI
+      // 商品管理人：等級・種別設定UI
       const autoShelfUI = (def.id === "stockManager" && hiredS) ? (() => {
-        const cur = gs.shop.autoShelfRarities || [];
-        const chips = RARITY_LIST.map(r => {
-          const active = cur.includes(r.key);
+        const curR = gs.shop.autoShelfRarities || [];
+        const curT = gs.shop.autoShelfTypes    || [];
+
+        // 等級チップ（N / R / E / L）
+        const rarityChips = RARITY_LIST.map(r => {
+          const active = curR.includes(r.key);
+          const short = { normal:"N", rare:"R", epic:"E", legendary:"L" }[r.key] || r.key;
           return `<span onclick="(()=>{const a=gs.shop.autoShelfRarities||(gs.shop.autoShelfRarities=[]);const idx=a.indexOf('${r.key}');idx>=0?a.splice(idx,1):a.push('${r.key}');saveGame();window._staffRefresh&&window._staffRefresh();})()"
-            style="cursor:pointer;padding:2px 7px;border-radius:10px;font-size:10px;border:1px solid ${active?r.color:'#444'};color:${active?r.color:'#555'};background:${active?r.color+'22':'transparent'};user-select:none">${r.label}</span>`;
+            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?r.color:'#444'};color:${active?r.color:'#666'};background:${active?r.color+'22':'transparent'};user-select:none">${short}</span>`;
         }).join('');
-        return `<div style="margin-top:6px;font-size:10px;color:var(--muted);margin-bottom:3px">自動陳列する等級：</div><div style="display:flex;gap:4px;flex-wrap:wrap">${chips}</div>`;
+
+        // 種別チップ（装 / 消）
+        const TYPE_DEFS = [
+          { key:"equip",      label:"装",  color:"#7ec8e3" },
+          { key:"consumable", label:"消",  color:"#a8e6a3" },
+        ];
+        const typeChips = TYPE_DEFS.map(t => {
+          const active = curT.includes(t.key);
+          return `<span onclick="(()=>{const a=gs.shop.autoShelfTypes||(gs.shop.autoShelfTypes=[]);const idx=a.indexOf('${t.key}');idx>=0?a.splice(idx,1):a.push('${t.key}');saveGame();window._staffRefresh&&window._staffRefresh();})()"
+            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?t.color:'#444'};color:${active?t.color:'#666'};background:${active?t.color+'22':'transparent'};user-select:none">${t.label}</span>`;
+        }).join('');
+
+        return `
+          <div style="margin-top:6px;font-size:10px;color:var(--muted);margin-bottom:3px">自動陳列する等級：</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">${rarityChips}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">種別：<span style="color:#555;font-size:9px">（未選択=全種類）</span></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">${typeChips}</div>`;
       })() : '';
       const cardStyle = locked
         ? 'padding:8px 0;border-bottom:1px solid #222;opacity:0.45;'
@@ -14468,6 +14508,8 @@ function openItemDetail(uid) {
           ? `<button class="btn btn-gold" disabled title="装備を外してから陳列してください" style="opacity:0.35">🏪 陳列する</button>`
           : UNSELLABLE_ITEMS.has(m.itemId || item.itemId)
           ? `<button class="btn btn-secondary" disabled style="opacity:0.35">🚫 非売品</button>`
+          : item.locked
+          ? `<button class="btn btn-gold" disabled title="ロック中は陳列できません" style="opacity:0.35">🔒 陳列する</button>`
           : gs.shop.shelves.some(s => s && s.item && s.item.uid === uid)
           ? `<button class="btn btn-secondary" style="border-color:#e74c3c;color:#e74c3c" onclick="unlistItem('${uid}')">🏪 取り下げる</button>`
           : `<button class="btn btn-gold" onclick="openShelfFromDetail('${uid}')">🏪 陳列する</button>`
@@ -14661,6 +14703,7 @@ function openShelfFromDetail(uid) {
   const item = gs.inventory.find(i=>i.uid===uid);
   if(!item) return;
   if(UNSELLABLE_ITEMS.has(item.itemId)) { setInventoryMsg("damage","✕ この素材は非売品です"); render(); return; }
+  if(item.locked) { setInventoryMsg("damage","✕ ロック中のアイテムは出品できません"); render(); return; }
   if(emptyIdx<0) {
     setInventoryMsg("damage", "✕ 空きの棚がありません。ショップで売れるのを待ちましょう。");
     render();
