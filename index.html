@@ -1999,6 +1999,22 @@ const REBIRTH_SKILL_MASTER = {
     desc:"最大HP +10%・転生時SP +3 追加獲得",
     type:"passive_pct", effect:{ maxHpPct:10, bonusSp:3 },
   },
+  // ── 深淵の真髄（worldRank100解禁） ──
+  rb_apex: {
+    name:"深淵の覇絶", icon:"♾", cost:5, requires:["rb_veteran","rb_mastery"], unlockRank:100,
+    desc:"全ステ +8%・ボス与ダメ +10%",
+    type:"passive_pct", effect:{ stat:"all", pct:8, bossDmgPct:10 },
+  },
+  rb_hoard: {
+    name:"深淵の蓄積", icon:"🌌", cost:5, requires:["rb_fortune","rb_endurance"], unlockRank:100,
+    desc:"アイテム売値 +12%・陳列枠 +2",
+    type:"gameplay", effect:{ sellPct:12, extraShelf:2 },
+  },
+  rb_transcend: {
+    name:"深淵の超越", icon:"✨", cost:6, requires:["rb_apex","rb_hoard"], unlockRank:100,
+    desc:"全ステ +5%・最大HP +15%・転生時SP +5",
+    type:"passive_pct", effect:{ stat:"all", pct:5, maxHpPct:15, bonusSp:5 },
+  },
 };
 
 // ── ランダムOP（affix）マスターデータ ──
@@ -3731,6 +3747,11 @@ function calcStats(gs) {
     const sk = REBIRTH_SKILL_MASTER[id];
     return acc + (sk?.effect?.maxHpPct || 0);
   }, 0);
+  // rb_apex: ボス与ダメ+N%集計（S53）
+  const rbBossDmgPct = rbSkills.reduce((acc, id) => {
+    const sk = REBIRTH_SKILL_MASTER[id];
+    return acc + (sk?.effect?.bossDmgPct || 0);
+  }, 0);
   // rb_crit: クリティカル率ボーナス集計
   const rbCritRatePct = rbSkills.reduce((acc, id) => {
     const sk = REBIRTH_SKILL_MASTER[id];
@@ -3855,6 +3876,7 @@ function calcStats(gs) {
     colPoisonDmg:   _col.poisonDmg  || 0,
     colCount:      _col.count      || 0,
     rbCritRatePct,
+    rbBossDmgPct,
   };
 }
 
@@ -4326,6 +4348,7 @@ function loadGame() {
       // S52: 祠バフフィールドのマイグレーション
       if(gs.dungeon._shrineAtkBuff === undefined) gs.dungeon._shrineAtkBuff = false;
       if(gs.dungeon._shrineLukBuff === undefined) gs.dungeon._shrineLukBuff = false;
+      // S53: rb_apex/rb_hoard/rb_transcend は REBIRTH_SKILL_MASTER 参照なので追加マイグレーション不要
       if(gs.dungeon.autoRun           === undefined) gs.dungeon.autoRun  = null;
       if(gs.equipped.cloak    === undefined) gs.equipped.cloak    = null;
       if(gs.equipped.seal     === undefined) gs.equipped.seal     = null;
@@ -4688,6 +4711,8 @@ function initDailyMissions() {
     const shuffled = [...DAILY_MISSION_TYPES].sort(() => Math.random() - 0.5);
     gs.meta.dailyMissions = shuffled.slice(0, 2).map(d => d.gen());
     gs.meta.dailyResetAt = _nextMidnight();
+    // S53: リセット時にログ1行追加（旧セーブから2件化後の混乱軽減）
+    addShopLog("info", `📅 デイリーミッションが更新されました（本日の2件）`);
     saveGame();
     return autoClaimed; // 自動受取発生時はtrueを返す（呼び出し元でrender()を判断）
   }
@@ -5175,6 +5200,7 @@ function doRebirth() {
         "観測不能な存在として認識した。",
         "",
         "6階層「観測外領域」が解禁された。",
+        "永続スキル「深淵の真髄」も解禁された。",
         "深淵の意思を目指して進め。",
       ],
       badge: "称号「深淵の観測者」",
@@ -8230,6 +8256,10 @@ function doBattle(action) {
     if((r.setWillBossDmgBonus||0) > 0 && en.isBoss) {
       dmg = Math.floor(dmg * (1 + r.setWillBossDmgBonus / 100));
       logs.push({cls:"item", msg:`🌌 意思の具現！${hitSpan("+" + r.setWillBossDmgBonus + "%")}`});
+    }
+    // rb_apex: ボス与ダメ+N%（S53）
+    if((r.rbBossDmgPct||0) > 0 && en.isBoss) {
+      dmg = Math.floor(dmg * (1 + r.rbBossDmgPct / 100));
     }
     // specter_set 8部位：回避後の次攻撃が確定クリティカル（通常戦）
     // ボス戦では回避判定がないため、代わりに攻撃時10%で確定クリティカルを付与
@@ -13258,10 +13288,11 @@ function openBagModal() {
       <div style="flex:1;overflow-y:auto;padding:12px 16px">
         ${slots >= maxSlots
           ? '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0">最大容量に達しています</div>'
-          : `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          : `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                <span style="font-size:12px;color:var(--muted)">次の拡張（+2枠）</span>
                <span style="font-size:13px;color:${p.gold >= nextCost?'var(--gold)':'var(--red)'}">${nextCost.toLocaleString()}G</span>
              </div>
+             ${!canBuy ? `<div style="font-size:11px;color:#666;text-align:right;margin-bottom:8px">あと ${(nextCost - p.gold).toLocaleString()}G</div>` : '<div style="margin-bottom:8px"></div>'}
              <button class="btn btn-gold" style="${canBuy?'':'opacity:0.4'}" ${canBuy?'':'disabled'}
                onclick="buyLootSlot();this.closest('.modal-overlay').remove();openBagModal();">🎒 鞄を大きくする</button>`
         }
@@ -13317,8 +13348,11 @@ function buildCombatSkillBtn() {
       ${canUse?"":"disabled"}>${def.icon} ${def.name} (${mpCost}MP)</button>`;
   }
   // 複数ある場合はモーダル
-  return `<button class="btn btn-secondary" style="color:var(--accent2);border-color:#6a4a9a"
-    onclick="openCombatSkillModal()">✨ スキル (${mp}MP)</button>`;
+  // 使用可能スキルが1つでもあれば有効、なければdisabled
+  const _hasUsable = available.some(def => mp >= Math.max(1, def.mpCost - costReduce));
+  return `<button class="btn btn-secondary" style="color:${_hasUsable?'var(--accent2)':'#555'};border-color:${_hasUsable?'#6a4a9a':'#333'}"
+    onclick="${_hasUsable?'openCombatSkillModal()':''}"
+    ${_hasUsable?'':'disabled'}>✨ スキル <span style="font-size:11px;opacity:0.8">(${mp}MP)</span></button>`;
 }
 
 function openCombatSkillModal() {
@@ -13409,6 +13443,17 @@ function renderDungeon(sc, ab) {
     for(let f = 1; f <= maxFloor; f++) selectableFloors.push(f);
     const selFloor = d.selectedFloor || maxFloor;
     const ngLabel = ng > 0 ? `<div style="font-size:11px;color:#ffaa44;margin-bottom:2px">フェーズ${ng + 1}</div>` : "";
+    // 転生進捗インジケーター（S53）: 転生可能になるまで条件を表示
+    const rebirthHint = (() => {
+      if(canRebirth()) return ""; // 転生可能なら表示不要
+      const cond1ok = gs.dungeon.ng >= 1;
+      const cond2ok = gs.player.level >= 50;
+      if(cond1ok && cond2ok) return ""; // 両条件達成（念のため）
+      const parts = [];
+      if(!cond1ok) parts.push(`5階ボス撃破でフェーズ移行`);
+      if(!cond2ok) parts.push(`Lv${gs.player.level}/50`);
+      return `<div style="font-size:10px;color:#6a6a8a;margin-top:2px">🔁 転生まで：${parts.join("・")}</div>`;
+    })();
 
     // フロア選択ボタン（クリア済み階層＋最新フロア）
     const floorBtns = selectableFloors.map(f => {
@@ -13452,7 +13497,8 @@ function renderDungeon(sc, ab) {
         <div class="card" style="text-align:center;padding:16px 14px;margin-bottom:0;flex-shrink:0">
           <div style="font-family:'Cinzel',serif;font-size:20px;color:var(--accent2);margin-bottom:2px">深淵の迷宮</div>
           ${ngLabel}
-          <div style="font-size:11px;color:var(--muted);margin-bottom:12px">クリア済み：${clearedFloor}階層 / 解放中：${maxFloor}階層</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:${rebirthHint?4:12}px">クリア済み：${clearedFloor}階層 / 解放中：${maxFloor}階層</div>
+          ${rebirthHint}
           <div style="display:flex;flex-wrap:nowrap;gap:6px;justify-content:center;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none">
             ${floorBtns}
           </div>
@@ -16246,6 +16292,35 @@ function openSkillTree(tabKey) {
           return `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
             <div style="font-size:12px;color:var(--muted)">🔒 深淵の覇道</div>
             <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/50 回で解禁</div>
+          </div>`;
+        })()}
+        ${(() => {
+          const _shinzuiUnlocked = _wr >= 100;
+          const shinzuiIds = ["rb_apex","rb_hoard","rb_transcend"];
+          if(_shinzuiUnlocked) {
+            const nodes = shinzuiIds.filter(id => REBIRTH_SKILL_MASTER[id]).map(id => {
+              const sk = REBIRTH_SKILL_MASTER[id];
+              const owned    = p.rebirthSkills.includes(id);
+              const reqsMet  = sk.requires.every(r => p.rebirthSkills.includes(r));
+              const canLearn = !owned && reqsMet && p.rebirthPoints >= sk.cost;
+              const locked   = !owned && !reqsMet;
+              const cls = owned ? "skill-node owned" : locked ? "skill-node locked" : canLearn ? "skill-node learnable" : "skill-node";
+              const onclick = canLearn ? `learnRebirthSkill('${id}')` : "";
+              return `<div class="${cls}" style="border-color:${owned?"#00aacc":locked?"":"#00aacc"}" ${onclick ? `onclick="${onclick}"` : ""}>
+                <div class="skill-icon">${sk.icon}</div>
+                <div class="skill-name">${sk.name}</div>
+                <div class="skill-desc">${sk.desc}</div>
+                <div class="skill-cost" style="color:#66ddff">${owned ? "✅ 習得済" : locked ? "🔒" : `${sk.cost}RP`}</div>
+              </div>`;
+            }).join("");
+            return `<div style="margin-bottom:12px;border:1px solid #004466;border-radius:8px;padding:10px;background:#00080e">
+              <div style="font-size:11px;color:#66ddff;margin-bottom:6px">🌌 深淵の真髄 <span style="font-size:10px;color:var(--muted)">（転生100回解禁）</span></div>
+              <div class="skill-row">${nodes}</div>
+            </div>`;
+          }
+          return `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
+            <div style="font-size:12px;color:var(--muted)">🔒 深淵の真髄</div>
+            <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/100 回で解禁</div>
           </div>`;
         })()}
       `;
