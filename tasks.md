@@ -1,3 +1,16 @@
+## S60 完了内容（2026-04-06）
+
+### 品質改善（4件）
+
+| 内容 | 詳細 |
+|---|---|
+| COLOR-VAR-MINOR | `--boss`(#ff2244) / `--alert`(#ffcc00) / `--twitter`(#1da1f2) / `--track-bg`(#1e1e2e) / `--accent-light`(#aaaaff) / `--border-success`(#226622) / `--text-muted-blue`(#aaaadd) を変数化（計52箇所） |
+| COLOR-VAR-UNID-SET | `--unid-bg`(#1a1a00・7箇所) / `--unid-border`(#888800・7箇所) を変数化 |
+| HINT-INVEST | `calcNextAction()` に投資ヒント追加（Gold≥5000・投資上限未満の時） |
+| DOC-SYNC | HANDOVER.md の CSS変数セクションを S54〜S60 の一覧形式に整理 |
+
+---
+
 ## S59 完了内容（2026-04-06）
 
 ### バグ修正・品質改善（3件）
@@ -24,7 +37,7 @@
 
 # 深淵商会 — タスク・進捗管理
 
-**バージョン**: S59
+**バージョン**: S60
 **最終更新**: 2026-04-06
 
 ---

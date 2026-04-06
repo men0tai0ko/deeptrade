@@ -57,6 +57,16 @@
     /* S59変数化 */
     --bg-darker:    #1a1a1a;  /* リスト区切り・背景最暗部 */
     --border-list:  #1a1a2a;  /* リスト行ボーダー */
+    /* S60変数化 */
+    --boss:         #ff2244;  /* ボスセル・赤強調 */
+    --alert:        #ffcc00;  /* dockアラート・注意色 */
+    --twitter:      #1da1f2;  /* X（Twitter）シェアボタン */
+    --track-bg:     #1e1e2e;  /* プログレスバー背景 */
+    --accent-light: #aaaaff;  /* 昇級ボタン・採用可能テキスト */
+    --border-success:#226622; /* 強化値上昇ボーダー */
+    --text-muted-blue:#aaaadd;/* 薄青テキスト（選択・魔晶石） */
+    --unid-bg:      #1a1a00;  /* 未鑑定バッジ背景 */
+    --unid-border:  #888800;  /* 未鑑定バッジボーダー */
     /* S58変数化 */
     --border-dark:  #333;     /* 暗いボーダー・枠線 */
     --text-faint:   #666;     /* 非活性・補足テキスト */
@@ -135,7 +145,7 @@
 
   .barTrack {
     height: 6px;
-    background: #1e1e2e;
+    background: var(--track-bg);
     border-radius: 3px;
     overflow: hidden;
   }
@@ -276,8 +286,8 @@
   .dockBtn:active { background: #2a2a3e; border-color: var(--accent2); }
   .dockBtn .dockIcon { font-size: 18px; line-height: 1; }
   .dockBtn .dockLabel { font-size: 9px; color: var(--muted); white-space: nowrap; }
-  .dockBtn.dock-alert { border-color: #ffcc00; }
-  .dockBtn.dock-alert .dockLabel { color: #ffcc00; }
+  .dockBtn.dock-alert { border-color: var(--alert); }
+  .dockBtn.dock-alert .dockLabel { color: var(--alert); }
 
   /* ── カード ── */
   .card {
@@ -332,7 +342,7 @@
     width: 32px;
     height: 32px;
     border-radius: 5px;
-    background: #1e1e2e;
+    background: var(--track-bg);
     border: 1px solid var(--border);
     font-size: 15px;
     display: flex;
@@ -344,7 +354,7 @@
 
   .mapCell.visited { background: #2a2a3e; }
   .mapCell.current { background: var(--accent); border-color: var(--accent2); }
-  .mapCell.bossCell { border-color: #ff2244; color: #ff2244; font-weight: bold; }
+  .mapCell.bossCell { border-color: var(--boss); color: var(--boss); font-weight: bold; }
 
   /* ── ボス専用カード ── */
   .bossCard {
@@ -378,7 +388,7 @@
   }
   .boss-intro-icon { font-size: 80px; display: block; margin-bottom: 16px; }
   .boss-intro-name {
-    font-family: 'Cinzel', serif; font-size: 26px; color: #ff2244;
+    font-family: 'Cinzel', serif; font-size: 26px; color: var(--boss);
     text-shadow: 0 0 20px rgba(255,34,68,0.8); margin-bottom: 8px;
   }
   .boss-intro-flavor { font-size: 13px; color: #aa8888; margin-bottom: 24px; }
@@ -705,7 +715,7 @@
   .timerBar {
     width: 100%;
     height: 3px;
-    background: #1e1e2e;
+    background: var(--track-bg);
     border-radius: 2px;
     margin-top: 6px;
     overflow: hidden;
@@ -5318,7 +5328,7 @@ function _showRebirthMilestoneModal({ icon, title, color, lines, badge }) {
       ${badge ? `<div style="display:inline-block;padding:4px 14px;border-radius:20px;border:1px solid ${color};color:${color};font-size:12px;margin-bottom:16px">${badge}</div>` : ""}
     </div>
     <div style="flex-shrink:0;padding:8px 16px 20px">
-      <button class="btn btn-secondary" style="border-color:#1da1f2;color:#1da1f2;margin-bottom:8px;width:100%" id="shareMilestoneBtn">𝕏 シェアする</button>
+      <button class="btn btn-secondary" style="border-color:var(--twitter);color:var(--twitter);margin-bottom:8px;width:100%" id="shareMilestoneBtn">𝕏 シェアする</button>
       <button class="btn" style="border-color:${color};color:${color}" id="milestoneOkBtn">深淵へ戻る</button>
     </div>
   `;
@@ -6124,6 +6134,21 @@ function calcNextAction() {
     }
   }
 
+  // ③.3 投資未満 + 十分なGold → 投資を促す（S60）
+  const _investAmount = gs.shop.investment?.amount || 0;
+  if(_investAmount < INVEST_MAX && gs.player.gold >= 5000) {
+    const _investable = Math.min(gs.player.gold - 1000, INVEST_MAX - _investAmount);
+    if(_investable >= 1000) {
+      return {
+        icon:  "💹",
+        label: "NEXT ACTION",
+        text:  "Goldを投資しよう",
+        sub:   `投資可能 ${_investable.toLocaleString()}G — 放置収入タブから`,
+        action: () => { switchTab("shop"); setTimeout(() => openPassiveIncomeModal(), 100); },
+      };
+    }
+  }
+
   // ③.4 デイリーミッション達成・未受取 → 受け取りを促す（S56）
   const _dailyUnclaimed = (gs.meta?.dailyMissions || []).some(m => {
     const def = _getDailyDef(m.type);
@@ -6708,7 +6733,7 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
 
   // 結果データ
   const resultData = (() => {
-    if(isCritFail)    return { icon:"💀", color:"#ff2244", label:"大失敗！", sub:"罠が大爆発した！" };
+    if(isCritFail)    return { icon:"💀", color:"var(--boss)", label:"大失敗！", sub:"罠が大爆発した！" };
     if(isCritSuccess) return { icon:"✨", color:"#ffdd44", label:"大成功！", sub:"罠を解除＆HP回復！" };
     if(isSuccess)     return { icon:"✓",  color:"#44dd88", label:"成功！",   sub:"罠を解除した！" };
     return              { icon:"✕",  color:"#ff6644", label:"失敗…",   sub:"罠が作動した…" };
@@ -6727,7 +6752,7 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
   const showResult = () => {
     const lukLine = lukBonus > 0
       ? `<span style="font-size:11px;color:var(--muted)"> + ${lukBonus}(luk)</span>` : "";
-    const totalColor = isCritFail ? "#ff2244" : isCritSuccess ? "#ffdd44" : total >= successLine ? "#44dd88" : "#ff6644";
+    const totalColor = isCritFail ? "var(--boss)" : isCritSuccess ? "#ffdd44" : total >= successLine ? "#44dd88" : "#ff6644";
 
     mc.innerHTML = `
       <div style="font-size:13px;color:var(--muted);margin-bottom:16px">⚠ 罠を発見！</div>
@@ -7846,7 +7871,7 @@ function _showAffixPoolModal(item) {
     const current = (item.affixes || []).find(ca => ca.id === a.id);
     const highlight = current ? "background:#1a2a1a;border-color:#336633;" : "";
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:2px 0;border-radius:5px;border:1px solid var(--border-dark);${highlight}">
-      <span style="font-size:13px;color:${current ? "var(--success)" : "#aaaadd"}">${a.label}${current ? " ✓" : ""}</span>
+      <span style="font-size:13px;color:${current ? "var(--success)" : "var(--text-muted-blue)"}">${a.label}${current ? " ✓" : ""}</span>
       <span style="font-size:12px;color:var(--muted)">${a.min} ～ ${a.max}</span>
     </div>`;
   }).join("");
@@ -7925,7 +7950,7 @@ function _renderReforgeModal(uid, selectedIds) {
   overlay.innerHTML = `
     <div class="modal-content" style="max-width:340px">
       <div class="modal-title">🔮 錬成　<span style="font-size:12px;color:var(--muted)">${m.name}</span> ${goldBadge()}</div>
-      <div style="font-size:12px;color:#aaaadd;margin-bottom:4px">所持魔晶石: <span style="color:#88ccff;font-weight:700">🔷 ${crystal}個</span></div>
+      <div style="font-size:12px;color:var(--text-muted-blue);margin-bottom:4px">所持魔晶石: <span style="color:#88ccff;font-weight:700">🔷 ${crystal}個</span></div>
       <div id="reforgeCostInfo" style="margin-bottom:8px"></div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px">現在のOP：</div>
       <div id="reforgeAffixList"></div>
@@ -7941,7 +7966,7 @@ function _renderReforgeModal(uid, selectedIds) {
     const row = document.createElement("div");
     row.style.cssText = "padding:6px 10px;margin:3px 0;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
       + (sel ? "border:1px solid var(--accent);background:var(--accent-bg);" : "border:1px solid var(--border-subtle);background:var(--bg-deep);");
-    row.innerHTML = `<span style="color:${sel ? "var(--accent)" : "#aaaadd"}">${a.label}</span>`
+    row.innerHTML = `<span style="color:${sel ? "var(--accent)" : "var(--text-muted-blue)"}">${a.label}</span>`
       + `<div style="display:flex;align-items:center;gap:6px">`
       + `<span style="color:${sel ? "var(--accent)" : "var(--success)"};font-size:12px">+${a.val}${sel ? " 🔒固定" : ""}</span>`
       + `<button style="width:18px;height:18px;border-radius:50%;border:1px solid var(--text-faint);background:var(--bg-mid);color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1" data-info-btn="${a.id}">!</button>`
@@ -8033,9 +8058,9 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
   const diffRows = newAffixes.map(na => {
     const oa = oldAffixes.find(o => o.id === na.id);
     if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644"); // 新規
-    if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622"); // 上昇
+    if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "var(--border-success)"); // 上昇
     if(na.val < oa.val) return affixRow(na, "var(--warning)", "#1f0d0d", "#662222"); // 下降
-    return affixRow(na, "#aaaadd", "var(--bg-deep)", "var(--border-subtle)"); // 変化なし
+    return affixRow(na, "var(--text-muted-blue)", "var(--bg-deep)", "var(--border-subtle)"); // 変化なし
   }).join("");
 
   const oldRows = oldAffixes.map(oa => {
@@ -8055,7 +8080,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
           ${oldAffixes.map(oa => {
             const na = newAffixes.find(n => n.id === oa.id);
             const changed = !na || na.val !== oa.val;
-            return affixRow(oa, changed ? "#888888" : "#aaaadd", changed ? "var(--bg-darker)" : "var(--bg-deep)", changed ? "var(--border-dark)" : "var(--border-subtle)");
+            return affixRow(oa, changed ? "#888888" : "var(--text-muted-blue)", changed ? "var(--bg-darker)" : "var(--bg-deep)", changed ? "var(--border-dark)" : "var(--border-subtle)");
           }).join("")}
         </div>
         <div>
@@ -8063,9 +8088,9 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
           ${newAffixes.map(na => {
             const oa = oldAffixes.find(o => o.id === na.id);
             if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644");
-            if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622");
+            if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "var(--border-success)");
             if(na.val < oa.val) return affixRow(na, "var(--warning)", "#1f0d0d", "#662222");
-            return affixRow(na, "#aaaadd", "var(--bg-deep)", "var(--border-subtle)");
+            return affixRow(na, "var(--text-muted-blue)", "var(--bg-deep)", "var(--border-subtle)");
           }).join("")}
         </div>
       </div>
@@ -8126,7 +8151,7 @@ function openGradeUpModal(uid, backFn) {
     const bar = `<div style="height:3px;border-radius:2px;background:var(--surface-deep);margin-top:3px">
       <div style="height:100%;width:${Math.min(100,Math.round(held/req.count*100))}%;background:${ok?'#44cc88':'#cc4444'};border-radius:2px;transition:width 0.3s"></div>
     </div>`;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:${ok?'#0d1f0d':'#1f0d0d'};border:1px solid ${ok?'#226622':'#662222'};margin-bottom:4px">
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:${ok?'#0d1f0d':'#1f0d0d'};border:1px solid ${ok?'var(--border-success)':'#662222'};margin-bottom:4px">
       <div style="font-size:22px;flex-shrink:0">${mm.icon}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;color:${ok?'var(--success)':'var(--warning)'};font-weight:700">${mm.name} <span style="font-size:10px;color:${r.color};font-weight:400">(${r.label})</span></div>
@@ -8159,7 +8184,7 @@ function openGradeUpModal(uid, backFn) {
       </div>
       <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
         ${check.ok
-          ? `<button class="btn btn-secondary" style="width:100%;border-color:#8888ff;color:#aaaaff;margin-bottom:6px" id="gradeUpExecBtn">✨ 昇級する</button>`
+          ? `<button class="btn btn-secondary" style="width:100%;border-color:#8888ff;color:var(--accent-light);margin-bottom:6px" id="gradeUpExecBtn">✨ 昇級する</button>`
           : `<button class="btn btn-secondary" style="width:100%;border-color:var(--border-subtle);color:var(--text-disabled);opacity:0.5;margin-bottom:6px" disabled>✨ 昇級不可：${check.reason}</button>`
         }
         <button class="btn btn-secondary" style="width:100%" id="gradeUpCancelBtn">閉じる</button>
@@ -8890,7 +8915,7 @@ function showBossResult(bossId, droppedItem, clearedFloor, nextFloor, isNewClear
       <div style="font-size:12px;color:${subColor};margin-bottom:20px">${subText}</div>
       ${isLoopClear && canRebirth() ? `<button class="btn" style="background:linear-gradient(135deg,#7a5c00,#3a2c00);border-color:var(--gold);color:var(--gold);min-width:160px;margin-bottom:8px" id="rebirthBtn">🌟 転生する</button>` : ""}
       <button class="btn btn-secondary" style="min-width:160px;border-color:var(--gold);color:var(--gold)" id="bossResultBtn">続ける</button>
-      <button class="btn btn-secondary" style="min-width:160px;margin-top:6px;border-color:#1da1f2;color:#1da1f2;opacity:0.85;font-size:12px" id="shareBossBtn">𝕏 結果をシェアする</button>
+      <button class="btn btn-secondary" style="min-width:160px;margin-top:6px;border-color:var(--twitter);color:var(--twitter);opacity:0.85;font-size:12px" id="shareBossBtn">𝕏 結果をシェアする</button>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -9354,7 +9379,7 @@ function openBlackmarketModal() {
         const r = RARITY_MASTER[item.rarity];
         const tags = [
           item.cursed && item.identified ? `<span style="font-size:10px;color:var(--curse);background:var(--curse-bg);padding:1px 5px;border-radius:3px">呪い</span>` : "",
-          !item.identified ? `<span style="font-size:10px;color:var(--unidentified);background:#1a1a00;padding:1px 5px;border-radius:3px">未鑑定</span>` : "",
+          !item.identified ? `<span style="font-size:10px;color:var(--unidentified);background:var(--unid-bg);padding:1px 5px;border-radius:3px">未鑑定</span>` : "",
         ].filter(Boolean).join(" ");
         const basePrice = itemPrice(item);
         return `<div class="itemCard" style="cursor:pointer;margin-bottom:6px" onclick="bmListItem('${item.uid}');document.querySelector('.modal-overlay').remove()">
@@ -9367,7 +9392,7 @@ function openBlackmarketModal() {
         </div>`;
       }).join("");
 
-  const raidColor = bm.raidRisk > 70 ? "#ff2244" : bm.raidRisk > 40 ? "#ff7700" : "#446644";
+  const raidColor = bm.raidRisk > 70 ? "var(--boss)" : bm.raidRisk > 40 ? "#ff7700" : "#446644";
   mc.style.cssText = "max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;";
   mc.innerHTML = `
     <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)">
@@ -9542,7 +9567,7 @@ function openLootOverflowModal(newItem) {
     const dispName = itemDisplayName(item);
     const dispIcon = isUnid ? "❓" : m.icon;
     const unidBadge = isUnid
-      ? `<span style="display:inline-block;background:#1a1a00;border:1px solid #888800;color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
+      ? `<span style="display:inline-block;background:var(--unid-bg);border:1px solid var(--unid-border);color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
       : "";
     const card = document.createElement("div");
     card.className = "itemCard";
@@ -10634,7 +10659,7 @@ function _drawMarketCanvas(hist, trendActive, trend) {
   const yStep = Y_RANGE <= 40 ? 5 : Y_RANGE <= 80 ? 10 : 30;
   const yTicks = [];
   for(let v = Math.ceil(Y_MIN/yStep)*yStep; v <= Y_MAX; v += yStep) yTicks.push(v);
-  ctx.strokeStyle = '#1e1e2e'; ctx.lineWidth = 1;
+  ctx.strokeStyle = 'var(--track-bg)'; ctx.lineWidth = 1;
   yTicks.forEach(v => {
     const y = toY(v);
     ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+gW, y); ctx.stroke();
@@ -10801,7 +10826,7 @@ function openMarketModal() {
       const on      = _marketVisible[cat.key];
       const isTrend = trendActive && trend.type === cat.key;
       const demand  = currentDemand[cat.key];
-      const dColor  = demand >= 80 ? '#2ecc71' : demand >= 50 ? '#ffcc00' : 'var(--danger)';
+      const dColor  = demand >= 80 ? '#2ecc71' : demand >= 50 ? 'var(--alert)' : 'var(--danger)';
       const border  = on ? (isTrend ? cat.color : 'var(--border-dark)') : 'var(--bg-mid)';
       const opacity = on ? '1' : '0.35';
       return `<div onclick="window._marketToggle('${cat.key}')"
@@ -12233,7 +12258,7 @@ function openMercenaryModal(floor) {
 
     // 同行中バナー
     const currentHtml = curDef
-      ? `<div style="padding:8px 10px;background:#0d180d;border:1px solid #226622;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      ? `<div style="padding:8px 10px;background:#0d180d;border:1px solid var(--border-success);border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
           <div style="font-size:24px;flex-shrink:0">${curDef.icon}</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;color:var(--success);font-weight:700">同行中：${curDef.name}</div>
@@ -12250,10 +12275,10 @@ function openMercenaryModal(floor) {
       const hired = cur?.id === m.id;
       const canAfford = gs.player.gold >= cost;
       const bg   = hired ? '#0d180d' : 'var(--surface-base)';
-      const brd  = hired ? '#226622' : '#252540';
+      const brd  = hired ? 'var(--border-success)' : '#252540';
       const nc   = hired ? 'var(--success)' : 'var(--text)';
       const btnBrd = hired ? 'var(--border-subtle)' : canAfford ? '#8888ff' : 'var(--border-subtle)';
-      const btnC   = hired ? 'var(--text-faint)' : canAfford ? '#aaaaff' : 'var(--text-disabled)';
+      const btnC   = hired ? 'var(--text-faint)' : canAfford ? 'var(--accent-light)' : 'var(--text-disabled)';
       const op     = hired || !canAfford ? '0.5' : '1';
       const dis    = hired || !canAfford ? 'disabled' : '';
       const btnTxt = hired ? '同行中' : '雇う';
@@ -13065,7 +13090,7 @@ function openStaffModal() {
                 : !locked ? `<span style="color:var(--muted);font-weight:400;font-size:11px"> ${hired.length}/${def.maxCount}</span>` : ''}
             </div>
             <div style="font-size:10px;color:var(--muted)">${def.desc}</div>
-            ${hiredS ? `<div style="font-size:10px;color:#aaaadd;margin-top:2px">${effDesc}</div>` : ''}
+            ${hiredS ? `<div style="font-size:10px;color:var(--text-muted-blue);margin-top:2px">${effDesc}</div>` : ''}
             ${autoShelfUI}
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
@@ -13636,7 +13661,7 @@ function renderDungeon(sc, ab) {
     const merc = gs.dungeon.mercenary ? MERCENARY_MASTER[gs.dungeon.mercenary.id] : null;
     const mercCost = merc ? calcMercCost(merc.cost(selFloor)) : 0;
     const mercBanner = merc
-      ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#0d180d;border:1px solid #226622;border-radius:8px;margin-bottom:6px">
+      ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#0d180d;border:1px solid var(--border-success);border-radius:8px;margin-bottom:6px">
           <span style="font-size:16px">${merc.icon}</span>
           <div style="flex:1;font-size:11px;color:var(--success)">${merc.name}が同行中（-${mercCost.toLocaleString()}G）</div>
           <button style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--surface-deep);color:var(--muted);cursor:pointer"
@@ -13757,8 +13782,8 @@ function renderCombat(sc, ab, c) {
     : "";
 
   if(en.isBoss) {
-    const phaseColor = en.phase===3?"#ff2244":en.phase===2?"#ff7700":"#cc4400";
-    const rageColor  = en.rage>70?"#ff2244":en.rage>40?"#ff7700":"#886600";
+    const phaseColor = en.phase===3?"var(--boss)":en.phase===2?"#ff7700":"#cc4400";
+    const rageColor  = en.rage>70?"var(--boss)":en.rage>40?"#ff7700":"#886600";
     sc.innerHTML = `
       ${poisonBanner}${burnBanner}
       <div class="bossCard" id="enemyBox">
@@ -13914,7 +13939,7 @@ function renderShop(sc, ab) {
   const trend = sh.trend;
   const trendNow = trend && trend.type && Date.now() < trend.endsAt;
   const trendBanner = trendNow
-    ? `<div class="trendBanner" style="background:#1a1200;border:1px solid #aa8800;border-radius:8px;padding:5px 10px;margin-bottom:6px;font-size:11px;color:#ffcc00;text-align:center">
+    ? `<div class="trendBanner" style="background:#1a1200;border:1px solid #aa8800;border-radius:8px;padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--alert);text-align:center">
         📣 流行中：${trend.label} <span style="color:var(--muted);font-size:10px">（販売速度+30%・売値+10%）</span>
        </div>` : "";
 
@@ -13940,7 +13965,7 @@ function renderShop(sc, ab) {
         if(isUnid) return "";
         if(demand >= 80) return `<div style="font-size:9px;color:var(--green);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>🔥</span><span>需要旺盛</span></div>`;
         if(demand >= 60) return `<div style="font-size:9px;color:#88dd88;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📈</span><span>需要${demand}%</span></div>`;
-        if(demand >= 40) return `<div style="font-size:9px;color:#ffcc00;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
+        if(demand >= 40) return `<div style="font-size:9px;color:var(--alert);margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
         return `<div style="font-size:9px;color:var(--red);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700;animation:none"><span>⚠</span><span style="color:#ff6666">需要低下 ${demand}%</span></div>`;
       })();
       const rarityClass = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
@@ -14044,7 +14069,7 @@ function updateShopTick() {
     // バナー追加
     const banner = document.createElement("div");
     banner.className = "trendBanner";
-    banner.style.cssText = "background:#1a1200;border:1px solid #aa8800;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:#ffcc00;text-align:center";
+    banner.style.cssText = "background:#1a1200;border:1px solid #aa8800;border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;color:var(--alert);text-align:center";
     banner.innerHTML = `📣 流行中：${trend.label} <span style="color:var(--muted);font-size:10px">（販売速度+30%・売値+10%）</span>`;
     const expBarEl = sc.querySelector('.shopExpBar'); if(expBarEl) expBarEl.parentNode.insertBefore(banner, expBarEl.nextSibling);
   } else if(!trendNow && trendEl) {
@@ -14101,7 +14126,7 @@ function updateShopTick() {
         if(isUnid) return "";
         if(demand >= 80) return `<div style="font-size:9px;color:var(--green);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>🔥</span><span>需要旺盛</span></div>`;
         if(demand >= 60) return `<div style="font-size:9px;color:#88dd88;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📈</span><span>需要${demand}%</span></div>`;
-        if(demand >= 40) return `<div style="font-size:9px;color:#ffcc00;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
+        if(demand >= 40) return `<div style="font-size:9px;color:var(--alert);margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
         return `<div style="font-size:9px;color:var(--red);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>⚠</span><span style="color:#ff6666">需要低下 ${demand}%</span></div>`;
       })();
       const rarityClass   = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
@@ -15038,13 +15063,13 @@ function openItemDetail(uid) {
         <div style="margin-top:4px"><span style="display:inline-block;background:var(--curse-bg);border:1px solid var(--curse-border);color:var(--curse);font-size:11px;padding:3px 8px;border-radius:4px">${item.curse.icon} ${item.curse.label}（${item.curse.desc}${item.curse.val > 0 ? ` ${item.curse.val}` : ""}）</span></div>
         ` : item.identified ? `<div style="font-size:11px;color:var(--muted);margin-top:6px">呪いなし</div>` : ""}
         ` : `
-        <div style="margin-top:10px;padding:10px;background:#1a1a00;border:1px solid #888800;border-radius:8px;text-align:center">
+        <div style="margin-top:10px;padding:10px;background:var(--unid-bg);border:1px solid var(--unid-border);border-radius:8px;text-align:center">
           <div style="color:var(--unidentified);font-size:13px;margin-bottom:4px">❓ 未鑑定</div>
           <div style="font-size:11px;color:var(--muted)">OP・呪いは不明です</div>
           ${gs.shop.level >= 2 ? `
           <div style="font-size:11px;color:var(--muted);margin-top:6px">鑑定費用: ${identifyCost(item)}G</div>
           ${gs.player.gold >= identifyCost(item)
-            ? `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:#888800;color:var(--unidentified)" onclick="identifyItem('${uid}')">🔍 鑑定する（${identifyCost(item)}G）</button>`
+            ? `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:var(--unid-border);color:var(--unidentified)" onclick="identifyItem('${uid}')">🔍 鑑定する（${identifyCost(item)}G）</button>`
             : `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:var(--text-disabled);color:var(--text-faint);opacity:0.5" disabled>🔍 Gold不足（${identifyCost(item)}G必要）</button>`
           }
           ` : `<div style="font-size:11px;color:var(--muted);margin-top:6px">ショップLv2で鑑定解禁</div>`}
@@ -15098,10 +15123,10 @@ function openItemDetail(uid) {
           const check = cond ? canGradeUp(item) : { ok:false };
           if(cond) {
             // 条件未達でもモーダルは開いて必要素材を確認できる
-            enhBtn = `<button class="btn btn-secondary" style="${btnStyle(true,'#aaaaff')}"
+            enhBtn = `<button class="btn btn-secondary" style="${btnStyle(true,'var(--accent-light)')}"
               onclick="openGradeUpModal('${uid}')">✨ 昇級</button>`;
           } else {
-            enhBtn = `<button class="btn btn-secondary" style="${btnStyle(false,'#aaaaff')}" disabled>✨ 昇級</button>`;
+            enhBtn = `<button class="btn btn-secondary" style="${btnStyle(false,'var(--accent-light)')}" disabled>✨ 昇級</button>`;
           }
         } else {
           enhBtn = `<button class="btn btn-secondary" style="${btnStyle(canEnh,'var(--success)')}"
@@ -15426,7 +15451,7 @@ function renderStatus(sc, ab) {
       ].filter(r => r.show);
 
       if(rows.length === 0) return "";
-      return `<div style="margin-top:10px;padding:8px 10px;background:var(--surface-base);border-radius:8px;border:1px solid #1e1e2e">
+      return `<div style="margin-top:10px;padding:8px 10px;background:var(--surface-base);border-radius:8px;border:1px solid var(--track-bg)">
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px">⚙ スキル効果</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 8px">
           ${rows.map(row => `<div style="display:flex;justify-content:space-between;font-size:11px">
@@ -15551,7 +15576,7 @@ function openUnequipModal(slot, uid) {
     ? `<div style="font-size:12px;color:var(--muted);margin-top:8px">呪い</div>
        <div style="margin-top:4px"><span style="display:inline-block;background:var(--curse-bg);border:1px solid var(--curse-border);color:var(--curse);font-size:11px;padding:3px 8px;border-radius:4px">${item.curse.icon} ${item.curse.label}${item.curse.val > 0 ? ` ${item.curse.val}` : ""}</span></div>`
     : (!item.identified && item.cursed
-      ? `<div style="font-size:11px;color:#888800;margin-top:6px">⚠ 未鑑定（呪いの有無不明）</div>` : "");
+      ? `<div style="font-size:11px;color:var(--unid-border);margin-top:6px">⚠ 未鑑定（呪いの有無不明）</div>` : "");
 
   mc.innerHTML = `
     <div class="modal-title">${m.icon} ${m.name}</div>
@@ -15586,8 +15611,8 @@ function openUnequipModal(slot, uid) {
       if(_atMax) {
         const _cond = GRADE_UP_MASTER[item.rarity];
         _enhBtn = _cond
-          ? `<button class="btn btn-secondary" style="${_btnStyle(true,'#aaaaff')}" id="gradeUpBtn">✨ 昇級</button>`
-          : `<button class="btn btn-secondary" style="${_btnStyle(false,'#aaaaff')}" disabled>✨ 昇級</button>`;
+          ? `<button class="btn btn-secondary" style="${_btnStyle(true,'var(--accent-light)')}" id="gradeUpBtn">✨ 昇級</button>`
+          : `<button class="btn btn-secondary" style="${_btnStyle(false,'var(--accent-light)')}" disabled>✨ 昇級</button>`;
       } else {
         const _canEnh = gs.player.gold >= enhanceCost(item);
         _enhBtn = `<button class="btn btn-secondary" style="${_btnStyle(_canEnh,'var(--success)')}"
@@ -15640,7 +15665,7 @@ function openUnequipModal(slot, uid) {
     const ciDispName = itemDisplayName(ci);
     const ciDispIcon = ciUnid ? "❓" : cm.icon;
     const ciUnidBadge = ciUnid
-      ? `<span style="display:inline-block;background:#1a1a00;border:1px solid #888800;color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
+      ? `<span style="display:inline-block;background:var(--unid-bg);border:1px solid var(--unid-border);color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
       : "";
     const card = document.createElement("div");
     card.className = "itemCard";
@@ -15659,7 +15684,7 @@ function openUnequipModal(slot, uid) {
           const sign  = diff > 0 ? "+" : "";
           return `<span style="color:${color};font-size:11px;margin-right:6px">${k} ${sign}${diff}</span>`;
         }).join("")
-      : ciUnid ? `<span style="font-size:11px;color:#888800">未鑑定（詳細不明）</span>` : "";
+      : ciUnid ? `<span style="font-size:11px;color:var(--unid-border)">未鑑定（詳細不明）</span>` : "";
 
     card.innerHTML =
       `<div class="itemIcon ${ciUnid?"rarity-normal":"rarity-"+ci.rarity}">${ciDispIcon}</div>` +
@@ -15670,7 +15695,7 @@ function openUnequipModal(slot, uid) {
         (ci.identified && ci.cursed && ci.curse
           ? `<div style="margin-top:3px"><span style="display:inline-block;background:var(--curse-bg);border:1px solid var(--curse-border);color:var(--curse);font-size:10px;padding:1px 6px;border-radius:3px">${ci.curse.icon} ${ci.curse.label}</span></div>`
           : (ciUnid && ci.cursed
-            ? `<div style="margin-top:3px"><span style="display:inline-block;background:#1a1a00;border:1px solid #886600;color:#ccaa00;font-size:10px;padding:1px 6px;border-radius:3px">⚠ 呪いの可能性</span></div>`
+            ? `<div style="margin-top:3px"><span style="display:inline-block;background:var(--unid-bg);border:1px solid #886600;color:#ccaa00;font-size:10px;padding:1px 6px;border-radius:3px">⚠ 呪いの可能性</span></div>`
             : "")) +
       `</div>` +
       `<div style="font-size:18px;color:var(--accent)">›</div>`;
@@ -15734,7 +15759,7 @@ function openEquipSelectModal(slot) {
       const dispName = itemDisplayName(item);
       const dispIcon = isUnid ? "❓" : m.icon;
       const unidBadge = isUnid
-        ? `<span style="display:inline-block;background:#1a1a00;border:1px solid #888800;color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
+        ? `<span style="display:inline-block;background:var(--unid-bg);border:1px solid var(--unid-border);color:var(--unidentified);font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px">未鑑定</span>`
         : "";
       const card = document.createElement("div");
       card.className = "itemCard";
@@ -15748,7 +15773,7 @@ function openEquipSelectModal(slot) {
           (item.identified && item.cursed && item.curse
             ? `<div style="margin-top:3px"><span style="display:inline-block;background:var(--curse-bg);border:1px solid var(--curse-border);color:var(--curse);font-size:10px;padding:1px 6px;border-radius:3px">${item.curse.icon} ${item.curse.label}</span></div>`
             : (isUnid && item.cursed
-              ? `<div style="margin-top:3px"><span style="display:inline-block;background:#1a1a00;border:1px solid #886600;color:#ccaa00;font-size:10px;padding:1px 6px;border-radius:3px">⚠ 呪いの可能性</span></div>`
+              ? `<div style="margin-top:3px"><span style="display:inline-block;background:var(--unid-bg);border:1px solid #886600;color:#ccaa00;font-size:10px;padding:1px 6px;border-radius:3px">⚠ 呪いの可能性</span></div>`
               : "")) +
         `</div>` +
         `<div class="itemPrice">${itemPrice(item)}G</div>`;
@@ -16834,7 +16859,7 @@ function _showLegendaryShareModal(item) {
     <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:16px">${displayName}</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button id="_lgShareBtn" class="btn btn-secondary"
-        style="border-color:#1da1f2;color:#1da1f2;font-size:13px">
+        style="border-color:var(--twitter);color:var(--twitter);font-size:13px">
         𝕏 シェアする
       </button>
       <button id="_lgCloseBtn" class="btn btn-secondary"

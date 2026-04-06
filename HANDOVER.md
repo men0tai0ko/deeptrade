@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-06（S59完了）
+**最終更新**: 2026-04-06（S60完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -213,13 +213,30 @@ AUTO_RUN_CONFIG = {
 
 ---
 
-## CSS変数追加分（S54）
+## CSS変数一覧（S54〜S60 追加分）
 
 ```css
---surface-deep: #1a1a2e;  /* UIボタン・コンポーネント背景 */
---surface-base: #0d0d18;  /* 最暗背景・カード内背景 */
+:root {
+  /* S54 */
+  --surface-deep: #1a1a2e;  --surface-base: #0d0d18;
+  /* S55 */
+  --danger: #e74c3c;  --success: #88ff88;
+  /* S56 */
+  --damage: #ff8888;  --warning: #ff9999;  --filter-active: #2a2a4e;  --unidentified: #cccc00;
+  /* S57 */
+  --border-subtle: #444;  --text-disabled: #555;  --info: #4488ff;
+  --accent-bg: #1a2a3a;  --bg-deep: #111;  --bg-mid: #222;
+  /* S58 */
+  --border-dark: #333;  --text-faint: #666;  --text-mid: #888;
+  --text-white: #fff;  --text-light: #ccc;  --text-subtle: #aaa;
+  /* S59 */
+  --bg-darker: #1a1a1a;  --border-list: #1a1a2a;
+  /* S60 */
+  --boss: #ff2244;  --alert: #ffcc00;  --twitter: #1da1f2;  --track-bg: #1e1e2e;
+  --accent-light: #aaaaff;  --border-success: #226622;  --text-muted-blue: #aaaadd;
+  --unid-bg: #1a1a00;  --unid-border: #888800;
+}
 ```
-
 ---
 
 ## デイリーミッションシステム（S51）
