@@ -1,3 +1,15 @@
+## S61 完了内容（2026-04-06）
+
+### 品質改善（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| COLOR-VAR-LAST | `--gold-dark`/#886600 / `--bg-canvas`/#0a0a14 / `--gold-bg`/#1a1200 / `--dmg-text`/#ff6666 / `--danger-dark`/#8a2a2a / `--success-bright`/#44dd88 / `--surface-alt`/#0d0d1a / `--btn-default`/#585880 を変数化（計51箇所） |
+| COLOR-JS-CONST | `--legendary-bright`/#e6ac2e / `--green-bright`/#2ecc71 / `--text-strike`/#888888 / `--blackmarket`/#ff6688 を変数化（計25箇所） |
+| HINT-FATIGUE | `calcNextAction()` に疲弊中ヒントを追加（ショップ休息へ誘導） |
+
+---
+
 ## S60 完了内容（2026-04-06）
 
 ### 品質改善（4件）
@@ -37,7 +49,7 @@
 
 # 深淵商会 — タスク・進捗管理
 
-**バージョン**: S60
+**バージョン**: S61
 **最終更新**: 2026-04-06
 
 ---

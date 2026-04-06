@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-06（S60完了）
+**最終更新**: 2026-04-06（S61完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -235,6 +235,12 @@ AUTO_RUN_CONFIG = {
   --boss: #ff2244;  --alert: #ffcc00;  --twitter: #1da1f2;  --track-bg: #1e1e2e;
   --accent-light: #aaaaff;  --border-success: #226622;  --text-muted-blue: #aaaadd;
   --unid-bg: #1a1a00;  --unid-border: #888800;
+  /* S61 */
+  --gold-dark: #886600;  --bg-canvas: #0a0a14;  --gold-bg: #1a1200;
+  --dmg-text: #ff6666;  --danger-dark: #8a2a2a;  --success-bright: #44dd88;
+  --surface-alt: #0d0d1a;  --btn-default: #585880;
+  --legendary-bright: #e6ac2e;  --green-bright: #2ecc71;
+  --text-strike: #888888;  --blackmarket: #ff6688;
 }
 ```
 ---
