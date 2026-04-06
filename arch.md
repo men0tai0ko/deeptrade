@@ -649,6 +649,7 @@ _achToastActive: boolean    // 処理中フラグ
 | .legendary-flash-overlay | 7999 | pointer-events:none |
 | .sale-banner | 8000 | top固定・pointer-events:none |
 | .ach-toast | 8200 | bottom:140px固定（S49-ACH） |
+| .daily-toast | 8210 | bottom:200px固定・デイリー達成通知（S52） |
 | _showLegendaryShareModal overlay | 8500 | center配置（S49-SHARE） |
 | affixPoolModal | 9999 | 錬成モーダル内ポップアップ |
 
@@ -853,3 +854,140 @@ effectキーの参照箇所（既存コードで自動対応）:
 UI: `openSkillTree` rbタブに `haiwayIds = ["rb_veteran","rb_fortune","rb_endurance"]` の独立ブロックを追加。worldRank50未満は鍵アイコンで進捗（N/50）表示。
 
 演出: `wr===50` の分岐を `addLog` 1行から `_showRebirthMilestoneModal` モーダル演出に昇格。
+
+---
+
+## S52 追加アーキテクチャ（2026-04-06）
+
+### 祠イベントシステム（SHRINE_EVENTS）
+
+```javascript
+// 重み付き抽選テーブル（11種）
+const SHRINE_EVENTS = [
+  { id:"fatigue_cure",  weight:20, canFire:()=> gs.player.fatigue?.expiresAt > Date.now() },
+  { id:"exp",           weight:15, canFire:()=> true },
+  { id:"heal",          weight:15, canFire:()=> gs.player.hp < calcStats(gs).maxHp },
+  { id:"identify",      weight:14, canFire:()=> gs.inventory.some(i=>!i.identified) },
+  { id:"mp_restore",    weight:12, canFire:()=> gs.player.mp < calcStats(gs).maxMp },
+  { id:"gold_windfall", weight:10, canFire:()=> true },
+  { id:"temp_atk",      weight:10, canFire:()=> !gs.dungeon._shrineAtkBuff },
+  { id:"luk_up",        weight: 8, canFire:()=> !gs.dungeon._shrineLukBuff },
+  { id:"material",      weight: 8, canFire:()=> true },
+  { id:"hint",          weight: 8, canFire:()=> !!gs.dungeon.map[gs.dungeon.progress+1] },
+  { id:"divine_sight",  weight: 6, canFire:()=> /* 3マス先まで可視 */ },
+];
+```
+
+**祠バフの影響範囲:**
+- `_shrineAtkBuff`: `doBattle()` のダメージ計算に `shrineAtkMul=1.3` として統合。発動後即 `false` にリセット
+- `_shrineLukBuff`: `handleTrap()` / `handleRest()` の lukBonus 計算に `+5` として加算。`leaveDungeon()` でリセット
+- DEFAULT_STATE・マイグレーション（`loadGame`）に両フィールドを追加済み
+
+### デイリーミッション達成トースト（showDailyToast）
+
+```javascript
+// checkDailyMissions() 内で達成瞬間を検出
+const wasDone = def.isDone(m);
+const updated = def.update(m, trigger, payload);
+if(!wasDone && def.isDone(updated)) showDailyToast(updated);
+
+// トースト表示（.daily-toast / z-index:8210 / bottom:200px）
+function showDailyToast(mission) { /* 5秒自動消去・タップで openQuestModal() */ }
+```
+
+**注意:** `_dailyToastTimer` は1変数のみ管理。同時達成時は後発が前発を上書き（最大2件のため許容）。
+
+### 一括出品フィルター改善（openListModal）
+
+```javascript
+// 未鑑定品がある場合のみ「❓」ボタンを末尾に追加
+const hasUnidentified = available.some(i => !i.identified);
+
+// getFiltered() の分岐ロジック
+const showUnidOnly    = activeRarities.has("unidentified"); // ❓選択中
+const hasRarityFilter = activeRarities.size > 0 && !showUnidOnly; // N/R/E/L選択中
+const noFilter        = activeRarities.size === 0 && activeTypes.size === 0; // [全]状態
+
+// 等級指定中は未鑑定を除外 / [全]時は未鑑定を含む / ❓選択時は未鑑定のみ
+```
+
+### 周回リザルト強化（startAutoRun / stopAutoRun / showDungeonResult）
+
+```javascript
+// startAutoRun: startAt を追加
+gs.dungeon.autoRun = { ..., startAt: Date.now() };
+
+// stopAutoRun: 集計して session に追加
+const autoRunEarnedGold = Math.max(0, gs.player.gold - (ar.startGold || gs.player.gold));
+const elapsedSec = ar.startAt ? Math.floor((Date.now() - ar.startAt) / 1000) : null;
+// session.autoRunEarnedGold / autoRunElapsedSec / autoRunFloor
+
+// showDungeonResult: _autoRunSummaryCards で
+// 💰獲得Gold / 📊1周平均 / ⏱経過時間 / ⚡Gold/分 を表示
+// タイトル: autoRunRuns > 0 ? '🔄 周回リザルト' : '📋 探索リザルト'
+```
+
+### 需要バッジ（_demandBadge）
+
+```javascript
+// shelvesHtml・updateShopTick 両方で共通ロジック
+// demand >= 80 → 🔥需要旺盛（緑・太字）
+// demand >= 60 → 📈需要N%（薄緑）
+// demand >= 40 → 📊需要N%（黄）
+// demand <  40 → ⚠需要低下 N%（赤・太字）
+// visitor 表示中はバッジを非表示（既存優先順位を維持）
+```
+
+### ステータスタブ iconDock（S52追加）
+
+```javascript
+{ icon:'📘', label:'ガイド', fn:'showFirstGuideModal(true)' }
+// forceShow=true: isFirstPlay フラグを変更しない再表示モード
+```
+
+### チュートリアル改善（showFirstGuideModal）
+
+- PAGES 配列に STEP4「⛩ 祠と消耗品を活用」を追加
+- `forceShow` 引数追加（true時は `isFirstPlay` を変更せず、Analytics計測もスキップ）
+- 各ページに `tip` フィールド追加（ヒントバー表示）
+- ステップごとの色分け（accent/green/gold/#cc88ff）
+- Analytics skipDist を `[0,0,0,0]`（4要素）に拡張
+
+### Analytics強化（openAnalyticsModal / _analyticsReport）
+
+- `recent5 = sessions.slice(-5).reverse()` で直近5セッション取得
+- `funnelBar()` ヘルパーで横バー可視化
+- `dropEnter / dropReturn / dropSale / dropComplete` で各ステップ離脱率表示
+- KPI色判定: 帰還→販売率 ≥50%=緑 / ≥30%=黄 / <30%=赤
+- `_analyticsReport()` に `enter_to_return_pct` / `quicklist_rate` / 直近5セッション console.table を追加
+
+---
+
+## S54 追加アーキテクチャ（2026-04-06）
+
+### Fisher-Yatesシャッフル（initDailyMissions）
+
+```javascript
+// 変更前（偏りあり）
+const shuffled = [...DAILY_MISSION_TYPES].sort(() => Math.random() - 0.5);
+
+// 変更後（一様分布保証）
+const _pool = [...DAILY_MISSION_TYPES];
+for(let _i = _pool.length - 1; _i > 0; _i--) {
+  const _j = Math.floor(Math.random() * (_i + 1));
+  [_pool[_i], _pool[_j]] = [_pool[_j], _pool[_i]];
+}
+gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
+```
+
+### CSS変数追加（S44 COLOR-VAR）
+
+```css
+:root {
+  /* 既存変数に追加 */
+  --surface-deep: #1a1a2e;  /* UIボタン・コンポーネント背景（27箇所） */
+  --surface-base: #0d0d18;  /* 最暗背景・カード内背景（12箇所） */
+}
+```
+
+対象外カラー（誤置換リスクで保留）: `#e74c3c`・`#88ff88`・`#ff8888`・`#555`・`#666`・`#444` 等

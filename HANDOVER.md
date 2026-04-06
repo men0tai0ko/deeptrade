@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-02（S51完了）
+**最終更新**: 2026-04-06（S54完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -53,9 +53,11 @@ gs = {
     mercenary, poisoned, burned, consumables,
     omamoriPriority: "low" | "high",
     autoHeal: { enabled: boolean, threshold: number },
-    autoRun: { active, floor, runs, startGold, intervalMs, nextRunAt, totalDrops } | null,
+    autoRun: { active, floor, runs, startGold, startAt, intervalMs, nextRunAt, totalDrops } | null,
     _floor4PoisonAt,
     _watcherReady, _firstHitAvoided, _omenActive, _omenType, _session,
+    _shrineAtkBuff,     // 祠バフ：次の戦闘1回のみ与ダメ+30%（S52）
+    _shrineLukBuff,     // 祠バフ：フロア中 LUK+5（S52）
   },
   shop: {
     level, exp, nextExp, totalSales,
@@ -108,7 +110,8 @@ makeFilteredLogHtml("dungeon") // 冒険ログのみ
 ## ダメージ計算式
 
 ```
-プレイヤー→敵: max(1, floor(str×2×variance×atkDebuffMul×warCryMul - effectiveDef×0.7))
+プレイヤー→敵: max(1, floor(str×2×variance×atkDebuffMul×warCryMul×shrineAtkMul - effectiveDef×0.7))
+  shrineAtkMul=1.3（祠バフ発動時）/ 1.0（通常）
   variance=0.85〜1.15
   effectiveDef = max(0, en.def - c._defDebuffFlat)
 
@@ -188,7 +191,7 @@ AUTO_RUN_CONFIG = {
 - Lv / CP / HP（バフ表示付き）/ MP / EXP
 
 ### ステータスタブ iconDock
-スキル → 冒険録 → 依頼 → 実績 → 鞄拡張 → 転生 → データ → **分析（S51追加）**
+スキル → 冒険録 → 依頼 → 実績 → 鞄拡張 → 転生 → データ → 分析 → **📘ガイド（S52追加）**
 
 ### ショップ iconDock（常時表示）
 📋ログ → ⚙棚設定 → 👥雇用人 → ⭐常連客 → 🌑裏取引 → 📥一括取下 → 📊市場 → 💰放置収入
@@ -204,8 +207,18 @@ AUTO_RUN_CONFIG = {
 | .legendary-flash-overlay | 7999 | pointer-events:none |
 | .sale-banner | 8000 | top固定・pointer-events:none |
 | .ach-toast | 8200 | bottom:140px固定 |
+| .daily-toast | 8210 | bottom:200px固定・デイリー達成通知（S52） |
 | _showLegendaryShareModal overlay | 8500 | center配置 |
 | affixPoolModal | 9999 | 錬成モーダル内ポップアップ |
+
+---
+
+## CSS変数追加分（S54）
+
+```css
+--surface-deep: #1a1a2e;  /* UIボタン・コンポーネント背景 */
+--surface-base: #0d0d18;  /* 最暗背景・カード内背景 */
+```
 
 ---
 
@@ -310,11 +323,40 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S52 完了内容（2026-04-06）
+
+### 機能追加（8件）
+
+| 内容 | 詳細 |
+|---|---|
+| 祠イベント拡充 | SHRINE_EVENTSテーブル11種（重み付き抽選）に刷新。鑑定・MP回復・素材・Gold・一時バフ等を追加 |
+| 祠バフ統合 | `_shrineAtkBuff`（次戦+30%）/ `_shrineLukBuff`（フロア中LUK+5）を戦闘・罠計算に統合 |
+| チュートリアルSTEP4追加 | 「⛩ 祠と消耗品」ステップを追加。tip表示・ステップ色分け・forceShow引数対応 |
+| ガイド再表示ボタン | ステータスタブ iconDock に「📘 ガイド」ボタン追加（任意再表示） |
+| Analytics強化 | ファネルバー可視化・離脱率・直近5セッション・KPI色判定・STEP4スキップ集計 |
+| デイリー達成トースト | 達成瞬間に緑トースト（.daily-toast）表示。タップで依頼モーダル直行 |
+| 一括出品フィルター改善 | 未鑑定専用「❓」ボタン追加。等級指定中は未鑑定を非表示、[全]時のみ表示 |
+| 周回リザルト強化 | 獲得Gold・1周平均・経過時間・Gold/分カードを追加。タイトルを「🔄 周回リザルト」に変更 |
+| 需要UI改善 | 棚の需要表示を4段階バッジ（🔥旺盛/📈上昇/📊中程度/⚠低下）に強化 |
+
+## S54 完了内容（2026-04-06）
+
+### バグ修正・品質改善（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
+| SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
+| COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
 ## 保留課題（tasks.md に詳細）
 
 | # | 内容 | ステータス |
 |---|---|---|
-| DAILY-UX | 2件化への混乱懸念 | 🟡 保留 |
-| ANALYTICS-EVAL | まとめて出品ボタンのKPI観測 | 🟡 観測待ち |
+| DAILY-UX | 2件化への混乱懸念 | ✅ S53完了 |
+| ANALYTICS-EVAL | Analytics可視化モーダル強化・ファネル/ドロップ率/直近5セッション追加 | ✅ S52完了 |
 | COLOR-VAR | 未変数化カラーの変数化 | 🟢 保留（誤置換リスク） |
 | SKILL-EXPAND | worldRank100解禁転生スキル追加 | 🟢 設計待ち |
