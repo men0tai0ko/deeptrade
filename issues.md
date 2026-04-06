@@ -1,6 +1,6 @@
 # 深淵商会 — バグ・課題一覧
 
-**最終更新**: 2026-04-06（S54）
+**最終更新**: 2026-04-07（S63）
 
 ---
 
@@ -18,18 +18,151 @@
 
 ### DAILY-UX-2（旧UX-2）
 - **内容**: デイリーミッション件数が3件→2件に変わったことをプレイヤーが混乱する可能性
-- **現状**: ヘッダーに「毎日ランダムで2種類出題されます」の説明文を追加済み（S51）
-- **残課題**: 旧セーブ（3件）から2件に切り替わるリセット直後の体験
+- **現状**: ヘッダー説明文追加（S51）・リセット時ショップログ追加（S53）で対処済み
+- **残課題**: 旧セーブ（3件）から2件に切り替わるリセット直後の体験。実害報告なし
 
 ### DAILY-LOGIC-4（旧LOGIC-4）
-- **内容**: ミッション種別のシャッフルに `Math.random()-0.5` を使用しており厳密な一様分布ではない
-- **現状**: 実用上の偏りは観測されていない
-- **判断**: 許容範囲。分布確認のみ
+- **内容**: ミッション種別のシャッフルに `Math.random()-0.5` を使用していたが Fisher-Yates に置換済み（S54）
+- **判断**: クローズ候補。設計上の制約欄へ移動予定
 
-### BUG-3-OPEN（→ 設計上の制約へ移動・S55クローズ）
-- **内容**: `openQuestModal()` の `render()` に `dungeon.active` ガードを追加したが、通常プレイではタブ制限によりダンジョン中に依頼モーダルを開けないため実害の確認が困難
-- **確認結果**: コンソールから `openQuestModal()` を直接実行しても `!gs.dungeon.active` ガードが正しく機能し `render()` を抑制することを確認（S55）
-- **判断**: 正常動作。設計上の制約として整理し PENDING から除外
+---
+
+## ✅ 修正済み（S62）
+
+### COLOR-VAR-RESIDUAL
+- **内容**: `:root` で定義済みの `--rare`(#3498db) / `--epic`(#9b59b6) / `--green`(#27ae60) がCSS・JSの18箇所でハードコード残存
+- **修正**: CSS 9箇所・JS 9箇所を `var(--rare)` / `var(--epic)` / `var(--green)` に置換
+- **除外**: `#3498db44` 等アルファ付き16進・`RARITY_MASTER` / `SHELF_CATEGORY` の color フィールド（JS実行環境でCSS変数未解決）
+- **影響範囲**: 描画結果変わらず。保守性向上のみ
+
+### HINT-ORDER-FATIGUE
+- **内容**: `calcNextAction()` で疲弊チェック（③.2）が棚出品ヒント（②）より後にあり、棚が空＋疲弊中の状態でも疲弊に気づかない
+- **修正**: 疲弊チェックを②.5（未鑑定チェックの直後・棚ヒントの前）に移動
+- **影響範囲**: `calcNextAction()` の優先順序のみ。他ロジック変更なし
+
+---
+
+## ✅ 修正済み（S61）
+
+### COLOR-VAR-LAST
+- **内容**: `--gold-dark`/#886600 / `--bg-canvas`/#0a0a14 / `--gold-bg`/#1a1200 / `--dmg-text`/#ff6666 / `--danger-dark`/#8a2a2a / `--success-bright`/#44dd88 / `--surface-alt`/#0d0d1a / `--btn-default`/#585880 がハードコード残存
+- **修正**: CSS変数化（計51箇所置換）
+- **影響範囲**: CSS定義追加のみ。レンダリング結果変わらず
+
+### COLOR-JS-CONST
+- **内容**: `--legendary-bright`/#e6ac2e / `--green-bright`/#2ecc71 / `--text-strike`/#888888 / `--blackmarket`/#ff6688 がハードコード残存
+- **修正**: CSS変数化（計25箇所置換）
+- **影響範囲**: CSS定義追加のみ
+
+### HINT-FATIGUE
+- **内容**: 疲弊中のヒントが `calcNextAction()` に存在せず、ショップ休息への誘導がなかった
+- **修正**: `calcNextAction()` に疲弊中ヒントを追加
+- **影響範囲**: `calcNextAction()` のみ
+
+---
+
+## ✅ 修正済み（S60）
+
+### COLOR-VAR-MINOR
+- **内容**: `--boss`(#ff2244) / `--alert`(#ffcc00) / `--twitter`(#1da1f2) / `--track-bg`(#1e1e2e) / `--accent-light`(#aaaaff) / `--border-success`(#226622) / `--text-muted-blue`(#aaaadd) がハードコード残存
+- **修正**: CSS変数化（計52箇所置換）
+
+### COLOR-VAR-UNID-SET
+- **内容**: `--unid-bg`(#1a1a00・7箇所) / `--unid-border`(#888800・7箇所) がハードコード残存
+- **修正**: CSS変数化
+
+### HINT-INVEST
+- **内容**: `calcNextAction()` に投資促進ヒントがなく、Gold が十分あっても投資に誘導されなかった
+- **修正**: Gold≥5000・投資上限未満の条件でヒント追加
+
+---
+
+## ✅ 修正済み（S59）
+
+### ACH-STATMAP-FIX
+- **内容**: 実績進捗バーの `_statMap` に6種欠落・`_baseReqMap` 未補完。`_statKey` 未設定実績でエラー
+- **修正**: `_statMap` に6種追加・`_baseReqMap` 補完。`_statKey` 未設定時は進捗バーを非表示に変更
+- **影響範囲**: 実績モーダルの進捗バー表示のみ
+
+### HINT-POST-REBIRTH
+- **内容**: `calcNextAction()` に転生後のSP/RP未消費ヒントがなく、スキルツリーへの誘導なし
+- **修正**: SP未消費・RP未消費の各ヒントを追加
+
+### COLOR-VAR-FINAL
+- **内容**: `--bg-darker`(#1a1a1a・7箇所) / `--border-list`(#1a1a2a・6箇所) がハードコード残存
+- **修正**: CSS変数化
+
+---
+
+## ✅ 修正済み（S58）
+
+### COLOR-VAR-5/6/7
+- **内容**: `--border-subtle`(#444) / `--text-disabled`(#555) / `--info`(#4488ff) / `--accent-bg`(#1a2a3a) / `--border-dark`(#333) / `--text-faint`(#666) / `--text-mid`(#888) / `--text-white`(#fff) / `--text-light`(#ccc) / `--text-subtle`(#aaa) がハードコード残存
+- **修正**: CSS変数化（計14変数・108箇所置換）
+- **影響範囲**: CSS定義追加のみ
+
+---
+
+## ✅ 修正済み（S57）
+
+### ACH-FILTERBAR-RANK50（S56取り残し分）
+- **内容**: 実績モーダル `catList` の Rank50 到達後エントリが欠損（S56修正の取り残し）
+- **修正**: S57 で完全修正
+
+### COLOR-VAR-3/4
+- **内容**: `--damage`(#ff8888) / `--warning`(#ff9999) / `--filter-active`(#2a2a4e) / `--unidentified`(#cccc00) がハードコード残存
+- **修正**: CSS変数化
+
+### HINT-DAILY-COMPLETE
+- **内容**: デイリーミッション達成・未受取時に `calcNextAction()` が誘導しなかった
+- **修正**: 未受取ヒントを追加（依頼モーダルへ誘導）
+
+---
+
+## ✅ 修正済み（S56）
+
+### ACH-FILTERBAR-RANK50
+- **内容**: 実績モーダルのカテゴリバッジカウントが Rank50 到達後にエントリを追加しないバグ
+- **修正**: 最大ランクエントリを常にモーダルへ表示するよう修正
+- **影響範囲**: 実績モーダルのカテゴリバッジ表示のみ
+
+### COLOR-VAR-3
+- **内容**: `--damage` / `--warning` / `--filter-active` がハードコード残存
+- **修正**: CSS変数化（3種・計38箇所）
+
+### HINT-DAILY-COMPLETE（初出）
+- **内容**: `calcNextAction()` にデイリー未受取ヒントを追加
+
+### COLOR-VAR-4
+- **内容**: `--unidentified`（#cccc00・10箇所）がハードコード残存
+- **修正**: CSS変数化
+
+---
+
+## ✅ 修正済み（S55）
+
+### BUG-SALE-LISTEDAT
+- **内容**: `toggleSale()` でセール切替時に `listedAt` が更新されず、切替直後に即売れするバグ
+- **原因**: `listedAt` のリセット処理が未実装
+- **修正**: `toggleSale()` に `slot.listedAt = Date.now()` を追加
+- **影響範囲**: `toggleSale()` のみ
+
+### HINT-REBIRTH
+- **内容**: `calcNextAction()` に転生可能ヒントがなく、転生条件を満たしても誘導なし
+- **修正**: `canRebirth()` 判定でステータスタブへ誘導するヒントを追加
+
+### BUG-3-CLOSE
+- **内容**: `openQuestModal()` の `dungeon.active` ガード動作確認
+- **確認結果**: コンソールから `openQuestModal()` を直接実行しても正しく機能することを確認（S55）
+- **判断**: 正常動作。設計上の制約として整理
+
+### COLOR-VAR-2
+- **内容**: `--danger`（#e74c3c・28箇所）/ `--success`（#88ff88・30箇所）がハードコード残存
+- **修正**: CSS変数化
+
+### ACH-RANK-POST50
+- **内容**: 数量系実績 Rank50 到達後、最大ランクエントリが実績モーダルに表示されなかった
+- **修正**: Rank50 到達後も最大ランクエントリを表示するよう修正
 
 ---
 
@@ -41,9 +174,8 @@
 - **影響範囲**: `initDailyMissions()` のシャッフル処理のみ
 
 ### COLOR-VAR
-- **内容**: `#1a1a2e`（27箇所）・`#0d0d18`（12箇所）がインラインstyleとCSSクラスに散在し保守コストが高かった
-- **修正**: `:root` に `--surface-deep: #1a1a2e` / `--surface-base: #0d0d18` を追加し計39箇所を置換
-- **対象外**: `#e74c3c`・`#88ff88`・`#ff8888` 等は文脈依存のため今回は対象外
+- **内容**: `#1a1a2e`（27箇所）・`#0d0d18`（12箇所）がインラインstyleとCSSクラスに散在
+- **修正**: `:root` に `--surface-deep` / `--surface-base` を追加し計39箇所を置換
 - **影響範囲**: CSS定義追加のみ。レンダリング結果は変わらない
 
 ---
@@ -154,7 +286,8 @@
 
 | # | 内容 | 判断 |
 |---|---|---|
-| 未変数化カラー | `#555` / `#666` / `#1a1a2e` 等が直接記述されている箇所あり | 誤置換リスクのため保留 |
-| `DAILY_MISSION_TYPES` シャッフルの分布 | `Math.random()-0.5` は厳密な一様分布でない | 実用上許容 |
-| `openQuestModal` の `render()` ガード | ダンジョン中タブ制限で通常は到達不可 | S55確認・クローズ済み |
+| 未変数化カラー（アルファ付き） | `#3498db44` 等アルファ合成カラーは CSS変数に非対応のためハードコード維持 | 仕様 |
+| RARITY_MASTER / SHELF_CATEGORY color フィールド | JS実行環境でCSS変数未解決のためハードコード維持 | 仕様 |
+| `DAILY_MISSION_TYPES` シャッフルの分布 | Fisher-Yates 置換済み（S54）。`Math.random()-0.5` の記述は issues.md 旧記録のみ | クローズ済み |
+| `openQuestModal` の `render()` ガード | ダンジョン中タブ制限で通常は到達不可。S55確認済み | クローズ済み |
 | Analytics データがローカル端末のみ | localStorage のため複数端末間で集計不可 | 仕様（個人開発の制約） |
