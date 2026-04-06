@@ -54,6 +54,9 @@
     --accent-bg:    #1a2a3a;  /* アクティブタブ・選択ボタン背景（S57変数化） */
     --bg-deep:      #111;     /* Analytics・実績・モーダル内カード背景（S57変数化） */
     --bg-mid:       #222;     /* 薄暗いボーダー・セクション区切り（S57変数化） */
+    /* S59変数化 */
+    --bg-darker:    #1a1a1a;  /* リスト区切り・背景最暗部 */
+    --border-list:  #1a1a2a;  /* リスト行ボーダー */
     /* S58変数化 */
     --border-dark:  #333;     /* 暗いボーダー・枠線 */
     --text-faint:   #666;     /* 非活性・補足テキスト */
@@ -5557,17 +5560,30 @@ function openAchievementModal() {
       const statusIcon = done ? "✅" : reached ? "🎁" : "⬜";
       // ランク制の進捗表示
       const progressHtml = a.ranked ? (() => {
-        const _statMap = {adv_kill:"enemyKills",adv_boss:"bossKills",shop_sales:"totalSales",enh_enhance:"totalEnhance",enh_reforge:"totalReforge"};
-        const _baseReqMap = {adv_boss:1, enh_reforge:10, enh_enhance:50};
+        // S59: 全 rankBase を _statMap に追加（6種欠落修正）
+        const _statMap = {
+          adv_kill:"enemyKills", adv_boss:"bossKills", adv_enter:"totalDungeonEnter",
+          shop_sales:"totalSales", shop_reg:"totalRegularBuys",
+          enh_enhance:"totalEnhance", enh_reforge:"totalReforge",
+          enh_purify:"totalPurify", enh_brew:"totalBrew", enh_bulk:"totalBulkEnhance",
+          col_star:"totalColStar",
+        };
+        const _baseReqMap = {
+          adv_boss:1, adv_enter:10,
+          enh_reforge:10, enh_purify:5, enh_brew:5,
+          enh_enhance:50, enh_bulk:50, shop_reg:50,
+          col_star:10,
+        };
         const _statKey = _statMap[a.rankBase] || "";
+        if(!_statKey) return ""; // 対応statKeyなし → バー非表示
         const _curVal = (gs.achievements?.stats[_statKey]||0);
         const _baseReq = _baseReqMap[a.rankBase] || 100;
         const _req = _achRankReq(_baseReq, a.rank);
         const _pct = Math.min(100, Math.floor(_curVal / _req * 100));
-        return `<div style="margin-top:4px;background:#1a1a2a;border-radius:3px;height:4px;width:100%"><div style="background:var(--accent);width:${_pct}%;height:4px;border-radius:3px"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">${_curVal.toLocaleString()} / ${_req.toLocaleString()}</div>`;
+        return `<div style="margin-top:4px;background:var(--surface);border-radius:3px;height:4px;width:100%"><div style="background:var(--accent);width:${_pct}%;height:4px;border-radius:3px"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">${_curVal.toLocaleString()} / ${_req.toLocaleString()}</div>`;
       })() : "";
 
-      return `<div style="padding:10px 0;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;gap:10px">
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--bg-darker);display:flex;align-items:center;gap:10px">
         <div style="font-size:22px;width:32px;text-align:center;flex-shrink:0">${a.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:700;color:${done?"#4a8a4a":reached?"#cccc44":"var(--text)"}">${statusIcon} ${a.name}</div>
@@ -6035,7 +6051,28 @@ function calcNextAction() {
     !equippedUids.has(i.uid) && !listedUids.has(i.uid)
   );
 
-  // ① 未鑑定品がある → まず鑑定（格納庫タブへ：帰還後はlootタブに遷移不可のためinventoryを使う）
+  // ① SP未消費 → スキルツリーを促す（S59）
+  if((gs.player.skillPoints || 0) > 0) {
+    return {
+      icon:  "🌟",
+      label: "NEXT ACTION",
+      text:  `スキルポイントを振ろう（SP×${gs.player.skillPoints}）`,
+      sub:   "ステータスタブ → スキルツリー",
+      action: () => { switchTab("status"); setTimeout(() => openSkillTree(), 100); },
+    };
+  }
+  // ① RP未消費 → 永続スキルを促す（S59）
+  if((gs.player.rebirthPoints || 0) > 0) {
+    return {
+      icon:  "♾",
+      label: "NEXT ACTION",
+      text:  `永続スキルポイントを使おう（RP×${gs.player.rebirthPoints}）`,
+      sub:   "ステータスタブ → 転生スキルツリー",
+      action: () => { switchTab("status"); setTimeout(() => openSkillTree("rb"), 100); },
+    };
+  }
+
+  // ② 未鑑定品がある → まず鑑定（格納庫タブへ：帰還後はlootタブに遷移不可のためinventoryを使う）
   const unidentified = stockItems.filter(i => !i.identified);
   if(unidentified.length > 0) {
     return {
@@ -7504,7 +7541,7 @@ function _renderPurifyModal(uid, resultMsg) {
       <div class="modal-title">⛓ 解呪 ${goldBadge()}</div>
       <div style="font-size:14px;margin-bottom:6px">${m.name}</div>
       ${item.curse ? `<div style="font-size:12px;color:var(--curse);margin-bottom:4px">${item.curse.icon||"💀"} ${item.curse.label}</div>` : ""}
-      ${resultMsg ? `<div style="font-size:12px;margin-bottom:8px;padding:6px;border-radius:6px;background:#1a1a1a">${resultMsg}</div>` : ""}
+      ${resultMsg ? `<div style="font-size:12px;margin-bottom:8px;padding:6px;border-radius:6px;background:var(--bg-darker)">${resultMsg}</div>` : ""}
       ${item.cursed ? `
         <div style="font-size:12px;color:var(--muted);margin-bottom:4px">解呪費用: <span style="color:${canAfford?'var(--curse)':'var(--red)'}">${cost.toLocaleString()}G</span></div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px">成功率65% / 失敗30% / 大失敗5%</div>
@@ -8003,7 +8040,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
 
   const oldRows = oldAffixes.map(oa => {
     const na = newAffixes.find(n => n.id === oa.id);
-    if(!na) return affixRow(oa, "#888888", "#1a1a1a", "var(--border-subtle)"); // 消滅（打ち消し線風）
+    if(!na) return affixRow(oa, "#888888", "var(--bg-darker)", "var(--border-subtle)"); // 消滅（打ち消し線風）
     return ""; // 新OPに表示済み
   }).filter(Boolean).join("");
 
@@ -8018,7 +8055,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
           ${oldAffixes.map(oa => {
             const na = newAffixes.find(n => n.id === oa.id);
             const changed = !na || na.val !== oa.val;
-            return affixRow(oa, changed ? "#888888" : "#aaaadd", changed ? "#1a1a1a" : "var(--bg-deep)", changed ? "var(--border-dark)" : "var(--border-subtle)");
+            return affixRow(oa, changed ? "#888888" : "#aaaadd", changed ? "var(--bg-darker)" : "var(--bg-deep)", changed ? "var(--border-dark)" : "var(--border-subtle)");
           }).join("")}
         </div>
         <div>
@@ -11216,7 +11253,7 @@ function openBulkPurifyModal() {
       const r    = RARITY_MASTER[item.rarity];
       const cost = purifyCost(item, 1.0);
       const sel  = selected.has(item.uid);
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-list);cursor:pointer"
         onclick="window._bulkPurifyToggle('${item.uid}')">
         <div style="width:20px;height:20px;border:2px solid ${sel?'var(--curse-border)':'var(--text-disabled)'};border-radius:4px;background:${sel?'var(--curse-bg)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<span style="color:var(--curse);font-size:12px">✓</span>':''}
@@ -11383,7 +11420,7 @@ function openBrewModal() {
       const fromColor = RARITY_COLOR[recipe.fromRarity];
       const toColor   = RARITY_COLOR[recipe.toRarity];
 
-      return `<div style="padding:10px 0;border-bottom:1px solid #1a1a1a">
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--bg-darker)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="font-size:20px;flex-shrink:0">${recipe.icon}</div>
           <div style="flex:1;min-width:0">
@@ -12010,7 +12047,7 @@ function openBulkEnhanceModal() {
         itemCost += Math.floor((m?.basePrice||0) * (r?.multi||1) * (1 + lv * 1.5));
       }
       const curseMark = i.cursed ? `<span style="font-size:10px;color:#cc44ff;margin-left:2px">💀</span>` : '';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-list);cursor:pointer"
         onclick="window._beToggle('${i.uid}')">
         <div style="width:20px;height:20px;border:2px solid ${sel?'var(--accent)':'var(--text-disabled)'};border-radius:4px;background:${sel?'#1a2a40':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<span style="font-size:10px;color:var(--accent)">✓</span>':''}
@@ -13181,7 +13218,7 @@ function openPrepModal() {
     const canTakeAll = inInv > 1;
     const canRetAll  = inPrep > 1;
     const btnStyle = (ok, bcol, bgcol, tcol) =>
-      `padding:3px 8px;font-size:10px;border-radius:6px;border:1px solid ${ok?bcol:"var(--border-subtle)"};background:${ok?bgcol:"#1a1a1a"};color:${ok?tcol:"var(--text-disabled)"};cursor:${ok?"pointer":"default"}`;
+      `padding:3px 8px;font-size:10px;border-radius:6px;border:1px solid ${ok?bcol:"var(--border-subtle)"};background:${ok?bgcol:"var(--bg-darker)"};color:${ok?tcol:"var(--text-disabled)"};cursor:${ok?"pointer":"default"}`;
 
     return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--bg-mid)">
       <span class="shelfIcon rarity-${r}" style="width:36px;height:36px;font-size:20px;flex-shrink:0">${m.icon}</span>
@@ -14190,7 +14227,7 @@ function openBulkUnlistModal() {
       const isUnid  = !item.identified;
       const isSel   = selected.has(idx);
       const specDef = getShelfSpecialDef(slot.specialType);
-      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border-list);cursor:pointer"
         onclick="window._bulkUnlistToggle(${idx})">
         <div style="width:20px;height:20px;border:2px solid ${isSel?'var(--info)':'var(--text-disabled)'};border-radius:4px;
           background:${isSel?'#0a1a3a':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -14338,7 +14375,7 @@ function openShelfSettingsModal() {
       const hasItem = slot?.item;
       const itemName = hasItem ? (ITEM_MASTER[slot.item.itemId]?.name || '？') : '空き';
       const isFlowing = trendNow && specDef.id && specDef.id === trendType;
-      return `<div style="padding:10px 0;border-bottom:1px solid #1a1a2a">
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border-list)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="font-size:18px;flex-shrink:0">${specDef.icon}</div>
           <div style="flex:1;min-width:0">
@@ -14544,7 +14581,7 @@ function openListModal(slotIdx) {
       // 未鑑定ボタン特別スタイル
       if(f === "rarity:unidentified") {
         const isUnidActive = activeRarities.has("unidentified");
-        btn.style.background  = isUnidActive ? '#1a1a1a' : 'var(--surface-deep)';
+        btn.style.background  = isUnidActive ? 'var(--bg-darker)' : 'var(--surface-deep)';
         btn.style.borderColor = isUnidActive ? 'var(--text-mid)' : 'var(--border-subtle)';
         btn.style.borderStyle = isUnidActive ? 'solid' : 'dashed';
         return;
@@ -15422,7 +15459,7 @@ function renderStatus(sc, ab) {
           ${achieved?'<span style="font-size:9px;color:#44ff88">✓</span>':''}
         </span>`;
       }).join('');
-      return `<div style="margin-top:8px;padding:10px;background:var(--surface-base);border-radius:8px;border:1px solid ${count>=maxNeed?"#6a4a1a":count>=2?"#2a2a0a":"#1a1a2a"}">
+      return `<div style="margin-top:8px;padding:10px;background:var(--surface-base);border-radius:8px;border:1px solid ${count>=maxNeed?"#6a4a1a":count>=2?"#2a2a0a":"var(--border-list)"}">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
           <span style="font-size:16px">${set.icon}</span>
           <span style="font-size:12px;font-weight:700;color:${count>=maxNeed?"#e6ac2e":"#cccc44"}">${set.name}</span>
@@ -15909,7 +15946,7 @@ function openCollectionModal(initTab) {
           else                   invMark = `<span style="color:#cc9933">格納庫 +${invEnh}（不足）</span>`;
 
           return `<div style="display:flex;justify-content:space-between;align-items:center;
-            padding:3px 0;border-bottom:1px solid #1a1a2a;font-size:10px">
+            padding:3px 0;border-bottom:1px solid var(--border-list);font-size:10px">
             <span style="color:${rCol};min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${m.name}</span>
             <span style="color:${colCol};flex-shrink:0;margin:0 8px;white-space:nowrap">${colMark}</span>
             ${invMark}
