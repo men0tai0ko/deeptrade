@@ -48,6 +48,19 @@
     --warning:      #ff9999;  /* 強行潜入・分解確認など警戒色（S56変数化） */
     --filter-active:#2a2a4e;  /* フィルターボタンのアクティブ背景（S56変数化） */
     --unidentified: #cccc00;  /* 未鑑定品テキスト・バッジ色（S56変数化） */
+    --border-subtle:#444;     /* 非アクティブ・disabled ボーダー（S57変数化） */
+    --text-disabled:#555;     /* disabled テキスト・非活性ラベル（S57変数化） */
+    --info:         #4488ff;  /* Rare色・守備中・選択チェック・完了バッジ（S57変数化） */
+    --accent-bg:    #1a2a3a;  /* アクティブタブ・選択ボタン背景（S57変数化） */
+    --bg-deep:      #111;     /* Analytics・実績・モーダル内カード背景（S57変数化） */
+    --bg-mid:       #222;     /* 薄暗いボーダー・セクション区切り（S57変数化） */
+    /* S58変数化 */
+    --border-dark:  #333;     /* 暗いボーダー・枠線 */
+    --text-faint:   #666;     /* 非活性・補足テキスト */
+    --text-mid:     #888;     /* 中間グレーテキスト */
+    --text-white:   #fff;     /* 純白テキスト（btn等） */
+    --text-light:   #ccc;     /* 薄いテキスト */
+    --text-subtle:  #aaa;     /* Normal色・淡テキスト */
   }
 
   html { height: 100%; overflow: hidden; }
@@ -211,9 +224,9 @@
 
   .btn:active { transform: scale(0.97); }
 
-  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary { background: var(--accent); color: var(--text-white); }
   .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger { background: var(--red); color: var(--text-white); }
   .btn-gold { background: #4a3800; color: var(--gold); border: 1px solid var(--gold); }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -397,7 +410,7 @@
   }
   .boss-action-text {
     display: inline-block; font-size: 24px; font-weight: 700;
-    color: #fff; text-shadow: 0 0 16px rgba(255,80,0,0.9);
+    color: var(--text-white); text-shadow: 0 0 16px rgba(255,80,0,0.9);
     background: rgba(0,0,0,0.7); padding: 10px 24px; border-radius: 12px;
     border: 1px solid rgba(255,80,0,0.5);
   }
@@ -575,9 +588,9 @@
     position: absolute;
     bottom: -4px;
     right: -6px;
-    background: #333;
-    border: 1px solid #666;
-    color: #fff;
+    background: var(--border-dark);
+    border: 1px solid var(--text-faint);
+    color: var(--text-white);
     font-size: 9px;
     font-weight: 700;
     padding: 1px 3px;
@@ -1631,7 +1644,7 @@ function checkRegularVisits() {
         gs.shop.exp += Math.floor(price / 8);
         gs.shop.totalSales++;
         if(gs.achievements?.stats) gs.achievements.stats.totalRegularBuys = (gs.achievements.stats.totalRegularBuys||0) + 1;
-        const _rc2 = item.identified ? (RARITY_MASTER[item.rarity]?.color || '#ccc') : 'var(--unidentified)';
+        const _rc2 = item.identified ? (RARITY_MASTER[item.rarity]?.color || 'var(--text-light)') : 'var(--unidentified)';
         addShopLog("gold", `📦 ${reg.icon}${reg.name}「注文の品、確かに！」→【<span style="color:${_rc2};font-weight:700">${itemDisplayName(item)}</span>】${price}G（+${bonus}G 常連ボーナス）`);
         notifySale(item, price); // 売却快感演出（S48-SALE）
         reduceDemand(item);
@@ -1672,7 +1685,7 @@ function checkRegularVisits() {
     gs.shop.exp += Math.floor(price / 8);
     gs.shop.totalSales++;
     if(gs.achievements?.stats) gs.achievements.stats.totalRegularBuys = (gs.achievements.stats.totalRegularBuys||0) + 1;
-    const _rc3 = item.identified ? (RARITY_MASTER[item.rarity]?.color || '#ccc') : 'var(--unidentified)';
+    const _rc3 = item.identified ? (RARITY_MASTER[item.rarity]?.color || 'var(--text-light)') : 'var(--unidentified)';
     addShopLog("gold", `⭐ ${reg.icon}${reg.name}「${regularSerif(reg)}」→【<span style="color:${_rc3};font-weight:700">${itemDisplayName(item)}</span>】${price}G（常連Lv${reg.lv} +${bonus}G）`);
     notifySale(item, price); // 売却快感演出（S48-SALE）
     reduceDemand(item);
@@ -3918,7 +3931,7 @@ function calcCharCP(gs) {
 
 // CP表示テキスト（色付き）
 function cpSpan(cp) {
-  const col = cp >= 180 ? '#e67e22' : cp >= 110 ? '#9b59b6' : cp >= 60 ? '#3498db' : cp >= 30 ? '#27ae60' : '#888';
+  const col = cp >= 180 ? '#e67e22' : cp >= 110 ? '#9b59b6' : cp >= 60 ? '#3498db' : cp >= 30 ? '#27ae60' : 'var(--text-mid)';
   return `<span style="color:${col};font-weight:700">⚡${cp}</span>`;
 }
 
@@ -4955,15 +4968,15 @@ function confirmAutoRun(floor) {
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px 16px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-        <div style="background:#111;border-radius:8px;padding:10px;text-align:center">
+        <div style="background:var(--bg-deep);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:10px;color:var(--muted);margin-bottom:4px">周回間隔</div>
           <div style="font-size:18px;font-weight:700;color:var(--accent2)">${intSec}秒</div>
-          <div style="font-size:10px;color:#666">${cpMul}</div>
+          <div style="font-size:10px;color:var(--text-faint)">${cpMul}</div>
         </div>
-        <div style="background:#111;border-radius:8px;padding:10px;text-align:center">
+        <div style="background:var(--bg-deep);border-radius:8px;padding:10px;text-align:center">
           <div style="font-size:10px;color:var(--muted);margin-bottom:4px">ドロップ数</div>
           <div style="font-size:18px;font-weight:700;color:var(--gold)">${cfg.dropMin}〜${cfg.dropMax}個</div>
-          <div style="font-size:10px;color:#666">1周あたり</div>
+          <div style="font-size:10px;color:var(--text-faint)">1周あたり</div>
         </div>
       </div>
       <div style="font-size:12px;color:var(--muted);line-height:1.8">
@@ -5529,7 +5542,7 @@ function openAchievementModal() {
       const badge = unclaimed > 0
         ? `<span style="font-size:9px;background:#ffcc4433;color:var(--gold);border-radius:8px;padding:1px 4px;margin-left:3px">${unclaimed}</span>` : "";
       return `<button onclick="window._achCat='${c.key}';window._achRefresh&&window._achRefresh();"
-        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"#444"};background:${active?"#1a2a3a":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${c.label}${badge}</button>`;
+        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"var(--border-subtle)"};background:${active?"var(--accent-bg)":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${c.label}${badge}</button>`;
     }).join("");
 
     const cards = displayList.map(a => {
@@ -5591,7 +5604,7 @@ function openAchievementModal() {
       ? `<button onclick="window._achClaimAll&&window._achClaimAll();"
           style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--gold);background:#2a2200;color:var(--gold);cursor:pointer;white-space:nowrap">
           一括受取 (${unclaimedAll.length})</button>`
-      : `<button style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #444;background:transparent;color:#555;cursor:not-allowed" disabled>一括受取</button>`;
+      : `<button style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:transparent;color:var(--text-disabled);cursor:not-allowed" disabled>一括受取</button>`;
 
     body.innerHTML = `
       <div style="flex-shrink:0;padding:14px 16px 8px;border-bottom:1px solid var(--border);background:var(--card)">
@@ -6262,7 +6275,7 @@ function showDungeonResult(session, items, defeated=false) {
           const cls    = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
           return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
             <div class="${cls}" style="width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:20px">${icon}</div>
-            <div style="font-size:9px;color:#ccc;text-align:center;line-height:1.2;width:100%">${name}</div>
+            <div style="font-size:9px;color:var(--text-light);text-align:center;line-height:1.2;width:100%">${name}</div>
           </div>`;
         }).join("")}
       </div>`
@@ -6689,7 +6702,7 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
       <div style="font-size:18px;font-weight:700;color:${totalColor};margin-bottom:4px">
         ${die1} + ${die2}${lukBonus > 0 ? ` + ${lukBonus}` : ""} = <span style="font-size:24px">${total}</span>${lukLine}
       </div>
-      <div style="font-size:11px;color:#666;margin-bottom:16px">成功ライン: ${successLine}以上</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-bottom:16px">成功ライン: ${successLine}以上</div>
       <div style="font-size:28px;margin-bottom:6px;animation:trapReveal 0.4s ease-out">${resultData.icon}</div>
       <div style="font-size:20px;font-weight:700;color:${resultData.color};margin-bottom:4px;animation:trapReveal 0.4s ease-out 0.1s both">${resultData.label}</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:20px;animation:trapReveal 0.4s ease-out 0.2s both">${resultData.sub}</div>
@@ -6708,7 +6721,7 @@ function _showTrapDiceModal(die1, die2, lukBonus, total, isCritSuccess, isCritFa
       <div id="trapDie1" style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
       <div id="trapDie2" style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
     </div>
-    <div style="font-size:12px;color:#666">…</div>
+    <div style="font-size:12px;color:var(--text-faint)">…</div>
   `;
 
   // Phase1中: overlay外タップでアニメーションをスキップして即結果表示
@@ -6782,7 +6795,7 @@ function _showRestDiceModal(die1, die2, lukBonus, total, healRate) {
   const resultData = (() => {
     if(total >= 12) return { icon:"✨", color:"#ffdd44", label:"大当たり！", rate:"50%" };
     if(total >= 11) return { icon:"💚", color:"#44dd88", label:"よく休めた！", rate:"40%" };
-    if(total >= 8)  return { icon:"💤", color:"#4488ff", label:"ぐっすり眠れた", rate:"30%" };
+    if(total >= 8)  return { icon:"💤", color:"var(--info)", label:"ぐっすり眠れた", rate:"30%" };
     if(total >= 5)  return { icon:"😴", color:"#aaaaaa", label:"少し休んだ",  rate:"20%" };
     return                  { icon:"😓", color:"#ff8866", label:"落ち着けなかった…", rate:"15%" };
   })();
@@ -6830,7 +6843,7 @@ function _showRestDiceModal(die1, die2, lukBonus, total, healRate) {
         <div style="font-size:18px;font-weight:700;color:var(--green)">${actual > 0 ? `+${actual} HP` : "HP満タン"}</div>
         <div style="font-size:18px;font-weight:700;color:var(--accent2)">${mpActual > 0 ? `+${mpActual} MP` : "MP満タン"}</div>
       </div>
-      <div style="font-size:11px;color:#666;margin-bottom:20px;animation:trapReveal 0.4s ease-out 0.2s both">回復率 ${resultData.rate}</div>
+      <div style="font-size:11px;color:var(--text-faint);margin-bottom:20px;animation:trapReveal 0.4s ease-out 0.2s both">回復率 ${resultData.rate}</div>
       <button class="btn btn-secondary" style="width:100%" id="restContinueBtn">続ける</button>
     `;
 
@@ -6846,7 +6859,7 @@ function _showRestDiceModal(die1, die2, lukBonus, total, healRate) {
       <div style="font-size:52px;animation:diceRoll 1.1s ease-out forwards">🎲</div>
       <div style="font-size:52px;animation:diceRoll 1.3s ease-out forwards;animation-delay:0.1s">🎲</div>
     </div>
-    <div style="font-size:12px;color:#666">…</div>
+    <div style="font-size:12px;color:var(--text-faint)">…</div>
   `;
 
   // Phase1中: overlay外タップでアニメーションをスキップして即結果表示
@@ -7410,7 +7423,7 @@ function _renderEnhanceModal(uid, backFn) {
       <div style="font-size:16px;color:var(--success);font-weight:700;margin-bottom:12px">現在: +${item.enhLv||0} / +${ENHANCE_MAX}</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:4px">強化費用: <span style="color:${canAfford?'var(--success)':'var(--damage)'}">${cost.toLocaleString()}G</span></div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:12px">強化すると全ステータス+1</div>
-      <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:#2a8a2a;color:var(--success)':'border-color:#444;color:#555;opacity:0.5'}"
+      <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:#2a8a2a;color:var(--success)':'border-color:var(--border-subtle);color:var(--text-disabled);opacity:0.5'}"
         id="enhExecBtn" ${canAfford?'':'disabled'}>
         ⚒ 強化する（${cost.toLocaleString()}G）
       </button>
@@ -7495,7 +7508,7 @@ function _renderPurifyModal(uid, resultMsg) {
       ${item.cursed ? `
         <div style="font-size:12px;color:var(--muted);margin-bottom:4px">解呪費用: <span style="color:${canAfford?'var(--curse)':'var(--red)'}">${cost.toLocaleString()}G</span></div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px">成功率65% / 失敗30% / 大失敗5%</div>
-        <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:var(--curse-border);color:var(--curse)':'border-color:#444;color:#555;opacity:0.5'}"
+        <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:var(--curse-border);color:var(--curse)':'border-color:var(--border-subtle);color:var(--text-disabled);opacity:0.5'}"
           id="purifyExecBtn" ${canAfford?'':'disabled'}>
           ⛓ 解呪する（${cost.toLocaleString()}G）
         </button>` : `<div style="color:var(--success);font-size:13px;margin-bottom:8px">✨ 呪いは解けました</div>`}
@@ -7795,7 +7808,7 @@ function _showAffixPoolModal(item) {
   const rows = pool.map(a => {
     const current = (item.affixes || []).find(ca => ca.id === a.id);
     const highlight = current ? "background:#1a2a1a;border-color:#336633;" : "";
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:2px 0;border-radius:5px;border:1px solid #333;${highlight}">
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:2px 0;border-radius:5px;border:1px solid var(--border-dark);${highlight}">
       <span style="font-size:13px;color:${current ? "var(--success)" : "#aaaadd"}">${a.label}${current ? " ✓" : ""}</span>
       <span style="font-size:12px;color:var(--muted)">${a.min} ～ ${a.max}</span>
     </div>`;
@@ -7808,11 +7821,11 @@ function _showAffixPoolModal(item) {
   popup.innerHTML = `
     <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">ランダムオプション</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${m.name}（${m.type}）に付与可能なOP一覧</div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:#666;margin-bottom:4px;padding:0 8px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-faint);margin-bottom:4px;padding:0 8px">
       <span>オプション</span><span>値の範囲</span>
     </div>
     ${rows}
-    <button style="width:100%;margin-top:12px;padding:7px;border-radius:7px;border:1px solid #444;background:#111;color:var(--muted);cursor:pointer;font-size:13px"
+    <button style="width:100%;margin-top:12px;padding:7px;border-radius:7px;border:1px solid var(--border-subtle);background:var(--bg-deep);color:var(--muted);cursor:pointer;font-size:13px"
       onclick="document.getElementById('affixPoolModal').remove()">閉じる</button>`;
 
   // オーバーレイ外クリックで閉じる
@@ -7890,11 +7903,11 @@ function _renderReforgeModal(uid, selectedIds) {
     const sel = selectedIds.includes(a.id);
     const row = document.createElement("div");
     row.style.cssText = "padding:6px 10px;margin:3px 0;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
-      + (sel ? "border:1px solid var(--accent);background:#1a2a3a;" : "border:1px solid #444;background:#111;");
+      + (sel ? "border:1px solid var(--accent);background:var(--accent-bg);" : "border:1px solid var(--border-subtle);background:var(--bg-deep);");
     row.innerHTML = `<span style="color:${sel ? "var(--accent)" : "#aaaadd"}">${a.label}</span>`
       + `<div style="display:flex;align-items:center;gap:6px">`
       + `<span style="color:${sel ? "var(--accent)" : "var(--success)"};font-size:12px">+${a.val}${sel ? " 🔒固定" : ""}</span>`
-      + `<button style="width:18px;height:18px;border-radius:50%;border:1px solid #666;background:#222;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1" data-info-btn="${a.id}">!</button>`
+      + `<button style="width:18px;height:18px;border-radius:50%;border:1px solid var(--text-faint);background:var(--bg-mid);color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1" data-info-btn="${a.id}">!</button>`
       + `</div>`;
     row.addEventListener("click", e => {
       if(e.target.dataset.infoBtn) return; // ! ボタンは別処理
@@ -7931,7 +7944,7 @@ function _renderReforgeModal(uid, selectedIds) {
   const btn = document.createElement("button");
   btn.className = "btn btn-secondary";
   btn.style.cssText = "width:100%;margin-top:6px;"
-    + (canDo ? "border-color:#5588ff;color:#aaccff;" : "border-color:#444;color:#666;opacity:0.5;");
+    + (canDo ? "border-color:#5588ff;color:#aaccff;" : "border-color:var(--border-subtle);color:var(--text-faint);opacity:0.5;");
   btn.disabled = !canDo;
   btn.textContent = "🔮 錬成";
   if(canDo) btn.addEventListener("click", () => _execReforge(uid, activeFixed, activeMode));
@@ -7985,12 +7998,12 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
     if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644"); // 新規
     if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622"); // 上昇
     if(na.val < oa.val) return affixRow(na, "var(--warning)", "#1f0d0d", "#662222"); // 下降
-    return affixRow(na, "#aaaadd", "#111", "#444"); // 変化なし
+    return affixRow(na, "#aaaadd", "var(--bg-deep)", "var(--border-subtle)"); // 変化なし
   }).join("");
 
   const oldRows = oldAffixes.map(oa => {
     const na = newAffixes.find(n => n.id === oa.id);
-    if(!na) return affixRow(oa, "#888888", "#1a1a1a", "#444"); // 消滅（打ち消し線風）
+    if(!na) return affixRow(oa, "#888888", "#1a1a1a", "var(--border-subtle)"); // 消滅（打ち消し線風）
     return ""; // 新OPに表示済み
   }).filter(Boolean).join("");
 
@@ -8005,7 +8018,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
           ${oldAffixes.map(oa => {
             const na = newAffixes.find(n => n.id === oa.id);
             const changed = !na || na.val !== oa.val;
-            return affixRow(oa, changed ? "#888888" : "#aaaadd", changed ? "#1a1a1a" : "#111", changed ? "#333" : "#444");
+            return affixRow(oa, changed ? "#888888" : "#aaaadd", changed ? "#1a1a1a" : "var(--bg-deep)", changed ? "var(--border-dark)" : "var(--border-subtle)");
           }).join("")}
         </div>
         <div>
@@ -8015,7 +8028,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
             if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644");
             if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622");
             if(na.val < oa.val) return affixRow(na, "var(--warning)", "#1f0d0d", "#662222");
-            return affixRow(na, "#aaaadd", "#111", "#444");
+            return affixRow(na, "#aaaadd", "var(--bg-deep)", "var(--border-subtle)");
           }).join("")}
         </div>
       </div>
@@ -8110,7 +8123,7 @@ function openGradeUpModal(uid, backFn) {
       <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
         ${check.ok
           ? `<button class="btn btn-secondary" style="width:100%;border-color:#8888ff;color:#aaaaff;margin-bottom:6px" id="gradeUpExecBtn">✨ 昇級する</button>`
-          : `<button class="btn btn-secondary" style="width:100%;border-color:#444;color:#555;opacity:0.5;margin-bottom:6px" disabled>✨ 昇級不可：${check.reason}</button>`
+          : `<button class="btn btn-secondary" style="width:100%;border-color:var(--border-subtle);color:var(--text-disabled);opacity:0.5;margin-bottom:6px" disabled>✨ 昇級不可：${check.reason}</button>`
         }
         <button class="btn btn-secondary" style="width:100%" id="gradeUpCancelBtn">閉じる</button>
       </div>
@@ -9179,7 +9192,7 @@ function checkBlackmarket() {
     gs.player.gold += price;
     gs.shop.totalSales++;
     checkQuestProgress("sell", { gold: price, itemId: item.itemId, rarity: item.rarity });
-    const _rc4 = item.identified ? (RARITY_MASTER[item.rarity]?.color || '#ccc') : 'var(--unidentified)';
+    const _rc4 = item.identified ? (RARITY_MASTER[item.rarity]?.color || 'var(--text-light)') : 'var(--unidentified)';
     addShopLog("gold", `${buyer.icon}${buyer.name}「${comment}」→【<span style="color:${_rc4};font-weight:700">${m.name}</span>】${price}G`);
     notifySale(item, price); // 売却快感演出（S48-SALE）
 
@@ -9833,9 +9846,9 @@ function openUnlistModal(slotIdx) {
   const typeChips = SHELF_SPECIAL_TYPES.map(t =>
     `<button onclick="setShelfSpecial(${slotIdx},'${t.id||''}');this.closest('.modal-overlay').remove();"
       style="padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;
-        border:1px solid ${shelf.specialType===(t.id||null)?'var(--accent2)':'#333'};
+        border:1px solid ${shelf.specialType===(t.id||null)?'var(--accent2)':'var(--border-dark)'};
         background:${shelf.specialType===(t.id||null)?'#1a0a2e':'transparent'};
-        color:${shelf.specialType===(t.id||null)?'var(--accent2)':'#888'}">${t.icon} ${t.label}</button>`
+        color:${shelf.specialType===(t.id||null)?'var(--accent2)':'var(--text-mid)'}">${t.icon} ${t.label}</button>`
   ).join('');
 
   mc.innerHTML = `
@@ -9850,7 +9863,7 @@ function openUnlistModal(slotIdx) {
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">🏪 棚の特化設定：${specDef.icon}${specDef.label}</div>
         <button onclick="this.closest('.modal-overlay').remove();openShelfSettingsModal();"
           style="width:100%;padding:6px;border-radius:6px;font-size:11px;cursor:pointer;
-            border:1px solid #444;background:var(--surface-deep);color:var(--accent2)">
+            border:1px solid var(--border-subtle);background:var(--surface-deep);color:var(--accent2)">
           ⚙ 棚設定を変更する
         </button>
       </div>
@@ -9858,9 +9871,9 @@ function openUnlistModal(slotIdx) {
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">🏷 セール（売値-20%・速度+67%）</div>
         <button onclick="toggleSale(${slotIdx});this.closest('.modal-overlay').remove();"
           style="width:100%;padding:7px;border-radius:6px;font-size:12px;cursor:pointer;
-            border:1px solid ${isOnSale?'var(--gold)':'#444'};
+            border:1px solid ${isOnSale?'var(--gold)':'var(--border-subtle)'};
             background:${isOnSale?'#1a1500':'transparent'};
-            color:${isOnSale?'var(--gold)':'#888'}">
+            color:${isOnSale?'var(--gold)':'var(--text-mid)'}">
           ${isOnSale?'🏷 セール中（タップで解除）':'🏷 セールを開始する'}
         </button>
       </div>
@@ -10294,7 +10307,7 @@ function openInvestModal() {
       </div>
       <div style="flex:1;overflow-y:auto;padding:12px 16px">
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px">Goldを預けると毎分利回りが付きます。上限${INVEST_MAX.toLocaleString()}G。</div>
-      <div style="background:#111;border-radius:8px;padding:10px;margin-bottom:12px">
+      <div style="background:var(--bg-deep);border-radius:8px;padding:10px;margin-bottom:12px">
         <div style="font-size:13px">残高: <span style="color:var(--gold);font-weight:700">${inv.amount.toLocaleString()}G</span></div>
         <div style="font-size:11px;color:var(--muted)">現在利率: ${(tier.rate*100).toFixed(1)}%/分</div>
       </div>
@@ -10440,13 +10453,13 @@ function openRegularsModal() {
       const badge = orderBadge > 0
         ? `<span style="font-size:9px;background:#ffcc4433;color:var(--gold);border-radius:8px;padding:1px 4px;margin-left:3px">${orderBadge}</span>` : "";
       return `<button onclick="window._regCat='${c.key}';window._regRefresh&&window._regRefresh();"
-        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"#444"};background:${active?"#1a2a3a":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${c.label}${badge}</button>`;
+        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"var(--border-subtle)"};background:${active?"var(--accent-bg)":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${c.label}${badge}</button>`;
     }).filter(Boolean).join("");
 
   const noRegs = regs.length === 0;
   const _emptyMsg = window._regCat === "all" ? "まだ常連客がいません" : "このカテゴリの常連客はいません";
   const regCards = noRegs
-    ? `<div style="color:#555;text-align:center;padding:24px;font-size:13px">${_emptyMsg}</div>`
+    ? `<div style="color:var(--text-disabled);text-align:center;padding:24px;font-size:13px">${_emptyMsg}</div>`
     : regs.map(reg => {
         const nextLvNeed = (reg.lv + 1) * REGULAR_LV_THRESHOLD - reg.purchases;
         const barPct = ((reg.purchases % REGULAR_LV_THRESHOLD) / REGULAR_LV_THRESHOLD * 100).toFixed(0);
@@ -10455,11 +10468,11 @@ function openRegularsModal() {
         const canOrder = regularCanOrder(reg.lv);
         const fastVisit = regularCanFastVisit(reg.lv);
         const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? '#9b59b6' : '#3498db';
-        return `<div style="background:#111;border:1px solid ${borderColor};border-radius:8px;padding:10px 12px;margin-bottom:8px">
+        return `<div style="background:var(--bg-deep);border:1px solid ${borderColor};border-radius:8px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:22px">${reg.icon}</span>
             <div style="flex:1">
-              <div style="font-size:13px;font-weight:700;color:#fff">${reg.name}
+              <div style="font-size:13px;font-weight:700;color:var(--text-white)">${reg.name}
                 <span style="font-size:10px;color:var(--muted);font-weight:400"> Lv${reg.lv}</span>
                 ${fastVisit ? '<span style="font-size:10px;color:#2ecc71"> 🏃定期来訪</span>' : ''}
               </div>
@@ -10467,20 +10480,20 @@ function openRegularsModal() {
             </div>
             <div style="text-align:right">
               <div style="font-size:13px;color:#f1c40f;font-weight:700">+${reg.bonusPct}%</div>
-              <div style="font-size:9px;color:#666">売値ボーナス</div>
+              <div style="font-size:9px;color:var(--text-faint)">売値ボーナス</div>
             </div>
           </div>
           <div style="background:var(--surface-deep);border-radius:4px;height:4px;margin-bottom:6px">
             <div style="background:#3498db;height:100%;border-radius:4px;width:${barPct}%;transition:width 0.3s"></div>
           </div>
-          <div style="font-size:10px;color:#555;margin-bottom:6px">次のLvまで あと${nextLvNeed}回</div>
+          <div style="font-size:10px;color:var(--text-disabled);margin-bottom:6px">次のLvまで あと${nextLvNeed}回</div>
           ${hasOrder
             ? `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold)">
                 📋 注文中：<strong>${orderTl}</strong> を棚に出してください
                </div>`
             : canOrder
-              ? `<div style="font-size:11px;color:#555">注文機能解放済み（ランダムで注文が来ます）</div>`
-              : `<div style="font-size:11px;color:#444">Lv3で注文機能が解放されます</div>`
+              ? `<div style="font-size:11px;color:var(--text-disabled)">注文機能解放済み（ランダムで注文が来ます）</div>`
+              : `<div style="font-size:11px;color:var(--border-subtle)">Lv3で注文機能が解放されます</div>`
           }
         </div>`;
       }).join('');
@@ -10496,7 +10509,7 @@ function openRegularsModal() {
             ${regCards}
           </div>
           <div style="position:sticky;bottom:0;background:var(--card);padding:10px 16px 14px;border-top:1px solid var(--border)">
-            <div style="padding:8px;background:#0d0d1a;border-radius:6px;font-size:11px;color:#555;margin-bottom:8px">
+            <div style="padding:8px;background:#0d0d1a;border-radius:6px;font-size:11px;color:var(--text-disabled);margin-bottom:8px">
               <div style="margin-bottom:3px">Lv1：売値ボーナス開始 / 来訪間隔短縮</div>
               <div style="margin-bottom:3px">Lv3：注文機能解放</div>
               <div>Lv5：定期来訪（好み品があれば必ず購入）</div>
@@ -10588,7 +10601,7 @@ function _drawMarketCanvas(hist, trendActive, trend) {
   yTicks.forEach(v => {
     const y = toY(v);
     ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+gW, y); ctx.stroke();
-    ctx.fillStyle = v === 100 ? '#666' : '#3a3a3a';
+    ctx.fillStyle = v === 100 ? 'var(--text-faint)' : '#3a3a3a';
     ctx.font = '9px sans-serif'; ctx.textAlign = 'right';
     ctx.fillText(v+'%', PAD.left-3, y+3);
   });
@@ -10598,13 +10611,13 @@ function _drawMarketCanvas(hist, trendActive, trend) {
   ctx.lineWidth = 1;
 
   if(dispHist.length < 2) {
-    ctx.fillStyle = '#555'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = 'var(--text-disabled)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
     ctx.fillText('データ蓄積中… (5分ごとに記録)', W/2, H/2);
     return;
   }
 
   // X軸ラベル
-  ctx.fillStyle = '#444'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillStyle = 'var(--border-subtle)'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
   const step = Math.max(1, Math.floor(dispHist.length / 5));
   dispHist.forEach((h, i) => {
     if(i % step !== 0 && i !== dispHist.length-1) return;
@@ -10752,12 +10765,12 @@ function openMarketModal() {
       const isTrend = trendActive && trend.type === cat.key;
       const demand  = currentDemand[cat.key];
       const dColor  = demand >= 80 ? '#2ecc71' : demand >= 50 ? '#ffcc00' : 'var(--danger)';
-      const border  = on ? (isTrend ? cat.color : '#333') : '#222';
+      const border  = on ? (isTrend ? cat.color : 'var(--border-dark)') : 'var(--bg-mid)';
       const opacity = on ? '1' : '0.35';
       return `<div onclick="window._marketToggle('${cat.key}')"
-        style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#111;border-radius:6px;
+        style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-deep);border-radius:6px;
                border:1px solid ${border};opacity:${opacity};cursor:pointer;user-select:none;transition:opacity 0.15s">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${on?cat.color:'#444'};flex-shrink:0"></span>
+        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${on?cat.color:'var(--border-subtle)'};flex-shrink:0"></span>
         <span style="font-size:11px;flex:1">${cat.label}${isTrend ? ' 🔥' : ''}</span>
         <span style="font-size:10px;color:${dColor};font-weight:700">${demand}%</span>
         <span style="font-size:9px;color:var(--muted)">×${(1+(demand-100)*0.005).toFixed(2)}</span>
@@ -10776,37 +10789,37 @@ function openMarketModal() {
             style="width:100%;height:auto;background:#0a0a14;border-radius:8px;display:block"></canvas>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:10px;color:#555">X軸：</span>
+          <span style="font-size:10px;color:var(--text-disabled)">X軸：</span>
           ${[['全履歴',0],['直近30点',30],['直近15点',15],['直近5点',5]].map(([label,val])=>
             `<button onclick="window._marketSetX(${val})"
               style="padding:2px 8px;border-radius:8px;font-size:10px;cursor:pointer;
-                border:1px solid ${_marketXRange===val?'var(--accent)':'#333'};
+                border:1px solid ${_marketXRange===val?'var(--accent)':'var(--border-dark)'};
                 background:${_marketXRange===val?'#0a1a2a':'transparent'};
-                color:${_marketXRange===val?'var(--accent)':'#666'}">${label}</button>`
+                color:${_marketXRange===val?'var(--accent)':'var(--text-faint)'}">${label}</button>`
           ).join('')}
-          <span style="font-size:10px;color:#555;margin-left:4px">Y軸：</span>
+          <span style="font-size:10px;color:var(--text-disabled);margin-left:4px">Y軸：</span>
           ${[['固定','fixed'],['自動','auto']].map(([label,val])=>
             `<button onclick="window._marketSetY('${val}')"
               style="padding:2px 8px;border-radius:8px;font-size:10px;cursor:pointer;
-                border:1px solid ${_marketYRange===val?'var(--gold)':'#333'};
+                border:1px solid ${_marketYRange===val?'var(--gold)':'var(--border-dark)'};
                 background:${_marketYRange===val?'#1a1400':'transparent'};
-                color:${_marketYRange===val?'var(--gold)':'#666'}">${label}</button>`
+                color:${_marketYRange===val?'var(--gold)':'var(--text-faint)'}">${label}</button>`
           ).join('')}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
           ${legendHtml}
         </div>
         <div style="display:flex;gap:8px;font-size:11px;margin-bottom:10px">
-          <div style="flex:1;background:#111;border-radius:6px;padding:8px;border:1px solid #222">
+          <div style="flex:1;background:var(--bg-deep);border-radius:6px;padding:8px;border:1px solid var(--bg-mid)">
             <div style="color:var(--muted);margin-bottom:3px">📡 流行中</div>
             <div style="color:var(--gold);font-weight:700">${trendActive ? trend.label : 'なし'}</div>
           </div>
-          <div style="flex:1;background:#111;border-radius:6px;padding:8px;border:1px solid #222">
+          <div style="flex:1;background:var(--bg-deep);border-radius:6px;padding:8px;border:1px solid var(--bg-mid)">
             <div style="color:var(--muted);margin-bottom:3px">🔮 予測</div>
             <div style="color:#aaddff;font-weight:700">${predictionLabel}</div>
           </div>
         </div>
-        <div style="font-size:10px;color:#555;text-align:right;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--text-disabled);text-align:right;margin-bottom:8px">
           表示: ${_marketXRange>0?Math.min(_marketXRange,hist.length):hist.length}点 / 全${hist.length}点 / 5分間隔
         </div>
         </div>
@@ -10866,7 +10879,7 @@ function checkShopSales() {
       const customer = randomCustomer();
       const comment = customer.comment[Math.floor(Math.random()*customer.comment.length)];
       const displayName = itemDisplayName(item);
-      const _rCol = item.identified ? (RARITY_MASTER[item.rarity]?.color || '#ccc') : 'var(--unidentified)';
+      const _rCol = item.identified ? (RARITY_MASTER[item.rarity]?.color || 'var(--text-light)') : 'var(--unidentified)';
       const coloredName = `<span style="color:${_rCol};font-weight:700">${displayName}</span>`;
 
       // 常連ボーナス判定（この客が常連かつLv1以上）
@@ -11136,7 +11149,7 @@ function openBulkPurifyModal() {
   const activeRarities = new Set();
   const activeTypes    = new Set();
 
-  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid #444;background:#585880;flex-shrink:0';
+  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:#585880;flex-shrink:0';
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
@@ -11178,22 +11191,22 @@ function openBulkPurifyModal() {
       const rc  = RARITY_MASTER[rk];
       const on  = activeRarities.has(rk);
       return `<button onclick="window._bpFilterRarity('${rk}')" title="${rc?.label||rk}"
-        style="${BTN};color:${rc?.color||'#fff'};font-weight:700;font-size:12px;
-          border-color:${on?rc?.color||'var(--accent)':'#444'};
+        style="${BTN};color:${rc?.color||'var(--text-white)'};font-weight:700;font-size:12px;
+          border-color:${on?rc?.color||'var(--accent)':'var(--border-subtle)'};
           background:${on?'var(--filter-active)':'var(--surface-deep)'}"
         >${RARITY_SHORT[rk]}</button>`;
     }).join('');
     const allBtn = `<button onclick="window._bpFilterAll()" title="全フィルター解除"
       style="${BTN};color:var(--muted);font-weight:700;font-size:11px;
-        border-color:${noFilter?'var(--accent)':'#444'};
+        border-color:${noFilter?'var(--accent)':'var(--border-subtle)'};
         background:${noFilter?'var(--filter-active)':'var(--surface-deep)'}">全</button>`;
 
     const typeBtns = typeKeys.map(tk => {
       const on  = activeTypes.has(tk);
-      const col = TYPE_COLOR[tk] || '#ccc';
+      const col = TYPE_COLOR[tk] || 'var(--text-light)';
       return `<button onclick="window._bpFilterType('${tk}')" title="${tk}"
         style="${BTN};font-size:14px;color:${col};
-          border-color:${on?col:'#444'};
+          border-color:${on?col:'var(--border-subtle)'};
           background:${on?'var(--filter-active)':'var(--surface-deep)'}"
         >${TYPE_ICON[tk]||tk[0]}</button>`;
     }).join('');
@@ -11205,7 +11218,7 @@ function openBulkPurifyModal() {
       const sel  = selected.has(item.uid);
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
         onclick="window._bulkPurifyToggle('${item.uid}')">
-        <div style="width:20px;height:20px;border:2px solid ${sel?'var(--curse-border)':'#555'};border-radius:4px;background:${sel?'var(--curse-bg)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:20px;height:20px;border:2px solid ${sel?'var(--curse-border)':'var(--text-disabled)'};border-radius:4px;background:${sel?'var(--curse-bg)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<span style="color:var(--curse);font-size:12px">✓</span>':''}
         </div>
         <div style="font-size:20px;flex-shrink:0">${m.icon}</div>
@@ -11213,7 +11226,7 @@ function openBulkPurifyModal() {
           <div style="font-size:12px;font-weight:700;color:${r.color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
           <div style="font-size:10px;color:var(--curse)">${item.curse?.icon||''} ${item.curse?.label||'呪い'}</div>
         </div>
-        <div style="font-size:11px;color:${sel?'var(--curse)':'#555'};flex-shrink:0">${cost.toLocaleString()}G</div>
+        <div style="font-size:11px;color:${sel?'var(--curse)':'var(--text-disabled)'};flex-shrink:0">${cost.toLocaleString()}G</div>
       </div>`;
     }).join('');
 
@@ -11224,7 +11237,7 @@ function openBulkPurifyModal() {
           <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
             <button onclick="window._bulkPurifySelectAll(true)"  title="表示中を全選択" style="${BTN};font-size:14px">✅</button>
             <button onclick="window._bulkPurifySelectAll(false)" title="選択解除"       style="${BTN};font-size:14px">❌</button>
-            <div style="width:1px;height:20px;background:#333;margin:0 2px;flex-shrink:0"></div>
+            <div style="width:1px;height:20px;background:var(--border-dark);margin:0 2px;flex-shrink:0"></div>
             <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none">${rarityBtns}${allBtn}</div>
           </div>
           <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none">${typeBtns}</div>
@@ -11234,7 +11247,7 @@ function openBulkPurifyModal() {
           ${totalCost > 0 ? `<span style="color:${canAfford?'var(--curse)':'var(--red)'};font-weight:700;margin-left:8px">${totalCost.toLocaleString()}G</span>` : ''}
           ${!canAfford && totalCost > 0 ? '<span style="color:var(--red);margin-left:4px">⚠ Gold不足</span>' : ''}
         </div>
-        <div style="font-size:10px;color:#555;margin-bottom:6px">成功65% / 失敗30% / 大失敗5%（大失敗で中断）</div>
+        <div style="font-size:10px;color:var(--text-disabled);margin-bottom:6px">成功65% / 失敗30% / 大失敗5%（大失敗で中断）</div>
         <button class="btn btn-secondary" style="width:100%;border-color:var(--curse-border);color:var(--curse);${selected.size===0||!canAfford?'opacity:0.5':''}"
           id="bulkPurifyExecBtn" ${selected.size===0?'disabled':''} onclick="window._execBulkPurify()">
           ⛓ 一括解呪（${selected.size}件）
@@ -11254,7 +11267,7 @@ function openBulkPurifyModal() {
       const isActive = (rkMatch && activeRarities.has(rkMatch[1])) || (tkMatch && activeTypes.has(tkMatch[1]));
       const highlight = isActive || (isAll && noF);
       btn.style.background  = highlight ? 'var(--filter-active)' : 'var(--surface-deep)';
-      btn.style.borderColor = highlight ? 'var(--accent)' : '#444';
+      btn.style.borderColor = highlight ? 'var(--accent)' : 'var(--border-subtle)';
     });
   };
 
@@ -11336,7 +11349,7 @@ function openBrewModal() {
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
 
-  const RARITY_COLOR = { normal:"#aaa", rare:"#4488ff", epic:"#9b59b6", legendary:"#e6ac2e" };
+  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"#9b59b6", legendary:"#e6ac2e" };
   const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
 
   // レシピごとの数量状態
@@ -11354,7 +11367,7 @@ function openBrewModal() {
       : byStock;
   };
 
-  const BTN_S = "width:28px;height:28px;border-radius:6px;border:1px solid #444;background:var(--surface-deep);color:#ccc;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0";
+  const BTN_S = "width:28px;height:28px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--surface-deep);color:var(--text-light);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0";
 
   const buildRows = () => {
     return BREW_MASTER.filter(recipe => maxTimes(recipe) > 0).map(recipe => {
@@ -11402,9 +11415,9 @@ function openBrewModal() {
           ${recipe.gold > 0 && q > 0 ? `<span style="font-size:10px;color:var(--gold)">計 ${totalGold.toLocaleString()}G</span>` : ""}
           <button onclick="window._execBrew('${recipe.id}');window._brewRefresh&&window._brewRefresh();"
             style="padding:5px 14px;font-size:11px;border-radius:6px;
-              border:1px solid ${canDo?"var(--accent)":"#333"};
-              background:${canDo?"#1a2a3a":"transparent"};
-              color:${canDo?"var(--accent)":"#555"};
+              border:1px solid ${canDo?"var(--accent)":"var(--border-dark)"};
+              background:${canDo?"var(--accent-bg)":"transparent"};
+              color:${canDo?"var(--accent)":"var(--text-disabled)"};
               cursor:${canDo?"pointer":"not-allowed"}"
             ${canDo?"":"disabled"}>調合 ×${q||"0"}</button>
         </div>
@@ -11568,7 +11581,7 @@ function openBulkIdentifyModal() {
       const savedTop = sc.scrollTop;
       const cost = totalCost();
       const canAfford = gs.player.gold >= cost;
-      countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${cost.toLocaleString()}G</span>`;
+      countEl.innerHTML = `選択中 <span style="color:var(--text-white);font-weight:700">${selected.size}</span>個 ／ 合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${cost.toLocaleString()}G</span>`;
       confirmBtn.textContent = `🔍 ${selected.size}個を鑑定（${cost.toLocaleString()}G）`;
       confirmBtn.disabled = selected.size === 0 || !canAfford;
 
@@ -11578,14 +11591,14 @@ function openBulkIdentifyModal() {
         const cost = identifyCost(item);
         const checked = selected.has(item.uid);
         const row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #222;cursor:pointer";
+        row.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bg-mid);cursor:pointer";
         row.innerHTML = `
-          <div style="width:20px;height:20px;border:2px solid ${checked?'var(--accent)':'#555'};border-radius:4px;background:${checked?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            ${checked ? '<span style="color:#fff;font-size:12px;line-height:1">✓</span>' : ''}
+          <div style="width:20px;height:20px;border:2px solid ${checked?'var(--accent)':'var(--text-disabled)'};border-radius:4px;background:${checked?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            ${checked ? '<span style="color:var(--text-white);font-size:12px;line-height:1">✓</span>' : ''}
           </div>
           <div class="itemIcon rarity-normal" style="width:32px;height:32px;font-size:18px;flex-shrink:0">❓</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;color:var(--muted);font-weight:700">${m.name} <span style="color:#666;font-size:11px;font-weight:400">（未鑑定）</span></div>
+            <div style="font-size:13px;color:var(--muted);font-weight:700">${m.name} <span style="color:var(--text-faint);font-size:11px;font-weight:400">（未鑑定）</span></div>
             <div style="font-size:11px;color:var(--muted)">${m.type} ／ 鑑定費 <span style="color:var(--gold)">${cost}G</span></div>
           </div>
         `;
@@ -11635,7 +11648,7 @@ function openBulkDecomposeModal() {
   const activeTypes    = new Set();
   const selected       = new Set();
 
-  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid #444;background:#585880;transition:background 0.1s,border 0.1s';
+  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:#585880;transition:background 0.1s,border 0.1s';
 
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -11652,7 +11665,7 @@ function openBulkDecomposeModal() {
       style="${BTN};color:${rc.color};font-weight:700;font-size:12px">${rk[0].toUpperCase()}</button>`;
   }).join('');
   const typeBtns = typeKeys.map(tk =>
-    `<button data-dtype="${tk}" title="${tk}" style="${BTN};color:${TYPE_COLOR[tk]||'#ccc'}">${TYPE_ICON[tk]||'📦'}</button>`
+    `<button data-dtype="${tk}" title="${tk}" style="${BTN};color:${TYPE_COLOR[tk]||'var(--text-light)'}">${TYPE_ICON[tk]||'📦'}</button>`
   ).join('');
 
   mc.style.cssText = "max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;";
@@ -11663,14 +11676,14 @@ function openBulkDecomposeModal() {
       <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
         <button data-dfilter="select" title="表示中を全選択" style="${BTN};font-size:14px">✅</button>
         <button data-dfilter="clear"  title="選択解除"       style="${BTN};font-size:14px">❌</button>
-        <div style="width:1px;height:20px;background:#333;margin:0 2px;flex-shrink:0"></div>
+        <div style="width:1px;height:20px;background:var(--border-dark);margin:0 2px;flex-shrink:0"></div>
         <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none">
           ${rarityBtns}
           <button data-dfilter="rarity:all" title="全フィルター解除" style="${BTN};color:var(--muted);font-weight:700;font-size:11px">全</button>
         </div>
       </div>
       <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none;margin-bottom:3px">${typeBtns}</div>
-      <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid #222">
+      <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid var(--bg-mid)">
         <span style="font-size:10px;color:var(--muted);flex-shrink:0">並替</span>
         <button data-dsort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:var(--success)">⚒↑</button>
         <button data-dsort="enh_asc"  title="通常優先"     style="${BTN};font-size:11px;font-weight:700;color:var(--muted)">⚒↓</button>
@@ -11714,13 +11727,13 @@ function openBulkDecomposeModal() {
       );
       const highlight = isActive || (isAllBtn && noFilter);
       btn.style.background  = highlight ? 'var(--filter-active)' : 'var(--surface-deep)';
-      btn.style.borderColor = highlight ? 'var(--accent)' : '#444';
+      btn.style.borderColor = highlight ? 'var(--accent)' : 'var(--border-subtle)';
     });
     mc.querySelectorAll("[data-dsort]").forEach(btn => {
       const s = btn.dataset.dsort;
       const isActive = (s === "enh_desc" && sortEnhFirst) || (s === "enh_asc" && !sortEnhFirst);
       btn.style.background  = isActive ? '#1a2a1a' : 'var(--surface-deep)';
-      btn.style.borderColor = isActive ? '#44cc44' : '#444';
+      btn.style.borderColor = isActive ? '#44cc44' : 'var(--border-subtle)';
     });
   };
 
@@ -11818,7 +11831,7 @@ function openBulkDecomposeModal() {
       return s + (item ? decomposeCost(item) : 0);
     }, 0);
     const canAfford = gs.player.gold >= totalCost;
-    countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 費用合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${totalCost.toLocaleString()}G</span>`;
+    countEl.innerHTML = `選択中 <span style="color:var(--text-white);font-weight:700">${selected.size}</span>個 ／ 費用合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${totalCost.toLocaleString()}G</span>`;
     confirmBtn.textContent = `🔨 ${selected.size}個を分解（${totalCost.toLocaleString()}G）`;
     confirmBtn.disabled = selected.size === 0 || !canAfford;
 
@@ -11830,9 +11843,9 @@ function openBulkDecomposeModal() {
       const isEnhanced = (item.enhLv || 0) > 0;
       const checked = selected.has(item.uid);
       const row = document.createElement("div");
-      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #222;cursor:pointer;opacity:${isEnhanced&&!checked?'0.6':'1'}`;
+      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bg-mid);cursor:pointer;opacity:${isEnhanced&&!checked?'0.6':'1'}`;
       row.innerHTML = `
-        <div style="width:20px;height:20px;border:2px solid ${checked?'var(--warning)':'#555'};border-radius:4px;background:${checked?'#3a1010':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:20px;height:20px;border:2px solid ${checked?'var(--warning)':'var(--text-disabled)'};border-radius:4px;background:${checked?'#3a1010':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${checked ? '<span style="color:var(--warning);font-size:12px;line-height:1">✓</span>' : ''}
         </div>
         <div class="itemIcon rarity-${item.rarity}" style="width:32px;height:32px;font-size:18px;flex-shrink:0">${m.icon}</div>
@@ -11887,8 +11900,8 @@ function openBulkEnhanceModal() {
   const activeTypes    = new Set();
   let   targetLv       = 0; // 0=未設定（ENHANCE_MAX扱い）
 
-  const BTN  = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid #444;background:#585880;flex-shrink:0';
-  const BTN2 = 'display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #444;background:#585880;flex-shrink:0';
+  const BTN  = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:#585880;flex-shrink:0';
+  const BTN2 = 'display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border-subtle);background:#585880;flex-shrink:0';
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
@@ -11959,21 +11972,21 @@ function openBulkEnhanceModal() {
       const rc = RARITY_MASTER[rk];
       const on = activeRarities.has(rk);
       return `<button onclick="window._beFilterRarity('${rk}')" title="${rc?.label||rk}"
-        style="${BTN};color:${rc?.color||'#fff'};font-weight:700;font-size:12px;
-          border-color:${on?rc?.color||'var(--accent)':'#444'};
+        style="${BTN};color:${rc?.color||'var(--text-white)'};font-weight:700;font-size:12px;
+          border-color:${on?rc?.color||'var(--accent)':'var(--border-subtle)'};
           background:${on?'var(--filter-active)':'var(--surface-deep)'}"
         >${RARITY_SHORT[rk]}</button>`;
     }).join('') + `<button onclick="window._beFilterAll()" title="全フィルター解除"
       style="${BTN};color:var(--muted);font-weight:700;font-size:11px;
-        border-color:${noFilter?'var(--accent)':'#444'};
+        border-color:${noFilter?'var(--accent)':'var(--border-subtle)'};
         background:${noFilter?'var(--filter-active)':'var(--surface-deep)'}">全</button>`;
 
     const typeBtns = typeKeys.map(tk => {
       const on  = activeTypes.has(tk);
-      const col = TYPE_COLOR[tk] || '#ccc';
+      const col = TYPE_COLOR[tk] || 'var(--text-light)';
       return `<button onclick="window._beFilterType('${tk}')" title="${tk}"
-        style="${BTN};font-size:14px;color:${on?col:'#888'};
-          border-color:${on?col:'#444'};background:${on?'var(--filter-active)':'var(--surface-deep)'}"
+        style="${BTN};font-size:14px;color:${on?col:'var(--text-mid)'};
+          border-color:${on?col:'var(--border-subtle)'};background:${on?'var(--filter-active)':'var(--surface-deep)'}"
         >${TYPE_ICON[tk]||tk}</button>`;
     }).join('');
 
@@ -11981,8 +11994,8 @@ function openBulkEnhanceModal() {
     const lvBtns = Array.from({length:11}, (_,i) => i+1).map(n => {
       const on = targetLv === n;
       return `<button onclick="window._beFilterLv(${n})" title="+${n}まで強化"
-        style="${BTN2};color:${on?'#88ddff':'#aaa'};
-          border-color:${on?'var(--accent)':'#444'};background:${on?'#1a2a40':'var(--surface-deep)'}"
+        style="${BTN2};color:${on?'#88ddff':'var(--text-subtle)'};
+          border-color:${on?'var(--accent)':'var(--border-subtle)'};background:${on?'#1a2a40':'var(--surface-deep)'}"
         >${n}</button>`;
     }).join('');
 
@@ -11999,17 +12012,17 @@ function openBulkEnhanceModal() {
       const curseMark = i.cursed ? `<span style="font-size:10px;color:#cc44ff;margin-left:2px">💀</span>` : '';
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
         onclick="window._beToggle('${i.uid}')">
-        <div style="width:20px;height:20px;border:2px solid ${sel?'var(--accent)':'#555'};border-radius:4px;background:${sel?'#1a2a40':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:20px;height:20px;border:2px solid ${sel?'var(--accent)':'var(--text-disabled)'};border-radius:4px;background:${sel?'#1a2a40':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
           ${sel?'<span style="font-size:10px;color:var(--accent)">✓</span>':''}
         </div>
         <div style="font-size:20px;flex-shrink:0">${m?.icon||'?'}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:700;color:${r?.color||'#fff'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          <div style="font-size:12px;font-weight:700;color:${r?.color||'var(--text-white)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
             ${m?.name||i.itemId}${curseMark}
           </div>
           <div style="font-size:10px;color:var(--muted)">+${enh} → +${goal}</div>
         </div>
-        <div style="font-size:11px;color:${sel?'var(--gold)':'#666'};flex-shrink:0">${itemCost.toLocaleString()}G</div>
+        <div style="font-size:11px;color:${sel?'var(--gold)':'var(--text-faint)'};flex-shrink:0">${itemCost.toLocaleString()}G</div>
       </div>`;
     }).join('');
 
@@ -12023,14 +12036,14 @@ function openBulkEnhanceModal() {
           <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
             <button onclick="window._beSelectAll(true)"  title="全選択" style="${BTN};font-size:14px">✅</button>
             <button onclick="window._beSelectAll(false)" title="全解除" style="${BTN};font-size:14px">❌</button>
-            <div style="width:1px;height:20px;background:#333;margin:0 2px;flex-shrink:0"></div>
+            <div style="width:1px;height:20px;background:var(--border-dark);margin:0 2px;flex-shrink:0"></div>
             <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none">${rarityBtns}</div>
           </div>
           <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none;margin-bottom:3px">${typeBtns}</div>
-          <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid #222">
+          <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid var(--bg-mid)">
             <span style="font-size:10px;color:var(--muted);flex-shrink:0;margin-right:2px">目標</span>
             <div style="display:flex;flex-wrap:nowrap;gap:2px">${lvBtns}</div>
-            ${targetLv ? `<button onclick="window._beFilterLv(0)" style="${BTN2};color:var(--muted);border-color:#444;background:var(--surface-deep);font-size:10px">✕</button>` : ''}
+            ${targetLv ? `<button onclick="window._beFilterLv(0)" style="${BTN2};color:var(--muted);border-color:var(--border-subtle);background:var(--surface-deep);font-size:10px">✕</button>` : ''}
           </div>
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px">
@@ -12038,7 +12051,7 @@ function openBulkEnhanceModal() {
           ${maxCost > 0 ? `<span style="color:${canAfford?'var(--gold)':'var(--red)'};font-weight:700;margin-left:8px">最大${maxCost.toLocaleString()}G</span>` : ''}
           ${!canAfford && maxCost > 0 ? '<span style="color:var(--red);margin-left:4px">⚠ Gold不足</span>' : ''}
         </div>
-        <div style="font-size:10px;color:#555;margin-bottom:4px">目標値まで強化。失敗しても続行。Gold不足で停止。</div>
+        <div style="font-size:10px;color:var(--text-disabled);margin-bottom:4px">目標値まで強化。失敗しても続行。Gold不足で停止。</div>
         ${cursedWarn}
         <button class="btn btn-secondary" style="width:100%;border-color:#3a7a3a;color:#88cc88;${selected.size===0||!canAfford?'opacity:0.5':''}"
           id="bulkEnhExecBtn" ${selected.size===0||!canAfford?'disabled':''} onclick="window._execBulkEnhance()">
@@ -12059,7 +12072,7 @@ function openBulkEnhanceModal() {
       const isActive = (rkMatch && activeRarities.has(rkMatch[1])) || (tkMatch && activeTypes.has(tkMatch[1]));
       const highlight = isActive || (isAll && noF);
       btn.style.background  = highlight ? 'var(--filter-active)' : 'var(--surface-deep)';
-      btn.style.borderColor = highlight ? 'var(--accent)' : '#444';
+      btn.style.borderColor = highlight ? 'var(--accent)' : 'var(--border-subtle)';
     });
   };
 
@@ -12158,7 +12171,7 @@ function openBulkEnhanceModal() {
       if(s.goldOut && s.startLv === s.finalLv) {
         return `<div style="color:var(--red)">✕ ${s.name} +${s.startLv} Gold不足で未処理</div>`;
       }
-      const col = s.success > 0 ? '#88cc88' : '#888';
+      const col = s.success > 0 ? '#88cc88' : 'var(--text-mid)';
       const stopMark = s.goldOut ? ' <span style="color:var(--red)">（途中停止）</span>' : '';
       return `<div style="color:${col}">✓ ${s.name} +${s.startLv}→+${s.finalLv}（成${s.success}失${s.fail}）${stopMark}</div>`;
     }).join('') + `<div style="color:var(--gold);margin-top:2px">計${totalSpent.toLocaleString()}G消費</div>`;
@@ -12202,8 +12215,8 @@ function openMercenaryModal(floor) {
       const bg   = hired ? '#0d180d' : 'var(--surface-base)';
       const brd  = hired ? '#226622' : '#252540';
       const nc   = hired ? 'var(--success)' : 'var(--text)';
-      const btnBrd = hired ? '#444' : canAfford ? '#8888ff' : '#444';
-      const btnC   = hired ? '#666' : canAfford ? '#aaaaff' : '#555';
+      const btnBrd = hired ? 'var(--border-subtle)' : canAfford ? '#8888ff' : 'var(--border-subtle)';
+      const btnC   = hired ? 'var(--text-faint)' : canAfford ? '#aaaaff' : 'var(--text-disabled)';
       const op     = hired || !canAfford ? '0.5' : '1';
       const dis    = hired || !canAfford ? 'disabled' : '';
       const btnTxt = hired ? '同行中' : '雇う';
@@ -12293,7 +12306,7 @@ function renderTopBar() {
     </div>
     <div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 2px 4px;font-size:11px">
       <span style="color:var(--muted)">Lv <span style="font-size:15px;font-weight:700;color:var(--accent2)">${p.level}</span></span>
-      <span>${cpSpan(calcCharCP(gs))} <span style="color:#666;font-size:10px">CP</span></span>
+      <span>${cpSpan(calcCharCP(gs))} <span style="color:var(--text-faint);font-size:10px">CP</span></span>
     </div>
     <div class="barsRow">
       <div class="statBar">
@@ -12461,7 +12474,7 @@ function openAnalyticsModal() {
 
       <!-- ファネル可視化 -->
       <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">📉 ファネル（新規プレイヤー）</div>
-      <div style="background:#111;border-radius:8px;padding:10px 12px">
+      <div style="background:var(--bg-deep);border-radius:8px;padding:10px 12px">
         ${funnelBar("ガイド表示",  fGuideShown, fGuideShown, "var(--accent)")}
         ${funnelBar("ガイド完読",  fGuideCompleted, fGuideShown, "var(--accent2)")}
         ${funnelBar("初回潜入",    fEntered,    fGuideShown, "var(--accent2)")}
@@ -12472,7 +12485,7 @@ function openAnalyticsModal() {
 
       <!-- ドロップポイント -->
       <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">🚪 各ステップ離脱率</div>
-      <div style="background:#111;border-radius:8px;padding:8px 12px">
+      <div style="background:var(--bg-deep);border-radius:8px;padding:8px 12px">
         ${row("ガイド後→未潜入", dropEnter,    `${fGuideShown - fEntered}件`)}
         ${row("潜入後→未帰還",   dropReturn,   `${fEntered - fReturned}件`)}
         ${row("帰還後→未販売",   dropSale,     `${fReturned - fSold}件`)}
@@ -12481,7 +12494,7 @@ function openAnalyticsModal() {
 
       <!-- ガイドスキップ分布（S52: STEP4追加） -->
       <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">⏭ ガイドスキップ分布</div>
-      <div style="background:#111;border-radius:8px;padding:8px 12px">
+      <div style="background:var(--bg-deep);border-radius:8px;padding:8px 12px">
         ${row("STEP1でスキップ", skipDist[0] + "件")}
         ${row("STEP2でスキップ", skipDist[1] + "件")}
         ${row("STEP3でスキップ", skipDist[2] + "件")}
@@ -12490,7 +12503,7 @@ function openAnalyticsModal() {
 
       <!-- 直近セッション -->
       <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">🕐 直近セッション（最大5件）</div>
-      <div style="background:#111;border-radius:8px;padding:8px 12px">
+      <div style="background:var(--bg-deep);border-radius:8px;padding:8px 12px">
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px">
           📘=完読 👁=表示 ✖=なし &nbsp;⚔=潜入 ↩=帰還 💰=販売 ✅=完結
         </div>
@@ -12932,7 +12945,7 @@ function openStaffModal() {
 
   const shopLv = gs.shop.level;
     const RARITY_LIST = [
-      { key:"normal",    label:"Normal",    color:"#aaa" },
+      { key:"normal",    label:"Normal",    color:"var(--text-subtle)" },
       { key:"rare",      label:"Rare",      color:"#4fc3f7" },
       { key:"epic",      label:"Epic",      color:"#b39ddb" },
       { key:"legendary", label:"Legendary", color:"var(--gold)" },
@@ -12979,7 +12992,7 @@ function openStaffModal() {
           const active = curR.includes(r.key);
           const short = { normal:"N", rare:"R", epic:"E", legendary:"L" }[r.key] || r.key;
           return `<span onclick="(()=>{const a=gs.shop.autoShelfRarities||(gs.shop.autoShelfRarities=[]);const idx=a.indexOf('${r.key}');idx>=0?a.splice(idx,1):a.push('${r.key}');saveGame();window._staffRefresh&&window._staffRefresh();})()"
-            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?r.color:'#444'};color:${active?r.color:'#666'};background:${active?r.color+'22':'transparent'};user-select:none">${short}</span>`;
+            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?r.color:'var(--border-subtle)'};color:${active?r.color:'var(--text-faint)'};background:${active?r.color+'22':'transparent'};user-select:none">${short}</span>`;
         }).join('');
 
         // 種別チップ（装 / 消）
@@ -12990,20 +13003,20 @@ function openStaffModal() {
         const typeChips = TYPE_DEFS.map(t => {
           const active = curT.includes(t.key);
           return `<span onclick="(()=>{const a=gs.shop.autoShelfTypes||(gs.shop.autoShelfTypes=[]);const idx=a.indexOf('${t.key}');idx>=0?a.splice(idx,1):a.push('${t.key}');saveGame();window._staffRefresh&&window._staffRefresh();})()"
-            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?t.color:'#444'};color:${active?t.color:'#666'};background:${active?t.color+'22':'transparent'};user-select:none">${t.label}</span>`;
+            style="cursor:pointer;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${active?t.color:'var(--border-subtle)'};color:${active?t.color:'var(--text-faint)'};background:${active?t.color+'22':'transparent'};user-select:none">${t.label}</span>`;
         }).join('');
 
         return `
           <div style="margin-top:6px;font-size:10px;color:var(--muted);margin-bottom:3px">自動陳列する等級：</div>
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">${rarityChips}</div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">種別：<span style="color:#555;font-size:9px">（未選択=全種類）</span></div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:3px">種別：<span style="color:var(--text-disabled);font-size:9px">（未選択=全種類）</span></div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">${typeChips}</div>`;
       })() : '';
       const cardStyle = locked
-        ? 'padding:8px 0;border-bottom:1px solid #222;opacity:0.45;'
-        : 'padding:8px 0;border-bottom:1px solid #222;';
+        ? 'padding:8px 0;border-bottom:1px solid var(--bg-mid);opacity:0.45;'
+        : 'padding:8px 0;border-bottom:1px solid var(--bg-mid);';
       const lockBadge = locked
-        ? `<span style="font-size:9px;color:#666;background:#111;border:1px solid #333;border-radius:4px;padding:1px 5px;margin-left:4px">🔒 ショップLv${reqLv}</span>`
+        ? `<span style="font-size:9px;color:var(--text-faint);background:var(--bg-deep);border:1px solid var(--border-dark);border-radius:4px;padding:1px 5px;margin-left:4px">🔒 ショップLv${reqLv}</span>`
         : '';
       return `<div style="${cardStyle}">
         <div style="display:flex;align-items:center;gap:8px">
@@ -13027,7 +13040,7 @@ function openStaffModal() {
               ${canUp ? `onclick="upgradeStaff(${hiredIdx});window._staffRefresh&&window._staffRefresh();"` : 'disabled'}>
               育成 ${upCost ? upCost.toLocaleString()+'G' : '-'}
             </button>` : ''}
-            ${hiredS ? `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;border-color:#666;color:var(--muted)"
+            ${hiredS ? `<button class="btn btn-secondary" style="font-size:10px;padding:2px 8px;border-color:var(--text-faint);color:var(--muted)"
               onclick="fireStaff(${hiredIdx});window._staffRefresh&&window._staffRefresh();">
               解雇
             </button>` : ''}
@@ -13041,7 +13054,7 @@ function openStaffModal() {
       const hiredCount = t.ids.filter(id => sh.staff.some(s => s.id === id)).length;
       const badge = hiredCount > 0 ? `<span style="font-size:9px;background:#ffcc4433;color:var(--gold);border-radius:8px;padding:1px 4px;margin-left:3px">${hiredCount}</span>` : "";
       return `<button onclick="window._staffTab='${t.key}';window._staffRefresh&&window._staffRefresh();"
-        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"#444"};background:${active?"#1a2a3a":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${t.label}${badge}</button>`;
+        style="padding:4px 10px;font-size:11px;border-radius:12px;border:1px solid ${active?"var(--accent)":"var(--border-subtle)"};background:${active?"var(--accent-bg)":"transparent"};color:${active?"var(--accent)":"var(--muted)"};cursor:pointer;white-space:nowrap">${t.label}${badge}</button>`;
     }).join("");
 
     // 初回のみ骨格生成
@@ -13168,17 +13181,17 @@ function openPrepModal() {
     const canTakeAll = inInv > 1;
     const canRetAll  = inPrep > 1;
     const btnStyle = (ok, bcol, bgcol, tcol) =>
-      `padding:3px 8px;font-size:10px;border-radius:6px;border:1px solid ${ok?bcol:"#444"};background:${ok?bgcol:"#1a1a1a"};color:${ok?tcol:"#555"};cursor:${ok?"pointer":"default"}`;
+      `padding:3px 8px;font-size:10px;border-radius:6px;border:1px solid ${ok?bcol:"var(--border-subtle)"};background:${ok?bgcol:"#1a1a1a"};color:${ok?tcol:"var(--text-disabled)"};cursor:${ok?"pointer":"default"}`;
 
-    return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #222">
+    return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--bg-mid)">
       <span class="shelfIcon rarity-${r}" style="width:36px;height:36px;font-size:20px;flex-shrink:0">${m.icon}</span>
       <span style="flex:1;font-size:13px">${m.name}</span>
       <span style="font-size:10px;color:var(--muted)">倉:${inInv}</span>
       <span style="font-size:10px;color:var(--gold)">準:${inPrep}</span>
       <button onclick="takeOutConsumable('${id}','${r}');${reopen}" ${canTake?'':'disabled'}
-        style="${btnStyle(canTake,'var(--accent)','#1a2a3a','var(--accent)')}">+1</button>
+        style="${btnStyle(canTake,'var(--accent)','var(--accent-bg)','var(--accent)')}">+1</button>
       <button onclick="takeOutAllConsumable('${id}','${r}');${reopen}" ${canTakeAll?'':'disabled'}
-        style="${btnStyle(canTakeAll,'var(--accent)','#1a2a3a','var(--accent)')}">全出</button>
+        style="${btnStyle(canTakeAll,'var(--accent)','var(--accent-bg)','var(--accent)')}">全出</button>
       <button onclick="returnConsumable('${id}','${r}');${reopen}" ${canReturn?'':'disabled'}
         style="${btnStyle(canReturn,'#664433','#1a1010','#cc8866')}">-1</button>
       <button onclick="returnAllConsumable('${id}','${r}');${reopen}" ${canRetAll?'':'disabled'}
@@ -13206,9 +13219,9 @@ function openPrepModal() {
           <span style="color:var(--muted)">🧪 自動回復：</span>
           <button onclick="window._toggleAutoHeal()" id="autoHealToggleBtn"
             style="padding:3px 10px;border-radius:12px;font-size:11px;cursor:pointer;
-              border:1px solid ${gs.dungeon.autoHeal?.enabled?'#44aa66':'#444'};
+              border:1px solid ${gs.dungeon.autoHeal?.enabled?'#44aa66':'var(--border-subtle)'};
               background:${gs.dungeon.autoHeal?.enabled?'#0a2a1a':'transparent'};
-              color:${gs.dungeon.autoHeal?.enabled?'#44dd88':'#888'}">
+              color:${gs.dungeon.autoHeal?.enabled?'#44dd88':'var(--text-mid)'}">
             ${gs.dungeon.autoHeal?.enabled?"ON":"OFF"}
           </button>
           ${gs.dungeon.autoHeal?.enabled?`
@@ -13216,9 +13229,9 @@ function openPrepModal() {
           ${[10,20,30,50].map(v=>`
             <button onclick="window._setAutoHealThreshold(${v})"
               style="padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;
-                border:1px solid ${(gs.dungeon.autoHeal?.threshold||30)===v?'#44aa66':'#333'};
+                border:1px solid ${(gs.dungeon.autoHeal?.threshold||30)===v?'#44aa66':'var(--border-dark)'};
                 background:${(gs.dungeon.autoHeal?.threshold||30)===v?'#0a2a1a':'transparent'};
-                color:${(gs.dungeon.autoHeal?.threshold||30)===v?'#44dd88':'#888'}">${v}%以下</button>`).join('')}
+                color:${(gs.dungeon.autoHeal?.threshold||30)===v?'#44dd88':'var(--text-mid)'}">${v}%以下</button>`).join('')}
           `:""}
         </div>
       </div>
@@ -13255,14 +13268,14 @@ function openQuestModal() {
     if(!def) return '';
     const done   = def.isDone(m);
     const claimed = m.claimed;
-    const borderColor = claimed ? 'var(--muted)' : done ? 'var(--green)' : '#333';
+    const borderColor = claimed ? 'var(--muted)' : done ? 'var(--green)' : 'var(--border-dark)';
     const btnHtml = claimed
       ? `<span style="font-size:10px;color:var(--muted)">受取済み</span>`
       : done
         ? `<button class="btn btn-secondary" style="padding:2px 10px;font-size:11px;border-color:var(--green);color:var(--green)"
              onclick="claimDailyMission(${idx});this.closest('.modal-overlay').remove();openQuestModal();">受取</button>`
         : `<span style="font-size:11px;color:var(--gold)">${def.progressText(m)}</span>`;
-    return `<div style="padding:8px;background:#111;border:1px solid ${borderColor};border-radius:8px;margin-bottom:6px;opacity:${claimed?'0.5':'1'}">
+    return `<div style="padding:8px;background:var(--bg-deep);border:1px solid ${borderColor};border-radius:8px;margin-bottom:6px;opacity:${claimed?'0.5':'1'}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
         <span style="font-size:12px;flex:1">${def.icon} ${m.desc}</span>
         <span style="font-size:11px;color:var(--gold);white-space:nowrap">+${m.reward.toLocaleString()}G</span>
@@ -13285,7 +13298,7 @@ function openQuestModal() {
       const cur = gs.shop.shelves.filter(s=>s?.item).map(s=>s.item).filter(i=>(rarityOrder[i.rarity]||0)>=(rarityOrder[q.rarity]||0)).length;
       progressHtml = `<span style="color:var(--gold)">${cur}/${q.count}</span>`;
     } else if(q.type==='explore')  progressHtml = `<span style="color:var(--gold)">${Math.min(gs.dungeon.clearedFloor||0,q.floor)}/${q.floor}階</span>`;
-    return `<div style="padding:8px;background:#111;border:1px solid ${isDone?'var(--green)':'#333'};border-radius:8px;margin-bottom:6px">
+    return `<div style="padding:8px;background:var(--bg-deep);border:1px solid ${isDone?'var(--green)':'var(--border-dark)'};border-radius:8px;margin-bottom:6px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
         <span style="font-size:12px;flex:1">${def.icon} ${q.desc}</span>
         <span style="font-size:11px;color:var(--gold);white-space:nowrap">+${q.reward.toLocaleString()}G</span>
@@ -13344,7 +13357,7 @@ function openBagModal() {
                <span style="font-size:12px;color:var(--muted)">次の拡張（+2枠）</span>
                <span style="font-size:13px;color:${p.gold >= nextCost?'var(--gold)':'var(--red)'}">${nextCost.toLocaleString()}G</span>
              </div>
-             ${!canBuy ? `<div style="font-size:11px;color:#666;text-align:right;margin-bottom:8px">あと ${(nextCost - p.gold).toLocaleString()}G</div>` : '<div style="margin-bottom:8px"></div>'}
+             ${!canBuy ? `<div style="font-size:11px;color:var(--text-faint);text-align:right;margin-bottom:8px">あと ${(nextCost - p.gold).toLocaleString()}G</div>` : '<div style="margin-bottom:8px"></div>'}
              <button class="btn btn-gold" style="${canBuy?'':'opacity:0.4'}" ${canBuy?'':'disabled'}
                onclick="buyLootSlot();this.closest('.modal-overlay').remove();openBagModal();">🎒 鞄を大きくする</button>`
         }
@@ -13395,14 +13408,14 @@ function buildCombatSkillBtn() {
     const def = available[0];
     const mpCost = Math.max(1, def.mpCost - costReduce);
     const canUse = mp >= mpCost;
-    return `<button class="btn btn-secondary" style="color:${canUse?"var(--accent2)":"#555"};border-color:${canUse?"#6a4a9a":"#333"}"
+    return `<button class="btn btn-secondary" style="color:${canUse?"var(--accent2)":"var(--text-disabled)"};border-color:${canUse?"#6a4a9a":"var(--border-dark)"}"
       onclick="${canUse?`useCombatSkill('${def.id}')`:''}"
       ${canUse?"":"disabled"}>${def.icon} ${def.name} (${mpCost}MP)</button>`;
   }
   // 複数ある場合はモーダル
   // 使用可能スキルが1つでもあれば有効、なければdisabled
   const _hasUsable = available.some(def => mp >= Math.max(1, def.mpCost - costReduce));
-  return `<button class="btn btn-secondary" style="color:${_hasUsable?'var(--accent2)':'#555'};border-color:${_hasUsable?'#6a4a9a':'#333'}"
+  return `<button class="btn btn-secondary" style="color:${_hasUsable?'var(--accent2)':'var(--text-disabled)'};border-color:${_hasUsable?'#6a4a9a':'var(--border-dark)'}"
     onclick="${_hasUsable?'openCombatSkillModal()':''}"
     ${_hasUsable?'':'disabled'}>✨ スキル <span style="font-size:11px;opacity:0.8">(${mp}MP)</span></button>`;
 }
@@ -13429,14 +13442,14 @@ function openCombatSkillModal() {
         const canUse = mp >= mpCost;
         return `<button onclick="${canUse?`overlay.remove();useCombatSkill('${def.id}')`:''}"
           style="width:100%;padding:12px;margin-bottom:8px;border-radius:8px;
-            border:1px solid ${canUse?"#6a4a9a":"#333"};
+            border:1px solid ${canUse?"#6a4a9a":"var(--border-dark)"};
             background:${canUse?"#1a1020":"transparent"};
-            color:${canUse?"#e0e0f0":"#555"};
+            color:${canUse?"#e0e0f0":"var(--text-disabled)"};
             cursor:${canUse?"pointer":"not-allowed"};text-align:left"
           ${canUse?"":"disabled"}>
           <span style="font-size:18px">${def.icon}</span>
           <span style="font-weight:700;margin:0 8px">${def.name}</span>
-          <span style="font-size:11px;color:${canUse?"var(--accent2)":"#555"}">MP ${mpCost}${costReduce>0?` <span style="font-size:10px;color:#88cc88">(-${costReduce})</span>`:""}</span>
+          <span style="font-size:11px;color:${canUse?"var(--accent2)":"var(--text-disabled)"}">MP ${mpCost}${costReduce>0?` <span style="font-size:10px;color:#88cc88">(-${costReduce})</span>`:""}</span>
           <div style="font-size:11px;color:var(--muted);margin-top:4px">${def.desc}</div>
         </button>`;
       }).join("")}
@@ -13474,7 +13487,7 @@ function renderDungeon(sc, ab) {
           <div style="background:var(--surface-deep);border-radius:6px;height:8px;overflow:hidden">
             <div id="_ar_bar" style="height:100%;width:${progPct.toFixed(1)}%;background:var(--accent2);border-radius:6px;transition:width 0.4s"></div>
           </div>
-          <div style="font-size:10px;color:#555;margin-top:4px">${totalSec}秒間隔 / ${cfg.dropMin}〜${cfg.dropMax}個/周</div>
+          <div style="font-size:10px;color:var(--text-disabled);margin-top:4px">${totalSec}秒間隔 / ${cfg.dropMin}〜${cfg.dropMax}個/周</div>
         </div>
       </div>`;
     ab.innerHTML = `
@@ -13565,7 +13578,7 @@ function renderDungeon(sc, ab) {
               return `<div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:6px">
                 <span style="color:var(--muted)">推奨CP</span>
                 <span style="color:${_col};font-weight:700">⚡${_rec}</span>
-                <span style="color:#555">／</span>
+                <span style="color:var(--text-disabled)">／</span>
                 <span style="color:var(--muted)">現在CP</span>
                 <span style="color:${_col};font-weight:700">⚡${_cp}</span>
                 ${!_ok ? '<span style="color:var(--danger);font-size:10px;margin-left:2px">⚠ 危険</span>' : ''}
@@ -13589,7 +13602,7 @@ function renderDungeon(sc, ab) {
       ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#0d180d;border:1px solid #226622;border-radius:8px;margin-bottom:6px">
           <span style="font-size:16px">${merc.icon}</span>
           <div style="flex:1;font-size:11px;color:var(--success)">${merc.name}が同行中（-${mercCost.toLocaleString()}G）</div>
-          <button style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid #444;background:var(--surface-deep);color:var(--muted);cursor:pointer"
+          <button style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--surface-deep);color:var(--muted);cursor:pointer"
             onclick="openMercenaryModal(${selFloor})">変更</button>
         </div>`
       : '';
@@ -13725,7 +13738,7 @@ function renderCombat(sc, ab, c) {
           </div>
         </div>
         ${en.chargePending?`<div style="color:#ffaa00;font-size:11px;margin-top:6px;text-align:center">⚡ 溜め中…</div>`:""}
-        ${en.guardActive?`<div style="color:#4488ff;font-size:11px;margin-top:6px;text-align:center">🛡 防御中</div>`:""}
+        ${en.guardActive?`<div style="color:var(--info);font-size:11px;margin-top:6px;text-align:center">🛡 防御中</div>`:""}
       </div>
       <div class="eventBox" style="text-align:left;flex:1;height:auto;min-height:60px;margin-top:8px">${renderLogs()}</div>
     `;
@@ -13808,7 +13821,7 @@ function renderPassiveIncomeSection() {
     <div class="cardTitle">📦 ギルド支給品</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px">60分蓄積ごとにランダム素材1〜3個を受け取れます</div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:6px">支給素材: ${grPool.map(m=>`${m.icon}${m.name}`).join("・")}</div>
-    <div style="background:#111;border-radius:4px;height:6px;margin-bottom:4px;overflow:hidden">
+    <div style="background:var(--bg-deep);border-radius:4px;height:6px;margin-bottom:4px;overflow:hidden">
       <div style="height:100%;width:${grPct}%;background:${grReady?'var(--gold)':'#446688'};transition:width 0.3s"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:8px">
@@ -13907,7 +13920,7 @@ function renderShop(sc, ab) {
         ? `<div style="font-size:8px;color:var(--gold);font-weight:700">🏷 SALE -20%</div>` : '';
       const specialClass = slot.specialType ? `special-${slot.specialType}` : "";
       const specialHeaderBadge = slot.specialType
-        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'var(--success)':'#888'};
+        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'var(--success)':'var(--text-mid)'};
             position:absolute;top:4px;left:4px;line-height:1">${specialDef.icon}</div>`
         : "";
       return `<div class="shelfSlot occupied ${rarityClass} ${specialClass}" onclick="openUnlistModal(${idx})" style="cursor:pointer;position:relative">
@@ -13916,7 +13929,7 @@ function renderShop(sc, ab) {
           ${dispIcon}
           ${(!isUnid && (item.enhLv||0) > 0) ? `<span class="invCardEnhLv">+${item.enhLv}</span>` : ""}
         </div>
-        <div class="shelfItemName" style="color:${isUnid?'#aaa':''}">${dispName}${trendMark}</div>
+        <div class="shelfItemName" style="color:${isUnid?'var(--text-subtle)':''}">${dispName}${trendMark}</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px">${dispPrice}</div>
         ${!isUnid?(slot.visitor
           ? `<div style="font-size:9px;color:#aaddff;margin-top:2px;font-weight:700">${slot.visitor.icon}${slot.visitor.name}が見ている…</div>`
@@ -13931,7 +13944,7 @@ function renderShop(sc, ab) {
     const _trendHit  = _specType && _trendNow && _specType === gs.shop.trend?.type;
     const _specClass = _specType ? `special-${_specType}` : "";
     const _specLabel = _specType
-      ? `<div style="font-size:9px;font-weight:700;color:${_trendHit?'var(--gold)':'#888'};margin-top:2px">${_specDef.icon} ${_specDef.label}${_trendHit?" 🔥":""}</div>` : '';
+      ? `<div style="font-size:9px;font-weight:700;color:${_trendHit?'var(--gold)':'var(--text-mid)'};margin-top:2px">${_specDef.icon} ${_specDef.label}${_trendHit?" 🔥":""}</div>` : '';
     return `<div class="shelfSlot ${_specClass}" onclick="openListModal(${idx})" style="position:relative">
       <div class="shelfEmpty">+</div>
       <div class="shelfEmptyText">タップして陳列</div>
@@ -14067,7 +14080,7 @@ function updateShopTick() {
           ${dispIcon}
           ${(!isUnid && enhLv2 > 0) ? `<span class="invCardEnhLv">+${enhLv2}</span>` : ""}
         </div>
-        <div class="shelfItemName" style="color:${isUnid?'#aaa':''}">${dispName}${trendMark}</div>
+        <div class="shelfItemName" style="color:${isUnid?'var(--text-subtle)':''}">${dispName}${trendMark}</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px">${dispPrice}</div>
         ${!isUnid?(slot?.visitor
           ? `<div style="font-size:9px;color:#aaddff;margin-top:2px;font-weight:700">${slot.visitor.icon}${slot.visitor.name}が見ている…</div>`
@@ -14095,7 +14108,7 @@ function updateShopTick() {
       const _trendHit2  = _emptySpec && _trendNow2 && _emptySpec === gs.shop.trend?.type;
       const _emptyClass = `shelfSlot${_emptySpec ? " special-"+_emptySpec : ""}`;
       const _emptyLabel = _emptySpec
-        ? `<div style="font-size:9px;font-weight:700;color:${_trendHit2?'var(--gold)':'#888'};margin-top:2px">${_emptyDef.icon} ${_emptyDef.label}${_trendHit2?" 🔥":""}</div>` : "";
+        ? `<div style="font-size:9px;font-weight:700;color:${_trendHit2?'var(--gold)':'var(--text-mid)'};margin-top:2px">${_emptyDef.icon} ${_emptyDef.label}${_trendHit2?" 🔥":""}</div>` : "";
       if(el.className !== _emptyClass || !el.querySelector(".shelfEmpty")) {
         el.className = _emptyClass;
         el.onclick = () => openListModal(idx);
@@ -14141,8 +14154,8 @@ function openBulkUnlistModal() {
     .sort((a,b) => (RARITY_ORDER[a]||0)-(RARITY_ORDER[b]||0));
   const typeKeys = [...new Set(listedSlots.map(s => ITEM_MASTER[s.slot.item.itemId]?.type).filter(Boolean))];
 
-  const RARITY_COLOR = { normal:"#aaa", rare:"#4488ff", epic:"#9b59b6", legendary:"#e6ac2e" };
-  const BTN = "padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #333;background:transparent;color:var(--muted)";
+  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"#9b59b6", legendary:"#e6ac2e" };
+  const BTN = "padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid var(--border-dark);background:transparent;color:var(--muted)";
 
   const render = () => {
     // フィルター適用
@@ -14156,8 +14169,8 @@ function openBulkUnlistModal() {
 
     const rarityBtns = rarityKeys.map(rk =>
       `<button onclick="window._bulkUnlistFilter('rarity','${rk}')"
-        style="${BTN};color:${selRarities.has(rk)?RARITY_COLOR[rk]:'#888'};
-          border-color:${selRarities.has(rk)?RARITY_COLOR[rk]:'#333'};
+        style="${BTN};color:${selRarities.has(rk)?RARITY_COLOR[rk]:'var(--text-mid)'};
+          border-color:${selRarities.has(rk)?RARITY_COLOR[rk]:'var(--border-dark)'};
           background:${selRarities.has(rk)?'var(--surface-deep)':'transparent'}">
         ${rk[0].toUpperCase()}
       </button>`
@@ -14179,9 +14192,9 @@ function openBulkUnlistModal() {
       const specDef = getShelfSpecialDef(slot.specialType);
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1a1a2a;cursor:pointer"
         onclick="window._bulkUnlistToggle(${idx})">
-        <div style="width:20px;height:20px;border:2px solid ${isSel?'#4488ff':'#555'};border-radius:4px;
+        <div style="width:20px;height:20px;border:2px solid ${isSel?'var(--info)':'var(--text-disabled)'};border-radius:4px;
           background:${isSel?'#0a1a3a':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          ${isSel?'<span style="color:#4488ff;font-size:12px">✓</span>':''}
+          ${isSel?'<span style="color:var(--info);font-size:12px">✓</span>':''}
         </div>
         <div style="font-size:20px;flex-shrink:0">${isUnid?'❓':m.icon}</div>
         <div style="flex:1;min-width:0">
@@ -14208,7 +14221,7 @@ function openBulkUnlistModal() {
           ${[...new Set(gs.shop.shelves.filter(s=>s?.item&&s?.specialType).map(s=>s.specialType))].map(t=>{
             const def=getShelfSpecialDef(t);
             return `<button onclick="window._bulkUnlistBySpecial('${t}')"
-              style="padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #444;background:transparent;color:var(--muted)">
+              style="padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid var(--border-subtle);background:transparent;color:var(--muted)">
               ${def.icon}${def.label}
             </button>`;
           }).join('')}
@@ -14227,7 +14240,7 @@ function openBulkUnlistModal() {
       </div>
       <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
         <button class="btn btn-secondary" style="width:100%;margin-bottom:6px;
-          border-color:${selCount>0?'var(--danger)':'#333'};color:${selCount>0?'var(--danger)':'#555'}"
+          border-color:${selCount>0?'var(--danger)':'var(--border-dark)'};color:${selCount>0?'var(--danger)':'var(--text-disabled)'}"
           id="bulkUnlistConfirm" ${selCount===0?'disabled':''}>
           📥 ${selCount}件を取り下げる
         </button>
@@ -14314,9 +14327,9 @@ function openShelfSettingsModal() {
       const isFlowing = trendNow && t.id && t.id === trendType;
       return `<button onclick="window._shelfSetType(${slotIdx},'${t.id||''}')"
         style="padding:3px 8px;border-radius:10px;font-size:10px;cursor:pointer;
-          border:1px solid ${isCur?'var(--accent2)':isFlowing?'#ffaa00':'#333'};
+          border:1px solid ${isCur?'var(--accent2)':isFlowing?'#ffaa00':'var(--border-dark)'};
           background:${isCur?'#1a0a2e':isFlowing?'#1a1000':'transparent'};
-          color:${isCur?'var(--accent2)':isFlowing?'var(--gold)':'#888'}">
+          color:${isCur?'var(--accent2)':isFlowing?'var(--gold)':'var(--text-mid)'}">
         ${t.icon}${t.label}${isFlowing?' 🔥':''}
       </button>`;
     }).join('');
@@ -14344,7 +14357,7 @@ function openShelfSettingsModal() {
     const allChips = SHELF_SPECIAL_TYPES.map(t =>
       `<button onclick="window._shelfSetAll('${t.id||''}')"
         style="padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;
-          border:1px solid #444;background:var(--surface-deep);color:var(--accent2)">
+          border:1px solid var(--border-subtle);background:var(--surface-deep);color:var(--accent2)">
         ${t.icon}${t.label}
       </button>`
     ).join('');
@@ -14355,7 +14368,7 @@ function openShelfSettingsModal() {
         <div class="modal-title" style="margin-bottom:8px">🏪 棚の特化設定</div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:6px">一括設定</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${allChips}</div>
-        <div style="font-size:10px;color:#666">一致で売値+${SHELF_SPECIAL_BONUS.sellPct}% / 速度+${SHELF_SPECIAL_BONUS.speedPct}%
+        <div style="font-size:10px;color:var(--text-faint)">一致で売値+${SHELF_SPECIAL_BONUS.sellPct}% / 速度+${SHELF_SPECIAL_BONUS.speedPct}%
           <span style="color:var(--gold)">（流行一致で売値+30% / 速度+100%）</span></div>
       </div>
       <div id="shelfSettingsScroll" style="flex:1;overflow-y:auto;padding:0 16px">${buildRows()}</div>
@@ -14465,25 +14478,25 @@ function openListModal(slotIdx) {
   let   sortEnhFirst   = false; // trueで強化済み優先
 
   // ボタンサイズ共通スタイル
-  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid #444;background:#585880;transition:background 0.1s,border 0.1s';
+  const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:#585880;transition:background 0.1s,border 0.1s';
 
   // 骨格を初回のみ生成（未鑑定ボタンを末尾に追加）
   const rarityBtns = [
     ...rarityKeys.map(rk => {
       const rc = RARITY_MASTER[rk];
       return `<button data-filter="rarity:${rk}" title="${rc?.label||rk}"
-        style="${BTN};color:${rc?.color||'#fff'};font-weight:700;font-size:12px"
+        style="${BTN};color:${rc?.color||'var(--text-white)'};font-weight:700;font-size:12px"
         >${RARITY_SHORT[rk]||rk[0].toUpperCase()}</button>`;
     }),
     // 未鑑定ボタン：未鑑定品がある場合のみ表示
     ...(hasUnidentified
       ? [`<button data-filter="rarity:unidentified" title="未鑑定のみ表示"
-          style="${BTN};color:#888;font-weight:700;font-size:11px;border-style:dashed">❓</button>`]
+          style="${BTN};color:var(--text-mid);font-weight:700;font-size:11px;border-style:dashed">❓</button>`]
       : []),
   ].join('');
 
   const typeBtns = typeKeys.map(tk =>
-    `<button data-filter="type:${tk}" title="${tk}" style="${BTN};color:${TYPE_COLOR[tk]||'#ccc'}">${TYPE_ICON[tk]||tk[0]}</button>`
+    `<button data-filter="type:${tk}" title="${tk}" style="${BTN};color:${TYPE_COLOR[tk]||'var(--text-light)'}">${TYPE_ICON[tk]||tk[0]}</button>`
   ).join('');
 
   mc.style.cssText = "max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;";
@@ -14495,7 +14508,7 @@ function openListModal(slotIdx) {
         <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
           <button data-filter="select" title="表示中を上から選択" style="${BTN};font-size:14px">✅</button>
           <button data-filter="clear"  title="選択解除"           style="${BTN};font-size:14px">❌</button>
-          <div style="width:1px;height:20px;background:#333;margin:0 2px;flex-shrink:0"></div>
+          <div style="width:1px;height:20px;background:var(--border-dark);margin:0 2px;flex-shrink:0"></div>
           <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none">
             ${rarityBtns}
             <button data-filter="rarity:all" title="全レアリティ表示"
@@ -14503,7 +14516,7 @@ function openListModal(slotIdx) {
           </div>
         </div>
         <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none;margin-bottom:3px">${typeBtns}</div>
-        <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid #222">
+        <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid var(--bg-mid)">
           <span style="font-size:10px;color:var(--muted);flex-shrink:0">並替</span>
           <button data-sort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:var(--success)">⚒↑</button>
           <button data-sort="enh_asc"  title="通常優先"     style="${BTN};font-size:11px;font-weight:700;color:var(--muted)">⚒↓</button>
@@ -14532,18 +14545,18 @@ function openListModal(slotIdx) {
       if(f === "rarity:unidentified") {
         const isUnidActive = activeRarities.has("unidentified");
         btn.style.background  = isUnidActive ? '#1a1a1a' : 'var(--surface-deep)';
-        btn.style.borderColor = isUnidActive ? '#888' : '#444';
+        btn.style.borderColor = isUnidActive ? 'var(--text-mid)' : 'var(--border-subtle)';
         btn.style.borderStyle = isUnidActive ? 'solid' : 'dashed';
         return;
       }
       btn.style.background  = (isActive||isAllActive) ? 'var(--filter-active)' : 'var(--surface-deep)';
-      btn.style.borderColor = (isActive||isAllActive) ? 'var(--accent)' : '#333';
+      btn.style.borderColor = (isActive||isAllActive) ? 'var(--accent)' : 'var(--border-dark)';
     });
     mc.querySelectorAll("[data-sort]").forEach(btn => {
       const s = btn.dataset.sort;
       const isActive = (s === "enh_desc" && sortEnhFirst) || (s === "enh_asc" && !sortEnhFirst);
       btn.style.background  = isActive ? '#1a2a1a' : 'var(--surface-deep)';
-      btn.style.borderColor = isActive ? '#44cc44' : '#333';
+      btn.style.borderColor = isActive ? '#44cc44' : 'var(--border-dark)';
     });
   };
 
@@ -14629,7 +14642,7 @@ function openListModal(slotIdx) {
     const savedTop = scroll.scrollTop;
 
     // カウント・確定ボタンのみ更新（リフロー最小化）
-    countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span> / 空き棚 <span style="color:var(--gold);font-weight:700">${emptySlots}</span>`;
+    countEl.innerHTML = `選択中 <span style="color:var(--text-white);font-weight:700">${selected.size}</span> / 空き棚 <span style="color:var(--gold);font-weight:700">${emptySlots}</span>`;
     confirmBtn.textContent = `🏪 ${selected.size}個を出品`;
     confirmBtn.disabled = selected.size === 0;
 
@@ -14678,19 +14691,19 @@ function openListModal(slotIdx) {
       const rowOpacity = isFull ? "0.4" : isUnid ? "0.55" : isEnhanced ? "0.7" : "1";
       const pointerEvt = isFull ? "none" : "auto";
       // 未鑑定は等級色を出さず灰色で表示
-      const nameColor  = isUnid ? "#666" : r.color;
+      const nameColor  = isUnid ? "var(--text-faint)" : r.color;
       const iconClass  = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
 
       const row = document.createElement("div");
-      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #222;cursor:pointer;opacity:${rowOpacity};pointer-events:${pointerEvt}`;
+      row.style.cssText = `display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bg-mid);cursor:pointer;opacity:${rowOpacity};pointer-events:${pointerEvt}`;
       row.innerHTML = `
-        <div style="width:20px;height:20px;border:2px solid ${checked?'var(--accent)':isUnid?'#333':'#555'};border-radius:4px;background:${checked?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          ${checked ? '<span style="color:#fff;font-size:12px;line-height:1">✓</span>' : ''}
+        <div style="width:20px;height:20px;border:2px solid ${checked?'var(--accent)':isUnid?'var(--border-dark)':'var(--text-disabled)'};border-radius:4px;background:${checked?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          ${checked ? '<span style="color:var(--text-white);font-size:12px;line-height:1">✓</span>' : ''}
         </div>
         <div class="itemIcon ${iconClass}" style="width:32px;height:32px;font-size:18px;flex-shrink:0">${isUnid ? "❓" : m.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;color:${nameColor};font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${baseName}${isUnid ? ' <span style="font-size:10px;color:#555;font-weight:400">（要鑑定）</span>' : ''}${enhBadge}${affixBadge}${numBadge}${!isUnid && item.cursed ? ' <span style="color:#cc44cc">💀</span>' : ""}
+            ${baseName}${isUnid ? ' <span style="font-size:10px;color:var(--text-disabled);font-weight:400">（要鑑定）</span>' : ''}${enhBadge}${affixBadge}${numBadge}${!isUnid && item.cursed ? ' <span style="color:#cc44cc">💀</span>' : ""}
           </div>
           <div style="font-size:11px;color:var(--muted)">${m.type}　${isUnid ? "?" : itemPrice(item)}G</div>
         </div>
@@ -14910,7 +14923,7 @@ function renderInventory(sc, ab) {
   ];
   const filterTabs = filterDefs.map(f => `
     <button onclick="invFilterKey='${f.key}';render()"
-      style="padding:4px 12px;font-size:12px;border-radius:12px;border:1px solid ${invFilterKey===f.key?'var(--accent)':'#444'};background:${invFilterKey===f.key?'#1a2a3a':'transparent'};color:${invFilterKey===f.key?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
+      style="padding:4px 12px;font-size:12px;border-radius:12px;border:1px solid ${invFilterKey===f.key?'var(--accent)':'var(--border-subtle)'};background:${invFilterKey===f.key?'var(--accent-bg)':'transparent'};color:${invFilterKey===f.key?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
       ${f.label}
     </button>`).join("");
 
@@ -14929,7 +14942,7 @@ function renderInventory(sc, ab) {
       ? `invSortAsc=!invSortAsc;render()`
       : `invSortKey='${s.key}';invSortAsc=false;render()`;
     return `<button onclick="${onclick}"
-      style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid ${active?'var(--accent)':'#444'};background:${active?'#1a2a3a':'#111'};color:${active?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
+      style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid ${active?'var(--accent)':'var(--border-subtle)'};background:${active?'var(--accent-bg)':'var(--bg-deep)'};color:${active?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
       ${s.label}${arrow}
     </button>`;
   }).join("");
@@ -14995,7 +15008,7 @@ function openItemDetail(uid) {
           <div style="font-size:11px;color:var(--muted);margin-top:6px">鑑定費用: ${identifyCost(item)}G</div>
           ${gs.player.gold >= identifyCost(item)
             ? `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:#888800;color:var(--unidentified)" onclick="identifyItem('${uid}')">🔍 鑑定する（${identifyCost(item)}G）</button>`
-            : `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:#555;color:#666;opacity:0.5" disabled>🔍 Gold不足（${identifyCost(item)}G必要）</button>`
+            : `<button class="btn btn-secondary" style="margin-top:8px;width:100%;border-color:var(--text-disabled);color:var(--text-faint);opacity:0.5" disabled>🔍 Gold不足（${identifyCost(item)}G必要）</button>`
           }
           ` : `<div style="font-size:11px;color:var(--muted);margin-top:6px">ショップLv2で鑑定解禁</div>`}
         </div>
@@ -15039,7 +15052,7 @@ function openItemDetail(uid) {
         const canPur  = item.identified && item.cursed;
         const btnStyle = (active, color) => active
           ? `border-color:${color};color:${color};cursor:pointer`
-          : `border-color:#333;color:#555;cursor:not-allowed;opacity:0.4`;
+          : `border-color:var(--border-dark);color:var(--text-disabled);cursor:not-allowed;opacity:0.4`;
 
         // 強化+12到達時は昇級ボタンに切り替え
         let enhBtn = "";
@@ -15254,7 +15267,7 @@ function renderStatus(sc, ab) {
     { key:"seal",     icon:"🔴",  label:"印章" },
   ];
 
-  const rarityBorder = { normal:"#27ae60", rare:"#4488ff", epic:"#9b59b6", legendary:"#e6ac2e" };
+  const rarityBorder = { normal:"#27ae60", rare:"var(--info)", epic:"#9b59b6", legendary:"#e6ac2e" };
 
   const renderSlotCell = (def) => {
     const uid  = gs.equipped[def.key];
@@ -15264,13 +15277,13 @@ function renderStatus(sc, ab) {
     if(!item || !m) {
       const onclick = inDungeon ? "" : `onclick="openEquipSelectModal('${def.key}')"`;
       const cursor  = inDungeon ? "cursor:default;opacity:0.35" : "cursor:pointer";
-      return `<div ${onclick} style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:8px;border:1px dashed ${inDungeon ? "#333" : "var(--accent)"};background:var(--surface-base);${cursor}">
-        <div style="font-size:26px;line-height:1;color:${inDungeon ? "#333" : "var(--accent)"}">${inDungeon ? def.icon : "＋"}</div>
+      return `<div ${onclick} style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:8px;border:1px dashed ${inDungeon ? "var(--border-dark)" : "var(--accent)"};background:var(--surface-base);${cursor}">
+        <div style="font-size:26px;line-height:1;color:${inDungeon ? "var(--border-dark)" : "var(--accent)"}">${inDungeon ? def.icon : "＋"}</div>
         <div style="font-size:11px;color:var(--muted);text-align:center;line-height:1.2">${def.label}</div>
       </div>`;
     }
 
-    const border     = rarityBorder[item.rarity] || "#555";
+    const border     = rarityBorder[item.rarity] || "var(--text-disabled)";
     const enhBadge   = (item.enhLv||0) > 0 ? `<div style="font-size:10px;color:var(--success);font-weight:700;line-height:1">+${item.enhLv}</div>` : "";
     const curseBadge = (item.cursed && item.curse && item.curse.type === "bind")
       ? `<div style="font-size:10px;color:var(--curse);line-height:1">⛓</div>`
@@ -15395,8 +15408,8 @@ function renderStatus(sc, ab) {
   const setSection = (() => {
     const activeSets = r_set.setBonuses || [];
     if(activeSets.length === 0) {
-      return `<div style="margin-top:12px;padding:10px;background:var(--surface-base);border-radius:8px;border:1px solid #222">
-        <div style="font-size:11px;color:#555;text-align:center">装備セットなし</div>
+      return `<div style="margin-top:12px;padding:10px;background:var(--surface-base);border-radius:8px;border:1px solid var(--bg-mid)">
+        <div style="font-size:11px;color:var(--text-disabled);text-align:center">装備セットなし</div>
       </div>`;
     }
     return activeSets.map(({ set, count, activeEffects }) => {
@@ -15404,8 +15417,8 @@ function renderStatus(sc, ab) {
       const bars = set.effects.map(e => {
         const achieved = count >= e.need;
         return `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;margin-bottom:4px">
-          <span style="font-size:10px;color:${achieved?"var(--gold)":"#444"};font-weight:700">${e.need}部位</span>
-          <span style="font-size:10px;color:${achieved?"#e0e0f0":"#555"}">${e.desc}</span>
+          <span style="font-size:10px;color:${achieved?"var(--gold)":"var(--border-subtle)"};font-weight:700">${e.need}部位</span>
+          <span style="font-size:10px;color:${achieved?"#e0e0f0":"var(--text-disabled)"}">${e.desc}</span>
           ${achieved?'<span style="font-size:9px;color:#44ff88">✓</span>':''}
         </span>`;
       }).join('');
@@ -15529,7 +15542,7 @@ function openUnequipModal(slot, uid) {
       const _canRef = !!REFORGE_MASTER[item.rarity] && (item.affixes||[]).length > 0 && !item.cursed && !item.locked;
       const _btnStyle = (active, color) => active
         ? `border-color:${color};color:${color};cursor:pointer`
-        : `border-color:#333;color:#555;cursor:not-allowed;opacity:0.4`;
+        : `border-color:var(--border-dark);color:var(--text-disabled);cursor:not-allowed;opacity:0.4`;
 
       // 強化 or 昇級
       let _enhBtn = "";
@@ -15782,7 +15795,7 @@ function openCollectionModal(initTab) {
 
   const RARITIES    = ["normal","rare","epic","legendary"];
   const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
-  const RARITY_COLS  = { normal:"#888", rare:"#4488ff", epic:"#9b59b6", legendary:"#e6ac2e" };
+  const RARITY_COLS  = { normal:"var(--text-mid)", rare:"var(--info)", epic:"#9b59b6", legendary:"#e6ac2e" };
 
   // ── 固定ヘッダー（進捗バー）──
   const header = document.createElement("div");
@@ -15870,7 +15883,7 @@ function openCollectionModal(initTab) {
           const k = `${i.itemId}_${i.rarity}`;
           if((invMap[k] ?? -1) < (i.enhLv||0)) invMap[k] = (i.enhLv||0);
         });
-        const rCol = RARITY_MASTER[rarity]?.color || '#ccc';
+        const rCol = RARITY_MASTER[rarity]?.color || 'var(--text-light)';
         const rows = items.map(itemId => {
           const m      = ITEM_MASTER[itemId];
           if(!m) return '';
@@ -15882,16 +15895,16 @@ function openCollectionModal(initTab) {
           // 収集状態
           let colMark, colCol;
           if(colEnh < 0) {
-            colMark = '✗ 未収集'; colCol = '#555';
+            colMark = '✗ 未収集'; colCol = 'var(--text-disabled)';
           } else if(colEnh >= goal) {
-            colMark = `✓ +${colEnh}`; colCol = goal > 0 ? '#4488ff' : '#44cc88';
+            colMark = `✓ +${colEnh}`; colCol = goal > 0 ? 'var(--info)' : '#44cc88';
           } else {
             colMark = `△ +${colEnh}（★${goal}目標未達）`; colCol = '#cc9933';
           }
 
           // 格納庫在庫
           let invMark;
-          if(invEnh < 0)        invMark = `<span style="color:#444">在庫なし</span>`;
+          if(invEnh < 0)        invMark = `<span style="color:var(--border-subtle)">在庫なし</span>`;
           else if(invEnh >= goal) invMark = `<span style="color:#44aa44">格納庫 +${invEnh}</span>`;
           else                   invMark = `<span style="color:#cc9933">格納庫 +${invEnh}（不足）</span>`;
 
@@ -15909,7 +15922,7 @@ function openCollectionModal(initTab) {
       // カード1枚分のHTMLを生成するヘルパー
       // step: 表示する★段階（-1=進行中モード、0〜12=達成済み履歴表示）
       const makeCard = (themeId, theme, c, rarity, rLbl, step, isHistory) => {
-        const DONE_COL = "#4488ff";
+        const DONE_COL = "var(--info)";
         const GOLD_COL = "#e6ac2e";
         const WIP_COL  = "#cc9933";
         const partLbl  = (theme.isAcc||theme.isSlot) ? "" : c.label;
@@ -15933,9 +15946,9 @@ function openCollectionModal(initTab) {
               onclick="window._colCardToggle('${themeId}','${c.part}','${rarity}')">
             <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
               <span style="font-size:10px;font-weight:700;color:${col}">${label}</span>
-              <span style="font-size:9px;color:${_ckOpen?'#aaa':col};margin-left:auto">${_ckOpen?'▼':'▶'}</span>
+              <span style="font-size:9px;color:${_ckOpen?'var(--text-subtle)':col};margin-left:auto">${_ckOpen?'▼':'▶'}</span>
             </div>
-            <div style="background:#111;border-radius:3px;height:3px;margin-bottom:3px;overflow:hidden">
+            <div style="background:var(--bg-deep);border-radius:3px;height:3px;margin-bottom:3px;overflow:hidden">
               <div style="height:100%;width:100%;background:${col};border-radius:3px"></div>
             </div>
             <div style="font-size:9px;color:${isMax?'#e6c84a':'#88aaff'}">${rwStr||"—"}</div>
@@ -15946,11 +15959,11 @@ function openCollectionModal(initTab) {
           const gotCount = c.items.filter(id => (maxEnh[id+"_"+rarity] ?? -1) >= targetStep).length;
           const progW    = Math.min(100, gotCount / c.items.length * 100).toFixed(0);
           const inProgress = gotCount > 0;
-          const borderCol  = inProgress ? WIP_COL : '#555';
-          const bgCol      = inProgress ? '#1a1500' : '#111';
-          const labelCol   = inProgress ? WIP_COL : '#aaa';
-          const barCol     = inProgress ? WIP_COL : '#666';
-          const rwCol      = inProgress ? '#aa8833' : '#888';
+          const borderCol  = inProgress ? WIP_COL : 'var(--text-disabled)';
+          const bgCol      = inProgress ? '#1a1500' : 'var(--bg-deep)';
+          const labelCol   = inProgress ? WIP_COL : 'var(--text-subtle)';
+          const barCol     = inProgress ? WIP_COL : 'var(--text-faint)';
+          const rwCol      = inProgress ? '#aa8833' : 'var(--text-mid)';
           const label      = targetStep === 0
             ? `[${rLbl}]${partLbl}`
             : `[${rLbl}]${partLbl} ★${targetStep}`;
@@ -15969,7 +15982,7 @@ function openCollectionModal(initTab) {
               <span style="font-size:10px;font-weight:700;color:${labelCol}">${label}</span>
               <span style="font-size:9px;color:${inProgress?WIP_COL:'#999'};margin-left:auto">${gotCount}/${c.items.length} ${_ck2Open?'▼':'▶'}</span>
             </div>
-            <div style="background:#111;border-radius:3px;height:3px;margin-bottom:3px;overflow:hidden">
+            <div style="background:var(--bg-deep);border-radius:3px;height:3px;margin-bottom:3px;overflow:hidden">
               <div style="height:100%;width:${progW}%;background:${barCol};border-radius:3px"></div>
             </div>
             <div style="font-size:9px;color:${rwCol}">${rwStr||""}</div>
@@ -16022,12 +16035,12 @@ function openCollectionModal(initTab) {
         }
         const hasDone   = themeMaxStep >= 0;
         const allMax    = themeMaxStep >= ENHANCE_MAX;
-        const badgeCol  = allMax ? "#e6ac2e" : hasDone ? "#4488ff" : "transparent";
+        const badgeCol  = allMax ? "#e6ac2e" : hasDone ? "var(--info)" : "transparent";
         const badge     = hasDone
           ? `<span style="font-size:10px;color:${badgeCol};margin-left:6px">★${themeMaxStep}${allMax?' 🏆':''}</span>`
           : '';
         const arrow     = hasDone
-          ? `<span style="font-size:10px;color:#666;margin-left:auto">${expanded ? '▼' : '▶'}</span>`
+          ? `<span style="font-size:10px;color:var(--text-faint);margin-left:auto">${expanded ? '▼' : '▶'}</span>`
           : '';
         const clickable = hasDone ? `onclick="window._colToggle('${themeId}')"` : '';
 
@@ -16184,7 +16197,7 @@ function openCollectionModal(initTab) {
         { label:"毒ダメ",  val:_col.poisonDmg+"%",    show:_col.poisonDmg>0 },
       ].filter(e => e.show);
       body.innerHTML = effects.length === 0
-        ? `<div style="color:#555;text-align:center;padding:40px 20px;font-size:12px">コレクションを達成すると<br>ここに効果が表示されます</div>`
+        ? `<div style="color:var(--text-disabled);text-align:center;padding:40px 20px;font-size:12px">コレクションを達成すると<br>ここに効果が表示されます</div>`
         : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
             ${effects.map(e => `<div style="background:var(--surface-base);border:1px solid #1e2e1e;border-radius:6px;padding:8px 10px;
                 display:flex;justify-content:space-between;align-items:center">
@@ -16244,7 +16257,7 @@ function openSkillTree(tabKey) {
     const locked   = !owned && !reqsMet;
     const resetCost= SKILL_RESET_COST[sk.cost]||500;
     const cls = owned ? "skill-node owned" : locked ? "skill-node locked" : canLearn ? "skill-node learnable" : "skill-node";
-    const reqLabel = sk.requires.length>0 ? `<div style="font-size:9px;color:#666;margin-bottom:2px">← ${sk.requires.map(r=>SKILL_MASTER[r]?.name||r).join("・")}</div>` : "";
+    const reqLabel = sk.requires.length>0 ? `<div style="font-size:9px;color:var(--text-faint);margin-bottom:2px">← ${sk.requires.map(r=>SKILL_MASTER[r]?.name||r).join("・")}</div>` : "";
     return `
       <div class="${cls}" style="position:relative" ${canLearn ? `onclick="learnSkill('${id}')"` : ""}>
         ${reqLabel}
@@ -16315,7 +16328,7 @@ function openSkillTree(tabKey) {
           </div>`;
         })() : `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
           <div style="font-size:12px;color:var(--muted)">🔒 深淵の境地</div>
-          <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/20 回で解禁</div>
+          <div style="font-size:11px;color:var(--border-subtle);margin-top:4px">転生 ${_wr}/20 回で解禁</div>
         </div>`}
         ${(() => {
           const _haiwayUnlocked = _wr >= 50;
@@ -16343,7 +16356,7 @@ function openSkillTree(tabKey) {
           }
           return `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
             <div style="font-size:12px;color:var(--muted)">🔒 深淵の覇道</div>
-            <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/50 回で解禁</div>
+            <div style="font-size:11px;color:var(--border-subtle);margin-top:4px">転生 ${_wr}/50 回で解禁</div>
           </div>`;
         })()}
         ${(() => {
@@ -16372,7 +16385,7 @@ function openSkillTree(tabKey) {
           }
           return `<div style="margin-bottom:12px;border:1px solid #2a2a3a;border-radius:8px;padding:10px;background:#0a0a14;opacity:0.6;text-align:center">
             <div style="font-size:12px;color:var(--muted)">🔒 深淵の真髄</div>
-            <div style="font-size:11px;color:#444;margin-top:4px">転生 ${_wr}/100 回で解禁</div>
+            <div style="font-size:11px;color:var(--border-subtle);margin-top:4px">転生 ${_wr}/100 回で解禁</div>
           </div>`;
         })()}
       `;
