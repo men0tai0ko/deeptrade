@@ -42,6 +42,8 @@
     /* UIコンポーネント背景（S44変数化） */
     --surface-deep: #1a1a2e;
     --surface-base: #0d0d18;
+    --danger:       #e74c3c;  /* 危険・警告・赤系アクション（S55変数化） */
+    --success:      #88ff88;  /* 成功・強化値・同行中など明緑（S55変数化） */
   }
 
   html { height: 100%; overflow: hidden; }
@@ -124,7 +126,7 @@
     transition: width 0.4s ease;
   }
 
-  .hpFill  { background: linear-gradient(90deg, #8b0000, #e74c3c); }
+  .hpFill  { background: linear-gradient(90deg, #8b0000, var(--danger)); }
   .mpFill  { background: linear-gradient(90deg, #003366, #3498db); }
   .expFill { background: linear-gradient(90deg, #4a2080, #9b59b6); }
 
@@ -439,7 +441,7 @@
   .enemyName {
     font-family: 'Cinzel', serif;
     font-size: 16px;
-    color: #e74c3c;
+    color: var(--danger);
     margin-bottom: 8px;
   }
 
@@ -452,7 +454,7 @@
 
   .enemyHpFill {
     height: 100%;
-    background: linear-gradient(90deg, #8b0000, #e74c3c);
+    background: linear-gradient(90deg, #8b0000, var(--danger));
     border-radius: 4px;
     transition: width 0.4s ease;
   }
@@ -585,7 +587,7 @@
     left: -4px;
     background: #1a3a20;
     border: 1px solid #3a7a40;
-    color: #88ff88;
+    color: var(--success);
     font-size: 9px;
     font-weight: 700;
     padding: 1px 3px;
@@ -666,11 +668,11 @@
   }
 
   .shelfSlot:not(.occupied):hover { border-color: var(--accent); }
-  .shelfSlot.special-weapon    { border-color: #e74c3c44; }
+  .shelfSlot.special-weapon    { border-color: var(--danger)44; }
   .shelfSlot.special-armor     { border-color: #3498db44; }
   .shelfSlot.special-accessory { border-color: #9b59b644; }
   .shelfSlot.special-consumable{ border-color: #27ae6044; }
-  .shelfSlot.special-weapon.occupied    { border-color: #e74c3c; }
+  .shelfSlot.special-weapon.occupied    { border-color: var(--danger); }
   .shelfSlot.special-armor.occupied     { border-color: #3498db; }
   .shelfSlot.special-accessory.occupied { border-color: #9b59b6; }
   .shelfSlot.special-consumable.occupied{ border-color: #27ae60; }
@@ -3220,7 +3222,7 @@ const TREND_DURATION = 180000;
 const MARKET_SNAPSHOT_INTERVAL = 300000; // 5分
 const MARKET_SNAPSHOT_MAX      = 48;     // 最大48点（～4時間）
 const MARKET_CATEGORIES = [
-  { key:"weapon",     label:"⚔ 武器",   types:["weapon","sub"],                              color:"#e74c3c" },
+  { key:"weapon",     label:"⚔ 武器",   types:["weapon","sub"],                              color:"var(--danger)" },
   { key:"armor",      label:"🛡 防具",   types:["head","body","cloak","legs","arms","feet"], color:"#3498db" },
   { key:"accessory",  label:"💍 装飾品", types:["neck","bracelet","ring","seal"],            color:"#9b59b6" },
   { key:"consumable", label:"🧪 消耗品", types:["consumable"],                       color:"#2ecc71" },
@@ -3981,7 +3983,7 @@ function itemEffectiveStatsHtml(item) {
   const enh = item.enhLv || 0;
   return Object.entries(base).map(([k, v]) => {
     if(enh > 0) {
-      return `${k} +${v}<span style="color:#88ff88;font-size:0.85em">(+${enh})</span>`;
+      return `${k} +${v}<span style="color:var(--success);font-size:0.85em">(+${enh})</span>`;
     }
     return `${k} +${v}`;
   }).join("  ");
@@ -4004,7 +4006,7 @@ function itemDisplayName(item) {
   if(!m) return "不明なアイテム";
   if(item.identified) {
     const enh = item.enhLv || 0;
-    return m.name + (enh > 0 ? ` <span style="color:#88ff88;font-size:0.85em">+${enh}</span>` : "");
+    return m.name + (enh > 0 ? ` <span style="color:var(--success);font-size:0.85em">+${enh}</span>` : "");
   }
   const typeLabel = { weapon:"武具", head:"防具", body:"防具", legs:"防具", arms:"防具", feet:"防具", neck:"装飾品", bracelet:"装飾品", ring:"装飾品", sub:"武具", cloak:"防具", seal:"装飾品" };
   return `謎の${typeLabel[m.type] || "荷物"}`;
@@ -5017,8 +5019,8 @@ function confirmEnterDungeon(floor) {
   overlay.innerHTML = `
     <div class="modal-content" style="text-align:center">
       <div class="modal-title">⚠ CP不足</div>
-      <div style="font-size:13px;margin-bottom:10px">${floor}階層への潜入には<br>推奨CP <span style="color:#e74c3c;font-weight:700">⚡${recommended}</span> が目安です</div>
-      <div style="font-size:13px;margin-bottom:16px">現在のCP <span style="color:#e74c3c;font-weight:700">⚡${charCP}</span> では危険な戦いになります</div>
+      <div style="font-size:13px;margin-bottom:10px">${floor}階層への潜入には<br>推奨CP <span style="color:var(--danger);font-weight:700">⚡${recommended}</span> が目安です</div>
+      <div style="font-size:13px;margin-bottom:16px">現在のCP <span style="color:var(--danger);font-weight:700">⚡${charCP}</span> では危険な戦いになります</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" style="flex:1" id="cpCancelBtn">戻る</button>
         <button class="btn btn-secondary" style="flex:1;border-color:#8a2a2a;color:#ff9999" id="cpForceBtn">⚔ 強行潜入</button>
@@ -5475,7 +5477,13 @@ function openAchievementModal() {
             .filter(x => x.rankBase === base && claimed.includes(x.id))
             .reduce((m, x) => Math.max(m, x.rank), 0);
           const nextRank = ACHIEVEMENT_MASTER.find(x => x.rankBase === base && x.rank === maxClaimedRank + 1);
-          if(nextRank) { rankBaseShown.set(base, nextRank); rankedList.push(nextRank); }
+          if(nextRank) {
+            rankBaseShown.set(base, nextRank); rankedList.push(nextRank);
+          } else if(maxClaimedRank > 0) {
+            // S55: Rank最大（50）到達済み → 最大ランクエントリを引き続き表示
+            const maxEntry = ACHIEVEMENT_MASTER.find(x => x.rankBase === base && x.rank === maxClaimedRank);
+            if(maxEntry) { rankBaseShown.set(base, maxEntry); rankedList.push(maxEntry); }
+          }
         }
       } else {
         singleList.push(a);
@@ -6055,6 +6063,17 @@ function calcNextAction() {
         action: () => switchTab("inventory"),
       };
     }
+  }
+
+  // ③.5 転生可能 → 転生を促す（S55）
+  if(canRebirth()) {
+    return {
+      icon:  "🌟",
+      label: "NEXT ACTION",
+      text:  "転生できる！",
+      sub:   `worldRank ${gs.player.worldRank + 1} へ——ステータスタブで転生`,
+      action: () => switchTab("status"),
+    };
   }
 
   // ④ 次の階へGoldが少し足りない目安（潜入コスト = 傭兵代）
@@ -7364,10 +7383,10 @@ function _renderEnhanceModal(uid, backFn) {
     <div class="modal-content" style="text-align:center;max-width:300px">
       <div class="modal-title">⚒ 装備強化 ${goldBadge()}</div>
       <div style="font-size:14px;margin-bottom:6px">${m.name}</div>
-      <div style="font-size:16px;color:#88ff88;font-weight:700;margin-bottom:12px">現在: +${item.enhLv||0} / +${ENHANCE_MAX}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">強化費用: <span style="color:${canAfford?'#88ff88':'#ff8888'}">${cost.toLocaleString()}G</span></div>
+      <div style="font-size:16px;color:var(--success);font-weight:700;margin-bottom:12px">現在: +${item.enhLv||0} / +${ENHANCE_MAX}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">強化費用: <span style="color:${canAfford?'var(--success)':'#ff8888'}">${cost.toLocaleString()}G</span></div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:12px">強化すると全ステータス+1</div>
-      <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:#2a8a2a;color:#88ff88':'border-color:#444;color:#555;opacity:0.5'}"
+      <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:#2a8a2a;color:var(--success)':'border-color:#444;color:#555;opacity:0.5'}"
         id="enhExecBtn" ${canAfford?'':'disabled'}>
         ⚒ 強化する（${cost.toLocaleString()}G）
       </button>
@@ -7455,7 +7474,7 @@ function _renderPurifyModal(uid, resultMsg) {
         <button class="btn btn-secondary" style="width:100%;${canAfford?'border-color:var(--curse-border);color:var(--curse)':'border-color:#444;color:#555;opacity:0.5'}"
           id="purifyExecBtn" ${canAfford?'':'disabled'}>
           ⛓ 解呪する（${cost.toLocaleString()}G）
-        </button>` : `<div style="color:#88ff88;font-size:13px;margin-bottom:8px">✨ 呪いは解けました</div>`}
+        </button>` : `<div style="color:var(--success);font-size:13px;margin-bottom:8px">✨ 呪いは解けました</div>`}
       <button class="btn btn-secondary" style="width:100%;margin-top:8px" id="purifyCancelBtn">キャンセル</button>
     </div>`;
   overlay.querySelector("#purifyExecBtn")?.addEventListener("click", () => {
@@ -7753,7 +7772,7 @@ function _showAffixPoolModal(item) {
     const current = (item.affixes || []).find(ca => ca.id === a.id);
     const highlight = current ? "background:#1a2a1a;border-color:#336633;" : "";
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;margin:2px 0;border-radius:5px;border:1px solid #333;${highlight}">
-      <span style="font-size:13px;color:${current ? "#88ff88" : "#aaaadd"}">${a.label}${current ? " ✓" : ""}</span>
+      <span style="font-size:13px;color:${current ? "var(--success)" : "#aaaadd"}">${a.label}${current ? " ✓" : ""}</span>
       <span style="font-size:12px;color:var(--muted)">${a.min} ～ ${a.max}</span>
     </div>`;
   }).join("");
@@ -7850,7 +7869,7 @@ function _renderReforgeModal(uid, selectedIds) {
       + (sel ? "border:1px solid var(--accent);background:#1a2a3a;" : "border:1px solid #444;background:#111;");
     row.innerHTML = `<span style="color:${sel ? "var(--accent)" : "#aaaadd"}">${a.label}</span>`
       + `<div style="display:flex;align-items:center;gap:6px">`
-      + `<span style="color:${sel ? "var(--accent)" : "#88ff88"};font-size:12px">+${a.val}${sel ? " 🔒固定" : ""}</span>`
+      + `<span style="color:${sel ? "var(--accent)" : "var(--success)"};font-size:12px">+${a.val}${sel ? " 🔒固定" : ""}</span>`
       + `<button style="width:18px;height:18px;border-radius:50%;border:1px solid #666;background:#222;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1" data-info-btn="${a.id}">!</button>`
       + `</div>`;
     row.addEventListener("click", e => {
@@ -7940,7 +7959,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
   const diffRows = newAffixes.map(na => {
     const oa = oldAffixes.find(o => o.id === na.id);
     if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644"); // 新規
-    if(na.val > oa.val) return affixRow(na, "#88ff88", "#0d1f0d", "#226622"); // 上昇
+    if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622"); // 上昇
     if(na.val < oa.val) return affixRow(na, "#ff9999", "#1f0d0d", "#662222"); // 下降
     return affixRow(na, "#aaaadd", "#111", "#444"); // 変化なし
   }).join("");
@@ -7970,7 +7989,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
           ${newAffixes.map(na => {
             const oa = oldAffixes.find(o => o.id === na.id);
             if(!oa) return affixRow(na, "#88ffcc", "#0d1f18", "#226644");
-            if(na.val > oa.val) return affixRow(na, "#88ff88", "#0d1f0d", "#226622");
+            if(na.val > oa.val) return affixRow(na, "var(--success)", "#0d1f0d", "#226622");
             if(na.val < oa.val) return affixRow(na, "#ff9999", "#1f0d0d", "#662222");
             return affixRow(na, "#aaaadd", "#111", "#444");
           }).join("")}
@@ -7978,7 +7997,7 @@ function _showReforgeConfirm(uid, oldAffixes, newAffixes, cost) {
       </div>
       <div style="font-size:10px;color:var(--muted);margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
         <span style="color:#88ffcc">■ 新OP</span>
-        <span style="color:#88ff88">■ 上昇</span>
+        <span style="color:var(--success)">■ 上昇</span>
         <span style="color:#ff9999">■ 下降</span>
         <span style="color:#888888">■ 消滅</span>
       </div>
@@ -8036,8 +8055,8 @@ function openGradeUpModal(uid, backFn) {
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:${ok?'#0d1f0d':'#1f0d0d'};border:1px solid ${ok?'#226622':'#662222'};margin-bottom:4px">
       <div style="font-size:22px;flex-shrink:0">${mm.icon}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;color:${ok?'#88ff88':'#ff9999'};font-weight:700">${mm.name} <span style="font-size:10px;color:${r.color};font-weight:400">(${r.label})</span></div>
-        <div style="font-size:11px;color:var(--muted)">必要 ${req.count}個 ／ 所持 <span style="color:${ok?'#88ff88':'#ff9999'};font-weight:700">${held}</span>個 ${ok?'✓':'×'}</div>
+        <div style="font-size:12px;color:${ok?'var(--success)':'#ff9999'};font-weight:700">${mm.name} <span style="font-size:10px;color:${r.color};font-weight:400">(${r.label})</span></div>
+        <div style="font-size:11px;color:var(--muted)">必要 ${req.count}個 ／ 所持 <span style="color:${ok?'var(--success)':'#ff9999'};font-weight:700">${held}</span>個 ${ok?'✓':'×'}</div>
         ${bar}
       </div>
     </div>`;
@@ -8059,7 +8078,7 @@ function openGradeUpModal(uid, backFn) {
         <div style="font-size:14px;text-align:center;margin-bottom:8px">${m.name}</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">必要素材</div>
         ${matLines}
-        <div style="font-size:12px;color:${gs.player.gold>=cond.gold?'#88ff88':'#ff8888'};margin-top:6px">
+        <div style="font-size:12px;color:${gs.player.gold>=cond.gold?'var(--success)':'#ff8888'};margin-top:6px">
           💰 ${cond.gold.toLocaleString()}G
         </div>
 
@@ -9762,6 +9781,7 @@ function toggleSale(slotIdx) {
   const slot = gs.shop.shelves[slotIdx];
   if(!slot || !slot.item) return;
   slot.onSale = !slot.onSale;
+  slot.listedAt = Date.now();      // S55: セール切替時にタイマーをリセット（即売れ防止）
   slot.sellDuration = calcSellDuration(slot.item);
   saveGame(); render();
 }
@@ -9824,7 +9844,7 @@ function openUnlistModal(slotIdx) {
     <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
       <div style="display:flex;gap:8px">
         <button class="btn btn-secondary" style="flex:1" id="unlistCancelBtn">閉じる</button>
-        <button class="btn btn-secondary" style="flex:1;border-color:#e74c3c;color:#e74c3c" id="unlistConfirmBtn">取り下げる</button>
+        <button class="btn btn-secondary" style="flex:1;border-color:var(--danger);color:var(--danger)" id="unlistConfirmBtn">取り下げる</button>
       </div>
     </div>
   `;
@@ -10265,7 +10285,7 @@ function openInvestModal() {
       </div>
       <div style="display:flex;gap:8px">
         ${inv.amount > 0
-          ? `<button class="btn btn-secondary" style="flex:1;border-color:#e74c3c;color:#e74c3c" onclick="withdrawInvestAndRefresh()">全額引き出す</button>`
+          ? `<button class="btn btn-secondary" style="flex:1;border-color:var(--danger);color:var(--danger)" onclick="withdrawInvestAndRefresh()">全額引き出す</button>`
           : `<div style="flex:1"></div>`
         }
         <button class="btn btn-secondary" style="flex:1" onclick="this.closest('.modal-overlay').remove()">←</button>
@@ -10410,7 +10430,7 @@ function openRegularsModal() {
         const orderTl  = reg.order ? typeLabel(reg.order.itemType) : null;
         const canOrder = regularCanOrder(reg.lv);
         const fastVisit = regularCanFastVisit(reg.lv);
-        const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? '#e74c3c' : reg.lv >= 5 ? '#9b59b6' : '#3498db';
+        const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? '#9b59b6' : '#3498db';
         return `<div style="background:#111;border:1px solid ${borderColor};border-radius:8px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:22px">${reg.icon}</span>
@@ -10707,7 +10727,7 @@ function openMarketModal() {
       const on      = _marketVisible[cat.key];
       const isTrend = trendActive && trend.type === cat.key;
       const demand  = currentDemand[cat.key];
-      const dColor  = demand >= 80 ? '#2ecc71' : demand >= 50 ? '#ffcc00' : '#e74c3c';
+      const dColor  = demand >= 80 ? '#2ecc71' : demand >= 50 ? '#ffcc00' : 'var(--danger)';
       const border  = on ? (isTrend ? cat.color : '#333') : '#222';
       const opacity = on ? '1' : '0.35';
       return `<div onclick="window._marketToggle('${cat.key}')"
@@ -11524,7 +11544,7 @@ function openBulkIdentifyModal() {
       const savedTop = sc.scrollTop;
       const cost = totalCost();
       const canAfford = gs.player.gold >= cost;
-      countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 合計 <span style="color:${canAfford?'var(--gold)':'#e74c3c'};font-weight:700">${cost.toLocaleString()}G</span>`;
+      countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${cost.toLocaleString()}G</span>`;
       confirmBtn.textContent = `🔍 ${selected.size}個を鑑定（${cost.toLocaleString()}G）`;
       confirmBtn.disabled = selected.size === 0 || !canAfford;
 
@@ -11628,7 +11648,7 @@ function openBulkDecomposeModal() {
       <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none;margin-bottom:3px">${typeBtns}</div>
       <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid #222">
         <span style="font-size:10px;color:var(--muted);flex-shrink:0">並替</span>
-        <button data-dsort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:#88ff88">⚒↑</button>
+        <button data-dsort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:var(--success)">⚒↑</button>
         <button data-dsort="enh_asc"  title="通常優先"     style="${BTN};font-size:11px;font-weight:700;color:var(--muted)">⚒↓</button>
       </div>
     </div>
@@ -11774,7 +11794,7 @@ function openBulkDecomposeModal() {
       return s + (item ? decomposeCost(item) : 0);
     }, 0);
     const canAfford = gs.player.gold >= totalCost;
-    countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 費用合計 <span style="color:${canAfford?'var(--gold)':'#e74c3c'};font-weight:700">${totalCost.toLocaleString()}G</span>`;
+    countEl.innerHTML = `選択中 <span style="color:#fff;font-weight:700">${selected.size}</span>個 ／ 費用合計 <span style="color:${canAfford?'var(--gold)':'var(--danger)'};font-weight:700">${totalCost.toLocaleString()}G</span>`;
     confirmBtn.textContent = `🔨 ${selected.size}個を分解（${totalCost.toLocaleString()}G）`;
     confirmBtn.disabled = selected.size === 0 || !canAfford;
 
@@ -11794,7 +11814,7 @@ function openBulkDecomposeModal() {
         <div class="itemIcon rarity-${item.rarity}" style="width:32px;height:32px;font-size:18px;flex-shrink:0">${m.icon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;color:${r.color};font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            ${m.name}${isEnhanced?` <span style="color:#88ff88;font-size:11px">+${item.enhLv}</span>`:''}
+            ${m.name}${isEnhanced?` <span style="color:var(--success);font-size:11px">+${item.enhLv}</span>`:''}
           </div>
           <div style="font-size:11px;color:var(--muted)">${m.type} ／ 費用 <span style="color:#ff9999">${cost.toLocaleString()}G</span></div>
         </div>`;
@@ -12142,7 +12162,7 @@ function openMercenaryModal(floor) {
       ? `<div style="padding:8px 10px;background:#0d180d;border:1px solid #226622;border-radius:8px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
           <div style="font-size:24px;flex-shrink:0">${curDef.icon}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;color:#88ff88;font-weight:700">同行中：${curDef.name}</div>
+            <div style="font-size:13px;color:var(--success);font-weight:700">同行中：${curDef.name}</div>
             <div style="font-size:11px;color:var(--muted)">${curDef.desc}</div>
           </div>
           <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;width:auto;display:inline-block;border-color:#663333;color:#ff8888;flex-shrink:0"
@@ -12157,7 +12177,7 @@ function openMercenaryModal(floor) {
       const canAfford = gs.player.gold >= cost;
       const bg   = hired ? '#0d180d' : 'var(--surface-base)';
       const brd  = hired ? '#226622' : '#252540';
-      const nc   = hired ? '#88ff88' : 'var(--text)';
+      const nc   = hired ? 'var(--success)' : 'var(--text)';
       const btnBrd = hired ? '#444' : canAfford ? '#8888ff' : '#444';
       const btnC   = hired ? '#666' : canAfford ? '#aaaaff' : '#555';
       const op     = hired || !canAfford ? '0.5' : '1';
@@ -12168,7 +12188,7 @@ function openMercenaryModal(floor) {
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;color:${nc};font-weight:700">${m.name}${hired ? ' ✓' : ''}</div>
           <div style="font-size:11px;color:var(--muted);margin:2px 0;line-height:1.4">${m.desc}</div>
-          <div style="font-size:11px;color:${canAfford ? 'var(--gold)' : '#e74c3c'}">${cost.toLocaleString()}G / 探索</div>
+          <div style="font-size:11px;color:${canAfford ? 'var(--gold)' : 'var(--danger)'}">${cost.toLocaleString()}G / 探索</div>
         </div>
         <button class="btn btn-secondary" style="font-size:11px;padding:5px 12px;flex-shrink:0;width:auto;display:inline-block;border-color:${btnBrd};color:${btnC};opacity:${op}"
           ${dis} onclick="hireMercenary('${m.id}',${floor},${cost})">${btnTxt}</button>
@@ -13434,7 +13454,7 @@ function renderDungeon(sc, ab) {
         </div>
       </div>`;
     ab.innerHTML = `
-      <button class="btn btn-secondary" style="border-color:#e74c3c;color:#e74c3c;width:100%"
+      <button class="btn btn-secondary" style="border-color:var(--danger);color:var(--danger);width:100%"
         onclick="stopAutoRun()">⏹ 周回を止める</button>
     `;
     return;
@@ -13517,14 +13537,14 @@ function renderDungeon(sc, ab) {
               const _cp = calcCharCP(gs);
               const _rec = FLOOR_RECOMMENDED_CP[selFloor] || 0;
               const _ok = _cp >= _rec;
-              const _col = _ok ? '#27ae60' : '#e74c3c';
+              const _col = _ok ? '#27ae60' : 'var(--danger)';
               return `<div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:6px">
                 <span style="color:var(--muted)">推奨CP</span>
                 <span style="color:${_col};font-weight:700">⚡${_rec}</span>
                 <span style="color:#555">／</span>
                 <span style="color:var(--muted)">現在CP</span>
                 <span style="color:${_col};font-weight:700">⚡${_cp}</span>
-                ${!_ok ? '<span style="color:#e74c3c;font-size:10px;margin-left:2px">⚠ 危険</span>' : ''}
+                ${!_ok ? '<span style="color:var(--danger);font-size:10px;margin-left:2px">⚠ 危険</span>' : ''}
               </div>`;
             })()}
             ${(d.attempts||{})[String(selFloor)] > 0 ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">挑戦回数：${(d.attempts||{})[String(selFloor)]}回</div>` : ""}
@@ -13544,7 +13564,7 @@ function renderDungeon(sc, ab) {
     const mercBanner = merc
       ? `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:#0d180d;border:1px solid #226622;border-radius:8px;margin-bottom:6px">
           <span style="font-size:16px">${merc.icon}</span>
-          <div style="flex:1;font-size:11px;color:#88ff88">${merc.name}が同行中（-${mercCost.toLocaleString()}G）</div>
+          <div style="flex:1;font-size:11px;color:var(--success)">${merc.name}が同行中（-${mercCost.toLocaleString()}G）</div>
           <button style="font-size:10px;padding:2px 7px;border-radius:5px;border:1px solid #444;background:var(--surface-deep);color:var(--muted);cursor:pointer"
             onclick="openMercenaryModal(${selFloor})">変更</button>
         </div>`
@@ -13855,7 +13875,7 @@ function renderShop(sc, ab) {
       const trendMatched = isTrending({itemId: item.itemId}) && slot.specialType &&
         (() => { const sd = getShelfSpecialDef(slot.specialType); const m2 = ITEM_MASTER[item.itemId]; return sd.itemTypes.includes(m2?.type); })();
       const specialBadge = slot.specialType
-        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'#88ff88':'#777'};margin-top:1px;display:flex;align-items:center;gap:2px">
+        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'var(--success)':'#777'};margin-top:1px;display:flex;align-items:center;gap:2px">
             <span>${specialDef.icon}</span><span>${specialDef.label}</span>${trendMatched?'<span>🔥</span>':isMatched?'<span style=\'color:#44ff88\'>✓</span>':''}
            </div>`
         : '';
@@ -13863,7 +13883,7 @@ function renderShop(sc, ab) {
         ? `<div style="font-size:8px;color:var(--gold);font-weight:700">🏷 SALE -20%</div>` : '';
       const specialClass = slot.specialType ? `special-${slot.specialType}` : "";
       const specialHeaderBadge = slot.specialType
-        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'#88ff88':'#888'};
+        ? `<div style="font-size:8px;font-weight:700;color:${trendMatched?'var(--gold)':isMatched?'var(--success)':'#888'};
             position:absolute;top:4px;left:4px;line-height:1">${specialDef.icon}</div>`
         : "";
       return `<div class="shelfSlot occupied ${rarityClass} ${specialClass}" onclick="openUnlistModal(${idx})" style="cursor:pointer;position:relative">
@@ -14016,7 +14036,7 @@ function updateShopTick() {
       const _trendMatch2  = _isMatched2 && isTrending(item);
       const specialClass2 = slot.specialType ? `special-${slot.specialType}` : "";
       const specialBadge2 = slot.specialType
-        ? `<div style="font-size:8px;font-weight:700;color:${_trendMatch2?'var(--gold)':_isMatched2?'#88ff88':'#777'};position:absolute;top:4px;left:4px;line-height:1">${_specDef2.icon}</div>`
+        ? `<div style="font-size:8px;font-weight:700;color:${_trendMatch2?'var(--gold)':_isMatched2?'var(--success)':'#777'};position:absolute;top:4px;left:4px;line-height:1">${_specDef2.icon}</div>`
         : "";
       const enhLv2 = item.enhLv || 0;
       const newHtml = `${specialBadge2}<div class="shelfIcon ${rarityClass}" style="position:relative;${isUnid?'filter:grayscale(0.6)':''}">
@@ -14158,7 +14178,7 @@ function openBulkUnlistModal() {
         <div class="modal-title" style="text-align:center;margin-bottom:8px">📥 一括取り下げ</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
           <button onclick="window._bulkUnlistAll()"
-            style="padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid #e74c3c;background:transparent;color:#e74c3c">
+            style="padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid var(--danger);background:transparent;color:var(--danger)">
             全棚
           </button>
           ${[...new Set(gs.shop.shelves.filter(s=>s?.item&&s?.specialType).map(s=>s.specialType))].map(t=>{
@@ -14183,7 +14203,7 @@ function openBulkUnlistModal() {
       </div>
       <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
         <button class="btn btn-secondary" style="width:100%;margin-bottom:6px;
-          border-color:${selCount>0?'#e74c3c':'#333'};color:${selCount>0?'#e74c3c':'#555'}"
+          border-color:${selCount>0?'var(--danger)':'#333'};color:${selCount>0?'var(--danger)':'#555'}"
           id="bulkUnlistConfirm" ${selCount===0?'disabled':''}>
           📥 ${selCount}件を取り下げる
         </button>
@@ -14461,7 +14481,7 @@ function openListModal(slotIdx) {
         <div style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:3px;scrollbar-width:none;margin-bottom:3px">${typeBtns}</div>
         <div style="display:flex;align-items:center;gap:3px;padding-top:2px;border-top:1px solid #222">
           <span style="font-size:10px;color:var(--muted);flex-shrink:0">並替</span>
-          <button data-sort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:#88ff88">⚒↑</button>
+          <button data-sort="enh_desc" title="強化済み優先" style="${BTN};font-size:11px;font-weight:700;color:var(--success)">⚒↑</button>
           <button data-sort="enh_asc"  title="通常優先"     style="${BTN};font-size:11px;font-weight:700;color:var(--muted)">⚒↓</button>
         </div>
       </div>
@@ -14623,7 +14643,7 @@ function openListModal(slotIdx) {
       // 強化値バッジ
       const enhLv = item.enhLv || 0;
       const enhBadge = enhLv > 0
-        ? `<span style="color:#88ff88;font-size:11px;font-weight:400"> +${enhLv}</span>`
+        ? `<span style="color:var(--success);font-size:11px;font-weight:400"> +${enhLv}</span>`
         : "";
       const affixBadge = "";
 
@@ -14932,7 +14952,7 @@ function openItemDetail(uid) {
         <div style="font-size:14px;margin-top:4px">${m.type}</div>
         ${item.identified ? `
         ${m.stats&&Object.keys(m.stats).length?`
-        <div style="font-size:12px;color:var(--muted);margin-top:8px">ベース補正${(item.enhLv||0)>0?` <span style="color:#88ff88;font-size:10px">強化+${item.enhLv}</span>`:""}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">ベース補正${(item.enhLv||0)>0?` <span style="color:var(--success);font-size:10px">強化+${item.enhLv}</span>`:""}</div>
         <div style="font-size:14px;color:var(--text);margin-top:4px">${itemEffectiveStatsHtml(item)}</div>
         `:""}
         ${item.affixes&&item.affixes.length?`
@@ -14974,7 +14994,7 @@ function openItemDetail(uid) {
           : item.locked
           ? `<button class="btn btn-gold" disabled title="ロック中は陳列できません" style="opacity:0.35">🔒 陳列する</button>`
           : gs.shop.shelves.some(s => s && s.item && s.item.uid === uid)
-          ? `<button class="btn btn-secondary" style="border-color:#e74c3c;color:#e74c3c" onclick="unlistItem('${uid}')">🏪 取り下げる</button>`
+          ? `<button class="btn btn-secondary" style="border-color:var(--danger);color:var(--danger)" onclick="unlistItem('${uid}')">🏪 取り下げる</button>`
           : `<button class="btn btn-gold" onclick="openShelfFromDetail('${uid}')">🏪 陳列する</button>`
         }
       </div>
@@ -15010,7 +15030,7 @@ function openItemDetail(uid) {
             enhBtn = `<button class="btn btn-secondary" style="${btnStyle(false,'#aaaaff')}" disabled>✨ 昇級</button>`;
           }
         } else {
-          enhBtn = `<button class="btn btn-secondary" style="${btnStyle(canEnh,'#88ff88')}"
+          enhBtn = `<button class="btn btn-secondary" style="${btnStyle(canEnh,'var(--success)')}"
             ${canEnh ? `onclick="openEnhanceModal('${uid}')"` : "disabled"}>⚒ 強化</button>`;
         }
 
@@ -15227,7 +15247,7 @@ function renderStatus(sc, ab) {
     }
 
     const border     = rarityBorder[item.rarity] || "#555";
-    const enhBadge   = (item.enhLv||0) > 0 ? `<div style="font-size:10px;color:#88ff88;font-weight:700;line-height:1">+${item.enhLv}</div>` : "";
+    const enhBadge   = (item.enhLv||0) > 0 ? `<div style="font-size:10px;color:var(--success);font-weight:700;line-height:1">+${item.enhLv}</div>` : "";
     const curseBadge = (item.cursed && item.curse && item.curse.type === "bind")
       ? `<div style="font-size:10px;color:var(--curse);line-height:1">⛓</div>`
       : (item.cursed ? `<div style="font-size:10px;color:#9b59b6;line-height:1">呪</div>` : "");
@@ -15446,7 +15466,7 @@ function openUnequipModal(slot, uid) {
   // ── 現在の装備情報 ──
   const isBound = item.cursed && item.curse && item.curse.type === 'bind';
   const statsHtml = m.stats && Object.keys(m.stats).length
-    ? `<div style="font-size:12px;color:var(--muted);margin-top:8px">ベース補正${(item.enhLv||0)>0?` <span style="color:#88ff88;font-size:10px">強化+${item.enhLv}</span>`:""}</div>
+    ? `<div style="font-size:12px;color:var(--muted);margin-top:8px">ベース補正${(item.enhLv||0)>0?` <span style="color:var(--success);font-size:10px">強化+${item.enhLv}</span>`:""}</div>
        <div style="font-size:14px;color:var(--text);margin-top:4px">${itemEffectiveStatsHtml(item)}</div>`
     : "";
   const affixSection = item.affixes && item.affixes.length
@@ -15496,7 +15516,7 @@ function openUnequipModal(slot, uid) {
           : `<button class="btn btn-secondary" style="${_btnStyle(false,'#aaaaff')}" disabled>✨ 昇級</button>`;
       } else {
         const _canEnh = gs.player.gold >= enhanceCost(item);
-        _enhBtn = `<button class="btn btn-secondary" style="${_btnStyle(_canEnh,'#88ff88')}"
+        _enhBtn = `<button class="btn btn-secondary" style="${_btnStyle(_canEnh,'var(--success)')}"
           ${_canEnh ? 'id="enhanceBtn"' : 'disabled'}>⚒ 強化</button>`;
       }
 
@@ -16178,7 +16198,7 @@ function openSkillTree(tabKey) {
   document.querySelector(".skill-tree-modal")?.remove();
   const p = gs.player;
   const categories = [
-    { key:"atk", label:"⚔️ 火力", color:"#e74c3c" },
+    { key:"atk", label:"⚔️ 火力", color:"var(--danger)" },
     { key:"def", label:"🛡️ 防御", color:"#3498db" },
     { key:"exp", label:"👁️ 探索", color:"#2ecc71" },
   ];
