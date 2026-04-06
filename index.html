@@ -3448,6 +3448,8 @@ const DEFAULT_STATE = () => ({
     autoRun: null,         // 周回モード { active, floor, runs, startGold, intervalMs, nextRunAt, totalDrops }
     omamoriPriority:"low",  // お守り消費順: "low"=低レア優先 / "high"=高レア優先
     autoHeal:{ enabled:false, threshold:30 }, // 自動HP回復設定
+    _shrineAtkBuff: false, // 祠バフ：次の戦闘1回のみ与ダメ+30%（S52）
+    _shrineLukBuff: false, // 祠バフ：フロア中 LUK+5（S52）
   },
   shop:{
     level:1, exp:0, nextExp:100,
@@ -4297,6 +4299,9 @@ function loadGame() {
       if(gs.player.fatigue     === undefined) gs.player.fatigue    = null;
       if(gs.dungeon.omamoriPriority === undefined) gs.dungeon.omamoriPriority = "low";
       if(gs.dungeon.autoHeal          === undefined) gs.dungeon.autoHeal = { enabled:false, threshold:30 };
+      // S52: 祠バフフィールドのマイグレーション
+      if(gs.dungeon._shrineAtkBuff === undefined) gs.dungeon._shrineAtkBuff = false;
+      if(gs.dungeon._shrineLukBuff === undefined) gs.dungeon._shrineLukBuff = false;
       if(gs.dungeon.autoRun           === undefined) gs.dungeon.autoRun  = null;
       if(gs.equipped.cloak    === undefined) gs.equipped.cloak    = null;
       if(gs.equipped.seal     === undefined) gs.equipped.seal     = null;
@@ -5834,6 +5839,9 @@ function leaveDungeon(keepLoot, skipCostCheck) {
   gs.dungeon.combat = null;
   gs.dungeon.poisoned = false; // 帰還・全滅で毒解除
   gs.dungeon.burned   = false; // 熱傷も解除
+  // 祠バフをリセット（フロア単位のバフ）
+  gs.dungeon._shrineAtkBuff = false;
+  gs.dungeon._shrineLukBuff = false;
   // 帰還時：残った消耗品を格納庫に返却。全滅時：消滅
   if(keepLoot) {
     const cs = gs.dungeon.consumables || {};
@@ -6419,7 +6427,9 @@ function handleTrap(depth) {
   const floor  = gs.dungeon.activeFloor || gs.dungeon.floor;
   const r      = calcStats(gs);
   // luk補正：3F以下は最大+2、4Fは最大+3（毒スタートの補填）
-  const lukBonus = Math.min(floor >= 4 ? 3 : 2, Math.floor((r.total.luk || 0) / 10));
+  // 祠バフ（_shrineLukBuff）: LUK+5 として加算
+  const _shrLuk = (gs.dungeon._shrineLukBuff ? 5 : 0);
+  const lukBonus = Math.min(floor >= 4 ? 3 : 2, Math.floor(((r.total.luk || 0) + _shrLuk) / 10));
   const die1   = Math.ceil(Math.random() * 6);
   const die2   = Math.ceil(Math.random() * 6);
   const raw    = die1 + die2;
@@ -6554,7 +6564,9 @@ function _applyTrapResult(isCritSuccess, isCritFail, isSuccess) {
 
 function handleRest() {
   const r      = calcStats(gs);
-  const lukBonus = Math.min(2, Math.floor((r.total.luk || 0) / 10));
+  // 祠バフ（_shrineLukBuff）: LUK+5 として加算
+  const _shrLukR = (gs.dungeon._shrineLukBuff ? 5 : 0);
+  const lukBonus = Math.min(2, Math.floor(((r.total.luk || 0) + _shrLukR) / 10));
   const die1   = Math.ceil(Math.random() * 6);
   const die2   = Math.ceil(Math.random() * 6);
   const total  = Math.min(12, die1 + die2 + lukBonus);
@@ -6929,43 +6941,183 @@ function openCombatItemModal() {
 // ─────────────────────────────────────────
 // 祠マス・解呪システム（F-4）
 // ─────────────────────────────────────────
+
+// 祠イベント定義テーブル（S52拡充）
+// 呪い装備がない場合にランダム抽選される拡張イベント群
+const SHRINE_EVENTS = [
+  // ── 既存イベント（重み調整済み） ──
+  {
+    id: "exp",
+    weight: 15,
+    canFire: () => true,
+    fire: () => {
+      const bonus = 10 + Math.floor(Math.random() * 16); // 10〜25
+      gainExp(bonus);
+      addLog("item", `⛩ 祠を発見。神気に触れ、EXP+${bonus}を得た`);
+    }
+  },
+  {
+    id: "heal",
+    weight: 15,
+    canFire: () => {
+      const r = calcStats(gs);
+      return gs.player.hp < r.maxHp;
+    },
+    fire: () => {
+      const r = calcStats(gs);
+      const voidMul = 1 + (r.setVoidHealBonus || 0) / 100;
+      const heal = Math.floor(r.maxHp * 0.12 * voidMul);
+      const actual = Math.min(heal, r.maxHp - gs.player.hp);
+      gs.player.hp = Math.min(r.maxHp, gs.player.hp + actual);
+      addLog("item", `⛩ 祠を発見。清らかな気で${healSpan(actual + " HP")}回復した`);
+    }
+  },
+  {
+    id: "hint",
+    weight: 8,
+    canFire: () => !!gs.dungeon.map[gs.dungeon.progress + 1],
+    fire: () => {
+      const nextEv = gs.dungeon.map[gs.dungeon.progress + 1];
+      const evNames = {battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない",lava:"溶岩"};
+      addLog("item", `⛩ 祠を発見。導きの声が聞こえた——次のマスは【${evNames[nextEv] || "不明"}】らしい`);
+    }
+  },
+  // ── 新規イベント（S52追加） ──
+  {
+    id: "identify",
+    weight: 14,
+    canFire: () => gs.inventory.some(i => !i.identified),
+    fire: () => {
+      // 未鑑定品を最大2個、無料で鑑定
+      const unid = gs.inventory.filter(i => !i.identified);
+      const targets = unid.slice(0, 2);
+      targets.forEach(item => { item.identified = true; });
+      const count = targets.length;
+      addLog("item", `⛩ 祠を発見。神眼の加護を受け、未鑑定品が${count}個鑑定された`);
+    }
+  },
+  {
+    id: "mp_restore",
+    weight: 12,
+    canFire: () => {
+      const r = calcStats(gs);
+      return gs.player.mp < r.maxMp;
+    },
+    fire: () => {
+      const r = calcStats(gs);
+      const restore = Math.floor(r.maxMp * 0.5);
+      const actual = Math.min(restore, r.maxMp - gs.player.mp);
+      gs.player.mp = Math.min(r.maxMp, gs.player.mp + actual);
+      addLog("item", `⛩ 祠を発見。霊気に満たされ、MP+${actual}回復した`);
+    }
+  },
+  {
+    id: "gold_windfall",
+    weight: 10,
+    canFire: () => true,
+    fire: () => {
+      const floor = gs.dungeon.activeFloor || gs.dungeon.floor || 1;
+      const amount = floor * 20 + Math.floor(Math.random() * floor * 15);
+      gs.player.gold += amount;
+      addLog("item", `⛩ 祠を発見。賽銭箱の底にゴールドが眠っていた（+${goldSpan(amount + "G")}）`);
+    }
+  },
+  {
+    id: "temp_atk",
+    weight: 10,
+    canFire: () => !gs.dungeon._shrineAtkBuff,
+    fire: () => {
+      // 一時的な攻撃バフ：次の戦闘1回のみ与ダメ+30%
+      gs.dungeon._shrineAtkBuff = true;
+      addLog("item", "⛩ 祠を発見。戦神の加護を受けた——次の戦闘で与ダメ+30%");
+    }
+  },
+  {
+    id: "luk_up",
+    weight: 8,
+    canFire: () => !gs.dungeon._shrineLukBuff,
+    fire: () => {
+      // 一時的なLUKバフ：フロア終了まで LUK+5
+      gs.dungeon._shrineLukBuff = true;
+      addLog("item", "⛩ 祠を発見。幸運の加護を受けた——このフロアの間、LUK+5");
+    }
+  },
+  {
+    id: "material",
+    weight: 8,
+    canFire: () => true,
+    fire: () => {
+      const floor = gs.dungeon.activeFloor || gs.dungeon.floor || 1;
+      // 階層に応じた素材を1個ドロップ
+      const matTable = floor <= 2 ? "gem_n" : floor <= 4 ? "coin_n" : floor <= 5 ? "fang_n" : "gem_r";
+      const matNames  = { gem_n:"宝石", coin_n:"古代金貨", fang_n:"竜の牙", gem_r:"宝石(R)" };
+      // 鞄の空き確認
+      const used = gs.inventory.length;
+      const cap  = LOOT_LIMIT_BASE + gs.player.lootSlots * 2;
+      if(used >= cap) {
+        addLog("item", "⛩ 祠を発見。祠の恵みがあったが、鞄が満杯で受け取れなかった");
+        return;
+      }
+      const uid = "shrine_" + Date.now();
+      gs.inventory.push({ uid, itemId: matTable, rarity:"normal", identified:true,
+        demand:50, affixes:[], cursed:false, curse:null, enhLv:0, locked:false });
+      addLog("item", `⛩ 祠を発見。祠の恵み——${matNames[matTable]}を1個授かった`);
+    }
+  },
+  {
+    id: "divine_sight",
+    weight: 6,
+    canFire: () => gs.dungeon.map && gs.dungeon.progress < gs.dungeon.map.length - 3,
+    fire: () => {
+      // 3マス先まで全て見える（mapの次3マスをログに出力）
+      const evNames = {battle:"⚔戦闘",treasure:"💰宝箱",trap:"⚠罠",rest:"💤休息",shrine:"⛩祠",boss:"💀ボス",windfall:"✨落し物",omen:"🔮予兆",shortcut:"💨抜け道",nothing:"何もない",lava:"🌋溶岩"};
+      const prog = gs.dungeon.progress;
+      const ahead = [1,2,3].map(n => {
+        const ev = gs.dungeon.map[prog + n];
+        return ev ? evNames[ev] || "?" : null;
+      }).filter(Boolean);
+      addLog("item", `⛩ 祠を発見。神眼が開いた——[${ahead.join(" → ")}]`);
+    }
+  },
+  {
+    id: "fatigue_cure",
+    weight: 20, // 疲弊中なら最優先で引く（canFireでフィルタ）
+    canFire: () => gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now(),
+    fire: () => {
+      gs.player.fatigue = null;
+      addLog("item", "⛩ 祠を発見。呪いは感じないが…疲弊が癒えた");
+    }
+  },
+];
+
 function handleShrine() {
   const cursedItems = Object.values(gs.equipped)
     .map(uid => gs.inventory.find(i => i.uid === uid))
     .filter(item => item && item.identified && item.cursed && item.curse);
-  if(cursedItems.length === 0) {
-    // 空振り時：小バフをランダム付与
-    const roll = Math.random();
-    if(gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now()) {
-      // 疲弊中なら必ず解除
-      gs.player.fatigue = null;
-      addLog("item", "⛩ 祠を発見。呪いは感じないが…疲弊が癒えた");
-    } else if(roll < 0.4) {
-      const bonus = 10 + Math.floor(Math.random() * 11);
-      gainExp(bonus);
-      addLog("item", `⛩ 祠を発見。呪いは感じない。神気でEXP+${bonus}`);
-    } else if(roll < 0.7) {
-      const _shrineR = calcStats(gs);
-      const _shrineVoidMul = 1 + (_shrineR.setVoidHealBonus || 0) / 100;
-      const heal = Math.floor(_shrineR.maxHp * 0.10 * _shrineVoidMul);
-      const actual = Math.min(heal, _shrineR.maxHp - gs.player.hp);
-      if(actual > 0) {
-        gs.player.hp = Math.min(_shrineR.maxHp, gs.player.hp + actual);
-        addLog("item", `⛩ 祠を発見。呪いは感じない。清らかな気で${healSpan(actual + " HP")}回復`);
-      } else {
-        addLog("item", "⛩ 祠を発見。呪いは感じない…すでに満ちている");
-      }
-    } else {
-      // 次マスのヒント
-      const nextEv = gs.dungeon.map[gs.dungeon.progress + 1];
-      const hint = nextEv ? `次のマスは【${({battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない"})[nextEv] || "不明"}】らしい` : "先はまだ霧の中";
-      addLog("item", `⛩ 祠を発見。呪いは感じない。${hint}`);
-    }
+
+  if(cursedItems.length > 0) {
+    addLog("item", `⛩ 祠を発見。${statusSpan("呪われた装備")}を感じ取った（${cursedItems.length}個）`);
+    openShrineModal();
+    return;
+  }
+
+  // 発火可能なイベントを重みで抽選
+  const eligible = SHRINE_EVENTS.filter(e => e.canFire());
+  if(eligible.length === 0) {
+    addLog("item", "⛩ 祠を発見。しかし今は何も感じない……");
     saveGame();
     return;
   }
-  addLog("item", `⛩ 祠を発見。${statusSpan("呪われた装備")}を感じ取った（${cursedItems.length}個）`);
-  openShrineModal();
+  const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+  let rand = Math.random() * totalWeight;
+  let chosen = eligible[eligible.length - 1];
+  for(const ev of eligible) {
+    rand -= ev.weight;
+    if(rand <= 0) { chosen = ev; break; }
+  }
+
+  chosen.fire();
+  saveGame();
 }
 
 // 解呪費用計算（種別で倍率が変わる）
@@ -7934,7 +8086,13 @@ function doBattle(action) {
     const atkDebuffMul = (c._atkDebuffTurns > 0 && c._atkDebuffMul) ? c._atkDebuffMul : 1.0;
     // def_debuffFlat 適用（盾砕き・呪縛・鎧砕き）：敵のDEFに対するデバフは en.def から引く
     const effectiveDef = Math.max(0, en.def - (c._defDebuffFlat || 0));
-    let dmg = Math.max(1, Math.floor(r.total.str*2*variance*bossGuardMul*warCryMul*atkDebuffMul - effectiveDef*0.7));
+    // 祠バフ：_shrineAtkBuff（次の戦闘1回のみ与ダメ+30%）
+    const shrineAtkMul = gs.dungeon._shrineAtkBuff ? 1.3 : 1.0;
+    if(gs.dungeon._shrineAtkBuff) {
+      gs.dungeon._shrineAtkBuff = false;
+      logs.push({cls:"item", msg:"⛩ 戦神の加護が発動！与ダメ+30%"});
+    }
+    let dmg = Math.max(1, Math.floor(r.total.str*2*variance*bossGuardMul*warCryMul*atkDebuffMul*shrineAtkMul - effectiveDef*0.7));
     // 処刑人：敵HP30%以下で与ダメ+N%
     if((r.skillExecuteMul||0) > 0 && en.hp / en.maxHp <= 0.3) {
       dmg = Math.floor(dmg * (1 + r.skillExecuteMul));
@@ -11978,8 +12136,9 @@ function openAnalyticsModal() {
   } catch(e) {}
 
   // 新規プレイヤーセッションだけ抽出
-  const first = sessions.filter(s => s.isFirstSession);
-  const total = sessions.length;
+  const first   = sessions.filter(s => s.isFirstSession);
+  const total   = sessions.length;
+  const recent5 = sessions.slice(-5).reverse(); // 直近5セッション（新しい順）
 
   // ── ファネル集計 ──
   const fGuideShown     = first.filter(s => s.guide?.shown).length;
@@ -11989,24 +12148,30 @@ function openAnalyticsModal() {
   const fSold           = first.filter(s => s.firstLoop?.firstSaleAt).length;
   const fCompleted      = first.filter(s => s.firstLoop?.completed).length;
 
-  const pct = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + "%" : "—";
+  const pct    = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + "%" : "—";
   const avgMin = first.length > 0
     ? (first.reduce((acc, s) => acc + (s.durationSec || 0), 0) / first.length / 60).toFixed(1)
     : "—";
 
-  // ガイドスキップ分布（何ページ目でスキップしたか）
-  const skipDist = [0, 0, 0];
+  // ガイドスキップ分布（STEP1〜4 = index 0〜3 に対応、S52でSTEP4追加）
+  const skipDist = [0, 0, 0, 0];
   first.forEach(s => {
     const p = s.guide?.skippedAtPage;
-    if(p != null && p >= 0 && p <= 2) skipDist[p]++;
+    if(p != null && p >= 0 && p <= 3) skipDist[p]++;
   });
 
-  // firstReturn→firstSale 完了率（本実装の主目的KPI）
+  // firstReturn→firstSale 完了率（主目的KPI）
   const convReturnToSale = pct(fSold, fReturned);
 
-  // まとめて出品ボタン使用集計（①計測）
+  // まとめて出品ボタン使用集計
   const fQuickListUsed  = first.filter(s => s.quickList?.used > 0).length;
   const fQuickListRate  = pct(fQuickListUsed, fReturned);
+
+  // ── ファネルドロップ率（各ステップの離脱率）──
+  const dropEnter    = pct(fGuideShown - fEntered,    fGuideShown);
+  const dropReturn   = pct(fEntered    - fReturned,   fEntered);
+  const dropSale     = pct(fReturned   - fSold,       fReturned);
+  const dropComplete = pct(fSold       - fCompleted,  fSold);
 
   // ── UI生成 ──
   const overlay = document.createElement("div");
@@ -12026,55 +12191,115 @@ function openAnalyticsModal() {
       </span>
     </div>`;
 
-  const kpiRow = (label, val, note) => `
-    <div style="background:#1a1a26;border-radius:8px;padding:10px 12px;margin-bottom:6px">
+  // KPIカード（色付き）
+  const kpiRow = (label, val, note, col) => {
+    const c = col || "var(--accent2)";
+    return `
+    <div style="background:#1a1a26;border-radius:8px;padding:10px 12px;margin-bottom:6px;
+      border-left:3px solid ${c}">
       <div style="font-size:10px;color:var(--muted);margin-bottom:2px">${label}</div>
-      <div style="font-size:20px;font-weight:700;color:var(--accent2)">${val}
+      <div style="font-size:20px;font-weight:700;color:${c}">${val}
         ${note ? `<span style="font-size:10px;color:var(--muted);font-weight:400;margin-left:4px">${note}</span>` : ""}
       </div>
     </div>`;
+  };
+
+  // ファネル可視化（横バー）
+  const funnelBar = (label, n, total, col) => {
+    const w = total > 0 ? Math.round(n / total * 100) : 0;
+    return `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+        <span style="color:var(--muted)">${label}</span>
+        <span style="color:var(--text);font-weight:700">${n}件 <span style="color:var(--muted);font-weight:400">(${w}%)</span></span>
+      </div>
+      <div style="background:var(--border);border-radius:3px;height:6px;overflow:hidden">
+        <div style="height:100%;width:${w}%;background:${col || "var(--accent2)"};border-radius:3px;transition:width 0.4s"></div>
+      </div>
+    </div>`;
+  };
+
+  // 直近セッション行
+  const sessionRow = s => {
+    const dt  = s.startAt ? new Date(s.startAt).toLocaleDateString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
+    const min = s.durationSec ? Math.round(s.durationSec / 60) : "—";
+    const steps = [
+      s.guide?.completedAt   ? "📘" : s.guide?.shown ? "👁" : "✖",
+      s.firstLoop?.enterAt   ? "⚔"  : "·",
+      s.firstLoop?.returnAt  ? "↩"  : "·",
+      s.firstLoop?.firstSaleAt ? "💰" : "·",
+      s.firstLoop?.completed ? "✅" : "·",
+    ].join(" ");
+    return `<div style="display:flex;justify-content:space-between;align-items:center;
+      padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
+      <span style="color:var(--muted)">${dt}</span>
+      <span style="letter-spacing:2px">${steps}</span>
+      <span style="color:var(--muted)">${min}分</span>
+    </div>`;
+  };
+
+  // KPI色判定（帰還→販売率 50%以上=緑、30%以上=黄、以下=赤）
+  const kpiNum = fReturned > 0 ? fSold / fReturned * 100 : -1;
+  const kpiCol = kpiNum < 0 ? "var(--muted)" : kpiNum >= 50 ? "var(--green)" : kpiNum >= 30 ? "var(--gold)" : "var(--red)";
 
   mc.innerHTML = `
     <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)">
       <div class="modal-title">📊 Analytics</div>
       <div style="font-size:10px;color:var(--muted);margin-top:2px">
-        総セッション: ${total}件 / 新規: ${first.length}件
+        総セッション: ${total}件 / 新規: ${first.length}件 / 平均時間: ${avgMin}分
       </div>
     </div>
     <div style="flex:1;overflow-y:auto;padding:12px 16px">
 
-      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px">
-        🎯 初回ループ ファネル
+      <!-- 主目的KPI -->
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:8px">🎯 主目的 KPI</div>
+      ${kpiRow("帰還→販売完了率", convReturnToSale, `${fSold}/${fReturned}件`, kpiCol)}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        ${kpiRow("ループ完結率", pct(fCompleted, first.length), `${fCompleted}/${first.length}件`)}
+        ${kpiRow("まとめて出品率", fQuickListRate, `${fQuickListUsed}/${fReturned}件`)}
       </div>
-      ${kpiRow("帰還→販売完了率（主目的KPI）", convReturnToSale, `${fSold}/${fReturned}件`)}
-      ${kpiRow("ループ完結率", pct(fCompleted, first.length), `${fCompleted}/${first.length}件`)}
-      ${kpiRow("まとめて出品ボタン使用率", fQuickListRate, `${fQuickListUsed}/${fReturned}件`)}
 
-      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">
-        📋 ステップ別通過数
+      <!-- ファネル可視化 -->
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">📉 ファネル（新規プレイヤー）</div>
+      <div style="background:#111;border-radius:8px;padding:10px 12px">
+        ${funnelBar("ガイド表示",  fGuideShown, fGuideShown, "var(--accent)")}
+        ${funnelBar("ガイド完読",  fGuideCompleted, fGuideShown, "var(--accent2)")}
+        ${funnelBar("初回潜入",    fEntered,    fGuideShown, "var(--accent2)")}
+        ${funnelBar("初回帰還",    fReturned,   fGuideShown, "var(--green)")}
+        ${funnelBar("初回販売",    fSold,       fGuideShown, kpiCol)}
+        ${funnelBar("ループ完結",  fCompleted,  fGuideShown, "var(--gold)")}
       </div>
+
+      <!-- ドロップポイント -->
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">🚪 各ステップ離脱率</div>
       <div style="background:#111;border-radius:8px;padding:8px 12px">
-        ${row("ガイド表示", fGuideShown + "件")}
-        ${row("ガイド完読", fGuideCompleted + "件", `完読率 ${pct(fGuideCompleted, fGuideShown)}`)}
-        ${row("初回潜入", fEntered + "件", `潜入率 ${pct(fEntered, fGuideShown)}`)}
-        ${row("初回帰還", fReturned + "件", `帰還率 ${pct(fReturned, fEntered)}`)}
-        ${row("初回販売", fSold + "件", `販売率 ${pct(fSold, fReturned)}`)}
-        ${row("ループ完結", fCompleted + "件", `完結率 ${pct(fCompleted, fReturned)}`)}
-        ${row("平均プレイ時間", avgMin + " 分")}
+        ${row("ガイド後→未潜入", dropEnter,    `${fGuideShown - fEntered}件`)}
+        ${row("潜入後→未帰還",   dropReturn,   `${fEntered - fReturned}件`)}
+        ${row("帰還後→未販売",   dropSale,     `${fReturned - fSold}件`)}
+        ${row("販売後→未完結",   dropComplete, `${fSold - fCompleted}件`)}
       </div>
 
-      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">
-        ⏭ ガイドスキップ分布
-      </div>
+      <!-- ガイドスキップ分布（S52: STEP4追加） -->
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">⏭ ガイドスキップ分布</div>
       <div style="background:#111;border-radius:8px;padding:8px 12px">
         ${row("STEP1でスキップ", skipDist[0] + "件")}
         ${row("STEP2でスキップ", skipDist[1] + "件")}
         ${row("STEP3でスキップ", skipDist[2] + "件")}
+        ${row("STEP4でスキップ", skipDist[3] + "件")}
+      </div>
+
+      <!-- 直近セッション -->
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin:12px 0 8px">🕐 直近セッション（最大5件）</div>
+      <div style="background:#111;border-radius:8px;padding:8px 12px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">
+          📘=完読 👁=表示 ✖=なし &nbsp;⚔=潜入 ↩=帰還 💰=販売 ✅=完結
+        </div>
+        ${recent5.length > 0 ? recent5.map(sessionRow).join("") : '<div style="color:var(--muted);font-size:12px">データなし</div>'}
       </div>
 
       <div style="font-size:10px;color:var(--muted);margin-top:12px;line-height:1.6">
         ※ このデータはこの端末のlocalStorageにのみ存在します。<br>
-        コンソールで <code style="color:var(--accent2)">_analyticsReport()</code> を実行すると詳細テーブルを確認できます。
+        コンソールで <code style="color:var(--accent2)">_analyticsReport()</code> を実行すると詳細データを確認できます。
       </div>
     </div>
     <div style="flex-shrink:0;padding:8px 16px 14px;border-top:1px solid var(--border)">
@@ -12091,27 +12316,40 @@ window._analyticsReport = function() {
   try {
     const d = JSON.parse(localStorage.getItem("shinentrade_analytics") || "{}");
     const f = (d.sessions || []).filter(s => s.isFirstSession);
+    const ret  = f.filter(s=>s.firstLoop?.returnAt).length;
+    const sold = f.filter(s=>s.firstLoop?.firstSaleAt).length;
+    const ent  = f.filter(s=>s.firstLoop?.enterAt).length;
+    // ファネルサマリー
     console.table({
-      total_sessions:  (d.sessions || []).length,
-      first_sessions:  f.length,
-      guide_completed: f.filter(s => s.guide?.completedAt).length,
-      entered:         f.filter(s => s.firstLoop?.enterAt).length,
-      returned:        f.filter(s => s.firstLoop?.returnAt).length,
-      first_sale:      f.filter(s => s.firstLoop?.firstSaleAt).length,
-      loop_completed:  f.filter(s => s.firstLoop?.completed).length,
-      return_to_sale_pct: (
-        f.filter(s=>s.firstLoop?.firstSaleAt).length /
-        Math.max(1, f.filter(s=>s.firstLoop?.returnAt).length) * 100
-      ).toFixed(1) + "%",
-      quicklist_used_rate: (
-        f.filter(s=>s.quickList?.used > 0).length /
-        Math.max(1, f.filter(s=>s.firstLoop?.returnAt).length) * 100
-      ).toFixed(1) + "%",
-      avg_minutes: (
-        f.reduce((a,b) => a + (b.durationSec||0), 0) /
-        Math.max(1, f.length) / 60
-      ).toFixed(1),
+      total_sessions:       (d.sessions || []).length,
+      first_sessions:       f.length,
+      guide_shown:          f.filter(s => s.guide?.shown).length,
+      guide_completed:      f.filter(s => s.guide?.completedAt).length,
+      entered:              ent,
+      returned:             ret,
+      first_sale:           sold,
+      loop_completed:       f.filter(s => s.firstLoop?.completed).length,
+      return_to_sale_pct:   (sold / Math.max(1, ret) * 100).toFixed(1) + "%",
+      enter_to_return_pct:  (ret  / Math.max(1, ent) * 100).toFixed(1) + "%",
+      quicklist_used:       f.filter(s=>s.quickList?.used > 0).length,
+      quicklist_rate:       (f.filter(s=>s.quickList?.used > 0).length / Math.max(1, ret) * 100).toFixed(1) + "%",
+      avg_minutes:          (f.reduce((a,b) => a + (b.durationSec||0), 0) / Math.max(1, f.length) / 60).toFixed(1),
     });
+    // ガイドスキップ分布（STEP1〜4）
+    const skip = [0,0,0,0];
+    f.forEach(s => { const p = s.guide?.skippedAtPage; if(p!=null && p>=0 && p<=3) skip[p]++; });
+    console.table({ "STEP1_skip": skip[0], "STEP2_skip": skip[1], "STEP3_skip": skip[2], "STEP4_skip": skip[3] });
+    // 直近5セッション
+    const recent = (d.sessions || []).slice(-5).reverse().map(s => ({
+      date:    s.startAt ? new Date(s.startAt).toLocaleString("ja-JP") : "—",
+      guide:   s.guide?.completedAt ? "完読" : s.guide?.shown ? "表示のみ" : "なし",
+      entered: !!s.firstLoop?.enterAt,
+      returned:!!s.firstLoop?.returnAt,
+      sold:    !!s.firstLoop?.firstSaleAt,
+      completed:!!s.firstLoop?.completed,
+      minutes: s.durationSec ? (s.durationSec/60).toFixed(1) : "—",
+    }));
+    console.table(recent);
   } catch(e) { console.error("Analytics read error:", e); }
 };
 
@@ -12392,6 +12630,7 @@ function updateIconDock(tab) {
       { icon:'🔁', label:'転生',     fn:'openRebirthModal()', alertFn: ()=> canRebirth() },
       { icon:'💾', label:'データ',   fn:'openSaveDataModal()' },
       { icon:'📊', label:'分析',     fn:'openAnalyticsModal()' },
+      { icon:'📘', label:'ガイド',   fn:'showFirstGuideModal(true)' }, // S52: 任意再表示
     ],
   };
 
@@ -16057,30 +16296,40 @@ function _initTabTitleHook() {
 
 // ─────────────────────────────────────────
 // ─────────────────────────────────────────
-// ファーストガイド (S48-GUIDE)
-// 初回起動時のみ表示する3ステップ導線モーダル
+// ファーストガイド (S48-GUIDE / S52改善)
+// 初回起動時 or 任意再表示の4ステップ導線モーダル
 // ─────────────────────────────────────────
-function showFirstGuideModal() {
-  if(!gs.meta.isFirstPlay) return; // 初回フラグがなければ即抜け
+function showFirstGuideModal(forceShow) {
+  if(!forceShow && !gs.meta.isFirstPlay) return; // 初回フラグがなければ即抜け
 
   const PAGES = [
     {
       icon: "⚔",
       step: "STEP 1",
       title: "まず潜ろう",
-      body: "「1階層へ潜入」を押してダンジョンへ。<br>敵を倒して装備品を拾おう。<br>帰還ボタンでいつでも戻れる。",
+      body: "「1階層へ潜入」を押してダンジョンへ。<br>敵を倒して装備品を拾おう。<br><b style=\"color:var(--accent2)\">帰還ボタンでいつでも戻れる。</b>",
+      tip: "💡 深く潜るほど強い装備が出るよ",
     },
     {
       icon: "🔍",
       step: "STEP 2",
       title: "鑑定して売ろう",
-      body: "帰還したら格納庫タブで未鑑定品を鑑定。<br>ショップの棚に並べれば<br>時間が経つと自動で売れる。",
+      body: "帰還後は格納庫タブで未鑑定品を鑑定。<br>ショップの棚に並べれば<br><b style=\"color:var(--accent2)\">時間が経つと自動で売れる。</b>",
+      tip: "💡「まとめて出品」ボタンが便利！",
     },
     {
       icon: "💰",
       step: "STEP 3",
       title: "稼いで強くなろう",
-      body: "売上でレベルアップ・装備強化。<br>より深い階層へ潜るほど<br>レアな装備が手に入る。",
+      body: "売上でレベルアップ・装備強化。<br>より深い階層へ潜るほど<br><b style=\"color:var(--accent2)\">レアな装備が手に入る。</b>",
+      tip: "💡 転生でさらに強くなれる",
+    },
+    {
+      icon: "⛩",
+      step: "STEP 4",
+      title: "祠と消耗品を活用",
+      body: "ダンジョン内の<b style=\"color:var(--accent2)\">⛩ 祠マス</b>に触れると<br>EXP・回復・鑑定など様々な恩恵が。<br>消耗品（回復薬・解毒薬）も持参しよう。",
+      tip: "💡 格納庫→持ち物から事前準備できる",
     },
   ];
 
@@ -16109,17 +16358,25 @@ function showFirstGuideModal() {
 
     // ドットインジケーター
     const dots = PAGES.map((_, i) =>
-      `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px;
+      `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 3px;
         background:${i === page ? "var(--accent2)" : "var(--border)"};
-        transition:background 0.2s"></span>`
+        transform:${i === page ? "scale(1.3)" : "scale(1)"};
+        transition:background 0.2s,transform 0.2s"></span>`
     ).join("");
 
+    // ステップカラーマップ
+    const stepColors = ["var(--accent)","var(--green)","var(--gold)","#cc88ff"];
+    const stepCol = stepColors[page] || "var(--accent2)";
+
     mc.innerHTML = `
-      <div style="font-size:44px;margin-bottom:10px">${p.icon}</div>
-      <div style="font-size:10px;letter-spacing:2px;color:var(--accent);margin-bottom:6px">${p.step}</div>
+      <div style="font-size:48px;margin-bottom:8px;
+        filter:drop-shadow(0 0 12px ${stepCol}66)">${p.icon}</div>
+      <div style="font-size:10px;letter-spacing:2px;color:${stepCol};margin-bottom:6px;font-weight:700">${p.step}</div>
       <div style="font-family:'Cinzel',serif;font-size:18px;font-weight:700;
-        color:var(--accent2);margin-bottom:14px">${p.title}</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:22px">${p.body}</div>
+        color:var(--text);margin-bottom:12px">${p.title}</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:12px">${p.body}</div>
+      ${p.tip ? `<div style="font-size:11px;color:${stepCol};background:#1a1a26;border:1px solid ${stepCol}44;
+        border-radius:8px;padding:7px 12px;margin-bottom:14px;text-align:left">${p.tip}</div>` : ""}
       <div style="margin-bottom:18px">${dots}</div>
       <div style="display:flex;gap:8px">
         ${page === 0
@@ -16127,7 +16384,7 @@ function showFirstGuideModal() {
           : `<button id="_fgPrev" class="btn btn-secondary" style="flex:1">← 戻る</button>`
         }
         <button id="_fgNext" class="btn btn-primary" style="flex:2">
-          ${isLast ? "はじめる！" : "次へ →"}
+          ${isLast ? "🎮 はじめる！" : "次へ →"}
         </button>
       </div>
     `;
@@ -16143,7 +16400,7 @@ function showFirstGuideModal() {
     });
     const skipBtn = mc.querySelector("#_fgSkip");
     if(skipBtn) skipBtn.addEventListener("click", () => {
-      Analytics.guideSkipped(page); // スキップ時：何ページ目で離脱したか記録
+      if(!forceShow) Analytics.guideSkipped(page); // 初回のみ計測
       _closeGuide();
     });
     const prevBtn = mc.querySelector("#_fgPrev");
@@ -16151,13 +16408,16 @@ function showFirstGuideModal() {
   }
 
   function _closeGuide() {
-    gs.meta.isFirstPlay = false;
-    saveGame();
+    if(!forceShow) {
+      // 初回フラグを落とす（再表示時は変更しない）
+      gs.meta.isFirstPlay = false;
+      saveGame();
+    }
     overlay.remove();
   }
 
   function _closeGuideCompleted() {
-    Analytics.guideCompleted(); // 最後まで読んで「はじめる！」を押した
+    if(!forceShow) Analytics.guideCompleted(); // 最後まで読んで「はじめる！」を押した（初回のみ計測）
     _closeGuide();
   }
 
