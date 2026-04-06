@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-06（S55完了）
+**最終更新**: 2026-04-06（S56完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -323,6 +323,20 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S53 完了内容（2026-04-06）
+
+### 機能追加・バグ修正（5件）
+
+| 内容 | 詳細 |
+|---|---|
+| SKILL-EXPAND | worldRank100解禁転生スキル3種追加（rb_apex: 全ステ+8%・ボス与ダメ+10% / rb_hoard: 売値+12%・棚+2 / rb_transcend: 全ステ+5%・maxHP+15%・SP+5） |
+| REBIRTH-PROGRESS | `renderDungeon` 潜入前カードに転生条件進捗インジケーター（`rebirthHint`）追加 |
+| DAILY-UX | `initDailyMissions()` リセット時に `addShopLog` でログ追加 |
+| COMBAT-SKILL-UX | `buildCombatSkillBtn` 複数スキル時に `_hasUsable` 判定でdisabled化 |
+| BAG-COST-UX | `openBagModal` にGold差額ヒント表示を追加 |
+
+---
 
 ## S52 完了内容（2026-04-06）
 

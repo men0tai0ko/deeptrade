@@ -1,6 +1,6 @@
 # 深淵商会 — タスク・進捗管理
 
-**バージョン**: S55
+**バージョン**: S56
 **最終更新**: 2026-04-06
 
 ---
@@ -62,6 +62,20 @@
 | 3 | DAILY-RANDOM | Fisher-Yatesシャッフルに置換 | ✅ S54完了 | — |
 | 4 | SKILL-EXPAND | worldRank100解禁スキル3種追加・ボス与ダメ適用確認 | ✅ S53完了 | — |
 | 5 | COLOR-VAR | --surface-deep / --surface-base 変数化（39箇所） | ✅ S54完了 | — |
+
+---
+
+## S53 完了内容（2026-04-06）
+
+### 機能追加・バグ修正（5件）
+
+| 内容 | 詳細 |
+|---|---|
+| SKILL-EXPAND | worldRank100解禁転生スキル3種追加（rb_apex/rb_hoard/rb_transcend）・calcStats集計・doBattle適用・スキルツリーUIブロック・節目モーダル追記 |
+| REBIRTH-PROGRESS | 潜入前カードに転生条件進捗インジケーター追加（ng未達/Lv不足を個別表示） |
+| DAILY-UX | デイリーリセット時に「本日の2件」ショップログを追加 |
+| COMBAT-SKILL-UX | 複数戦闘スキル時、全スキルMP不足の場合にボタンをdisabled化 |
+| BAG-COST-UX | 鞄拡張モーダルにGold差額「あとNGold」ヒント表示を追加 |
 
 ---
 
@@ -141,6 +155,20 @@
 - PvP・マルチプレイ（単独プレイの完成度を優先）
 - ガチャ・課金要素（ゲームデザインの純粋さを保つ）
 - 複雑すぎるシステム（1ファイルの保守性を考慮し追加は最小限）
+
+## S56 完了内容（2026-04-06）
+
+### バグ修正・品質改善（5件）
+
+| 内容 | 詳細 |
+|---|---|
+| ACH-FILTERBAR-RANK50 | 実績モーダルのカテゴリバッジカウントがRank50到達後にエントリを追加しないバグを修正（S55の取り残し） |
+| COLOR-VAR-3 | `--damage`（#ff8888・11箇所）/ `--warning`（#ff9999・17箇所）/ `--filter-active`（#2a2a4e・10箇所）を変数化 |
+| HINT-DAILY-COMPLETE | `calcNextAction()` にデイリー未受取ヒントを追加（依頼モーダルへ誘導） |
+| DOC-S53-BACKFILL | tasks.md・HANDOVER.md に欠落していた S53 完了セクションを補完 |
+| COLOR-VAR-4 | `--unidentified`（#cccc00・10箇所）を変数化 |
+
+---
 
 ## S55 完了内容（2026-04-06）
 
