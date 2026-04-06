@@ -170,8 +170,8 @@
   }
 
   .hpFill  { background: linear-gradient(90deg, #8b0000, var(--danger)); }
-  .mpFill  { background: linear-gradient(90deg, #003366, #3498db); }
-  .expFill { background: linear-gradient(90deg, #4a2080, #9b59b6); }
+  .mpFill  { background: linear-gradient(90deg, #003366, var(--rare)); }
+  .expFill { background: linear-gradient(90deg, #4a2080, var(--epic)); }
 
   /* ── タブ ── */
   #tabBar {
@@ -677,7 +677,7 @@
     font-weight: 700;
   }
 
-  .badge-normal    { background: #3a4a3a; color: #27ae60; }
+  .badge-normal    { background: #3a4a3a; color: var(--green); }
   .badge-rare      { background: #1a3a60; color: var(--rare); }
   .badge-epic      { background: #3a1a5a; color: var(--epic); }
   .badge-legendary { background: #5a3000; color: var(--legendary); }
@@ -716,9 +716,9 @@
   .shelfSlot.special-accessory { border-color: #9b59b644; }
   .shelfSlot.special-consumable{ border-color: #27ae6044; }
   .shelfSlot.special-weapon.occupied    { border-color: var(--danger); }
-  .shelfSlot.special-armor.occupied     { border-color: #3498db; }
-  .shelfSlot.special-accessory.occupied { border-color: #9b59b6; }
-  .shelfSlot.special-consumable.occupied{ border-color: #27ae60; }
+  .shelfSlot.special-armor.occupied     { border-color: var(--rare); }
+  .shelfSlot.special-accessory.occupied { border-color: var(--epic); }
+  .shelfSlot.special-consumable.occupied{ border-color: var(--green); }
 
   .shelfItemName { font-size: 11px; font-weight: 700; margin-top: 4px; }
   .shelfTimer { font-size: 10px; color: var(--gold); margin-top: 3px; }
@@ -1139,8 +1139,8 @@
     from { top: -80px; opacity: 0; }
     to   { top: 8px;   opacity: 1; }
   }
-  .sale-banner.rare-banner      { background:#0a1a2e; border:1px solid #3498db; color:#7ec8ff; }
-  .sale-banner.epic-banner      { background:#130a20; border:1px solid #9b59b6; color:#d4aaff; }
+  .sale-banner.rare-banner      { background:#0a1a2e; border:1px solid var(--rare); color:#7ec8ff; }
+  .sale-banner.epic-banner      { background:#130a20; border:1px solid var(--epic); color:#d4aaff; }
   .sale-banner.legendary-banner {
     background:#1a0f00; border:2px solid var(--gold); color:#ffe47a;
     flex-direction:column; gap:3px; text-align:center; padding:10px 14px;
@@ -3957,7 +3957,7 @@ function calcCharCP(gs) {
 
 // CP表示テキスト（色付き）
 function cpSpan(cp) {
-  const col = cp >= 180 ? '#e67e22' : cp >= 110 ? '#9b59b6' : cp >= 60 ? '#3498db' : cp >= 30 ? '#27ae60' : 'var(--text-mid)';
+  const col = cp >= 180 ? 'var(--legendary)' : cp >= 110 ? 'var(--epic)' : cp >= 60 ? 'var(--rare)' : cp >= 30 ? 'var(--green)' : 'var(--text-mid)';
   return `<span style="color:${col};font-weight:700">⚡${cp}</span>`;
 }
 
@@ -6107,6 +6107,18 @@ function calcNextAction() {
     };
   }
 
+  // ②.5 疲弊中 → 棚より先に休息を促す（S62: 疲弊時は行動効率が落ちるため優先）
+  if(gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now()) {
+    const _restCost = (gs.dungeon.clearedFloor || 1) * 100;
+    return {
+      icon:  "💆",
+      label: "NEXT ACTION",
+      text:  "疲弊状態を回復しよう",
+      sub:   `ショップで${_restCost.toLocaleString()}G — 最大HP-15%が解除されます`,
+      action: () => switchTab("shop"),
+    };
+  }
+
   // ② 空き棚がある + 出品可能な装備がある → 棚に並べる
   const emptyShelfCount = gs.shop.shelves.filter(
     s => s === null || (s && !s.item)
@@ -6145,18 +6157,6 @@ function calcNextAction() {
         action: () => switchTab("inventory"),
       };
     }
-  }
-
-  // ③.2 疲弊中 → 休息を促す（S61）
-  if(gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now()) {
-    const _restCost = (gs.dungeon.clearedFloor || 1) * 100;
-    return {
-      icon:  "💆",
-      label: "NEXT ACTION",
-      text:  "疲弊状態を回復しよう",
-      sub:   `ショップで${_restCost.toLocaleString()}G — 最大HP-15%が解除されます`,
-      action: () => switchTab("shop"),
-    };
   }
 
   // ③.3 投資未満 + 十分なGold → 投資を促す（S60）
@@ -10554,7 +10554,7 @@ function openRegularsModal() {
         const orderTl  = reg.order ? typeLabel(reg.order.itemType) : null;
         const canOrder = regularCanOrder(reg.lv);
         const fastVisit = regularCanFastVisit(reg.lv);
-        const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? '#9b59b6' : '#3498db';
+        const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? 'var(--epic)' : 'var(--rare)';
         return `<div style="background:var(--bg-deep);border:1px solid ${borderColor};border-radius:8px;padding:10px 12px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span style="font-size:22px">${reg.icon}</span>
@@ -10571,7 +10571,7 @@ function openRegularsModal() {
             </div>
           </div>
           <div style="background:var(--surface-deep);border-radius:4px;height:4px;margin-bottom:6px">
-            <div style="background:#3498db;height:100%;border-radius:4px;width:${barPct}%;transition:width 0.3s"></div>
+            <div style="background:var(--rare);height:100%;border-radius:4px;width:${barPct}%;transition:width 0.3s"></div>
           </div>
           <div style="font-size:10px;color:var(--text-disabled);margin-bottom:6px">次のLvまで あと${nextLvNeed}回</div>
           ${hasOrder
@@ -11436,7 +11436,7 @@ function openBrewModal() {
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
 
-  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"#9b59b6", legendary:"var(--legendary-bright)" };
+  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
   const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
 
   // レシピごとの数量状態
@@ -13661,7 +13661,7 @@ function renderDungeon(sc, ab) {
               const _cp = calcCharCP(gs);
               const _rec = FLOOR_RECOMMENDED_CP[selFloor] || 0;
               const _ok = _cp >= _rec;
-              const _col = _ok ? '#27ae60' : 'var(--danger)';
+              const _col = _ok ? 'var(--green)' : 'var(--danger)';
               return `<div style="font-size:11px;margin-top:4px;display:flex;align-items:center;gap:6px">
                 <span style="color:var(--muted)">推奨CP</span>
                 <span style="color:${_col};font-weight:700">⚡${_rec}</span>
@@ -14241,7 +14241,7 @@ function openBulkUnlistModal() {
     .sort((a,b) => (RARITY_ORDER[a]||0)-(RARITY_ORDER[b]||0));
   const typeKeys = [...new Set(listedSlots.map(s => ITEM_MASTER[s.slot.item.itemId]?.type).filter(Boolean))];
 
-  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"#9b59b6", legendary:"var(--legendary-bright)" };
+  const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
   const BTN = "padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:1px solid var(--border-dark);background:transparent;color:var(--muted)";
 
   const render = () => {
@@ -15354,7 +15354,7 @@ function renderStatus(sc, ab) {
     { key:"seal",     icon:"🔴",  label:"印章" },
   ];
 
-  const rarityBorder = { normal:"#27ae60", rare:"var(--info)", epic:"#9b59b6", legendary:"var(--legendary-bright)" };
+  const rarityBorder = { normal:"var(--green)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
 
   const renderSlotCell = (def) => {
     const uid  = gs.equipped[def.key];
@@ -15374,7 +15374,7 @@ function renderStatus(sc, ab) {
     const enhBadge   = (item.enhLv||0) > 0 ? `<div style="font-size:10px;color:var(--success);font-weight:700;line-height:1">+${item.enhLv}</div>` : "";
     const curseBadge = (item.cursed && item.curse && item.curse.type === "bind")
       ? `<div style="font-size:10px;color:var(--curse);line-height:1">⛓</div>`
-      : (item.cursed ? `<div style="font-size:10px;color:#9b59b6;line-height:1">呪</div>` : "");
+      : (item.cursed ? `<div style="font-size:10px;color:var(--epic);line-height:1">呪</div>` : "");
     const itemName   = m.name.length > 6 ? m.name.slice(0,5)+"…" : m.name;
 
     return `<div onclick="openUnequipModal('${def.key}','${uid}')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border-radius:8px;border:1px solid ${border};background:var(--surface-base);cursor:pointer">
@@ -15882,7 +15882,7 @@ function openCollectionModal(initTab) {
 
   const RARITIES    = ["normal","rare","epic","legendary"];
   const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
-  const RARITY_COLS  = { normal:"var(--text-mid)", rare:"var(--info)", epic:"#9b59b6", legendary:"var(--legendary-bright)" };
+  const RARITY_COLS  = { normal:"var(--text-mid)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
 
   // ── 固定ヘッダー（進捗バー）──
   const header = document.createElement("div");
@@ -16323,7 +16323,7 @@ function openSkillTree(tabKey) {
   const p = gs.player;
   const categories = [
     { key:"atk", label:"⚔️ 火力", color:"var(--danger)" },
-    { key:"def", label:"🛡️ 防御", color:"#3498db" },
+    { key:"def", label:"🛡️ 防御", color:"var(--rare)" },
     { key:"exp", label:"👁️ 探索", color:"var(--green-bright)" },
   ];
   const hasRebirth = p.worldRank > 0 || p.rebirthPoints > 0;
