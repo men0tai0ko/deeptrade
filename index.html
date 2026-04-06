@@ -1144,6 +1144,30 @@
   }
   .ach-toast.visible { bottom: 140px; }
   .ach-toast:active { opacity: 0.8; }
+
+  /* デイリーミッション達成トースト（S52）*/
+  .daily-toast {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -120px;
+    width: calc(100% - 28px);
+    max-width: 452px;
+    background: #001a0a;
+    border: 1px solid var(--green);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 8210;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 12px rgba(39,174,96,0.25);
+    transition: bottom 0.35s cubic-bezier(0.22,1,0.36,1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .daily-toast.visible { bottom: 200px; }
+  .daily-toast:active { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -4678,11 +4702,60 @@ function checkDailyMissions(trigger, payload) {
     if(m.claimed) return m;  // 受取済みはスキップ
     const def = _getDailyDef(m.type);
     if(!def) return m;
+    // 達成瞬間を検出するために更新前の isDone を保持
+    const wasDone = def.isDone(m);
     const updated = def.update(m, trigger, payload);
-    if(updated !== m) { changed = true; return updated; }
+    if(updated !== m) {
+      changed = true;
+      // 今回の更新で達成に変わった瞬間のみトースト通知（S52）
+      if(!wasDone && def.isDone(updated)) {
+        showDailyToast(updated);
+      }
+      return updated;
+    }
     return m;
   });
   if(changed) saveGame();
+}
+
+// デイリーミッション達成トースト（S52）
+// 達成した瞬間に1回だけ表示。タップで依頼モーダルを開く。
+let _dailyToastTimer = null;
+function showDailyToast(mission) {
+  // 既存トーストがあれば即撤去
+  const existing = document.querySelector('.daily-toast');
+  if(existing) {
+    if(_dailyToastTimer) { clearTimeout(_dailyToastTimer); _dailyToastTimer = null; }
+    existing.remove();
+  }
+
+  const toast = document.createElement('div');
+  toast.className = 'daily-toast';
+  toast.innerHTML = `
+    <div style="font-size:22px;flex-shrink:0;width:30px;text-align:center">📅</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:10px;color:var(--green);letter-spacing:1px;margin-bottom:2px;font-weight:700">✅ デイリー達成！</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${mission.desc}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:1px">報酬 <span style="color:var(--gold);font-weight:700">+${(mission.reward||0).toLocaleString()}G</span>　タップして受取</div>
+    </div>
+    <div style="font-size:16px;color:var(--green);flex-shrink:0">›</div>
+  `;
+  document.body.appendChild(toast);
+
+  toast.addEventListener('click', () => {
+    if(_dailyToastTimer) { clearTimeout(_dailyToastTimer); _dailyToastTimer = null; }
+    toast.classList.remove('visible');
+    setTimeout(() => { if(toast.parentNode) toast.remove(); }, 380);
+    openQuestModal();
+  });
+
+  requestAnimationFrame(() => toast.classList.add('visible'));
+
+  _dailyToastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => { if(toast.parentNode) toast.remove(); }, 380);
+    _dailyToastTimer = null;
+  }, 5000);
 }
 
 // デイリーミッション報酬受取
@@ -5614,6 +5687,7 @@ function startAutoRun(floor) {
     runs: 0,
     totalDrops: 0,
     startGold: gs.player.gold,
+    startAt: Date.now(),        // S52: 周回開始時刻
     intervalMs,
     nextRunAt: Date.now() + intervalMs,
   };
@@ -5632,6 +5706,11 @@ function stopAutoRun() {
   gs.dungeon.autoRun = null;
   gs.player.status = 'idle';
 
+  // 周回中のGold増加を計算（startGold時点からの差分）
+  const autoRunEarnedGold = Math.max(0, gs.player.gold - (ar.startGold || gs.player.gold));
+  // 周回開始時刻（startAt）があれば経過時間を計算
+  const elapsedSec = ar.startAt ? Math.max(1, Math.floor((Date.now() - ar.startAt) / 1000)) : null;
+
   const session = {
     startGold: ar.startGold,
     kills: 0,
@@ -5644,6 +5723,9 @@ function stopAutoRun() {
     autoRunRuns: ar.runs,
     autoRunKills: 0,
     autoRunDrops: ar.totalDrops || 0,
+    autoRunEarnedGold,          // S52: 周回中の獲得Gold
+    autoRunElapsedSec: elapsedSec, // S52: 経過時間（秒）
+    autoRunFloor: ar.floor,     // S52: 周回階層
   };
   saveGame();
   showDungeonResult(session, []);
@@ -6063,8 +6145,11 @@ function showDungeonResult(session, items, defeated=false) {
   const earnedExp     = session?.earnedExp || 0;
   const kills         = session?.kills || 0;
   const bossKilled    = session?.bossKilled || false;
-  const autoRunRuns   = session?.autoRunRuns || 0;
-  const autoRunDrops  = session?.autoRunDrops || 0;
+  const autoRunRuns        = session?.autoRunRuns || 0;
+  const autoRunDrops       = session?.autoRunDrops || 0;
+  const autoRunEarnedGold  = session?.autoRunEarnedGold ?? null;  // S52: 周回中獲得Gold
+  const autoRunElapsedSec  = session?.autoRunElapsedSec ?? null;  // S52: 経過時間
+  const autoRunFloor       = session?.autoRunFloor ?? null;        // S52: 周回階層
   const maxDepth      = session?.maxDepth || gs.dungeon.progress || 0;
   const totalDmgGiven = session?.totalDmgGiven || 0;
   const totalDmgTaken = session?.totalDmgTaken || 0;
@@ -6107,8 +6192,41 @@ function showDungeonResult(session, items, defeated=false) {
     : `<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px">なし</div>`;
 
   // 統計カード（撃破数→到達深度→獲得Gold→獲得EXP→持ち帰り個数）
+  // 周回サマリーカード（S52: 獲得Gold・1周平均・経過時間を追加）
+  const _autoRunSummaryCards = (() => {
+    if(autoRunRuns <= 0) return [];
+    const avgDrops = autoRunRuns > 0 ? (autoRunDrops / autoRunRuns).toFixed(1) : "—";
+    const elapsedLabel = autoRunElapsedSec != null
+      ? (autoRunElapsedSec >= 3600
+          ? `${Math.floor(autoRunElapsedSec/3600)}時間${Math.floor((autoRunElapsedSec%3600)/60)}分`
+          : autoRunElapsedSec >= 60
+          ? `${Math.floor(autoRunElapsedSec/60)}分${autoRunElapsedSec%60}秒`
+          : `${autoRunElapsedSec}秒`)
+      : "—";
+    const goldPerMin = (autoRunEarnedGold != null && autoRunElapsedSec > 0)
+      ? Math.floor(autoRunEarnedGold / (autoRunElapsedSec / 60))
+      : null;
+
+    return [
+      { label:"🔄 周回数",   value: autoRunRuns + `<span style="font-size:12px;color:var(--muted)"> 周</span>`, color:"var(--accent2)" },
+      { label:"📦 取得数",   value: autoRunDrops + `<span style="font-size:12px;color:var(--muted)"> 個</span>`, color:"var(--gold)" },
+      ...(autoRunEarnedGold != null ? [{
+        label:"💰 獲得Gold",
+        value: autoRunEarnedGold.toLocaleString() + `<span style="font-size:12px;color:var(--muted)">G</span>`,
+        color: autoRunEarnedGold > 0 ? "var(--gold)" : "var(--muted)"
+      }] : []),
+      { label:"📊 1周平均",  value: avgDrops + `<span style="font-size:12px;color:var(--muted)"> 個/周</span>`, color:"#88ddff" },
+      ...(autoRunElapsedSec != null ? [{ label:"⏱ 経過時間", value: elapsedLabel, color:"var(--muted)" }] : []),
+      ...(goldPerMin != null ? [{
+        label:"⚡ Gold/分",
+        value: goldPerMin.toLocaleString() + `<span style="font-size:12px;color:var(--muted)">G</span>`,
+        color: "var(--green)"
+      }] : []),
+    ];
+  })();
+
   const stats = [
-    ...(autoRunRuns > 0 ? [{ label:"🔄 周回数", value: autoRunRuns + `<span style="font-size:12px;color:var(--muted)"> 周</span>`, color:"var(--accent2)" }, { label:"📦 取得数", value: autoRunDrops + `<span style="font-size:12px;color:var(--muted)"> 個</span>`, color:"var(--gold)" }] : []),
+    ..._autoRunSummaryCards,
     { label:"⚔ 撃破数",       value: kills + (bossKilled ? `<div style="font-size:10px;color:var(--gold);margin-top:2px">👑 ボス討伐</div>` : ""), color: bossKilled ? "var(--gold)" : "var(--text)" },
     { label:"🗺 到達深度",     value: maxDepth,                                color: "var(--text)" },
     { label: defeated && lostGold > 0 ? "💸 損失Gold" : "💰 獲得Gold",
@@ -6130,7 +6248,7 @@ function showDungeonResult(session, items, defeated=false) {
 
   mc.innerHTML = `
     <div style="flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border);text-align:center;${defeated ? 'background:#1a0808;' : ''}">
-      <div class="modal-title" style="${defeated ? 'color:#ff6666;' : ''}">${defeated ? '💀 力尽きた…' : '📋 探索リザルト'}</div>
+      <div class="modal-title" style="${defeated ? 'color:#ff6666;' : ''}">${defeated ? '💀 力尽きた…' : autoRunRuns > 0 ? '🔄 周回リザルト' : '📋 探索リザルト'}</div>
       ${defeated ? '<div style="font-size:11px;color:#ff8888;margin-top:4px">鞄の中身は失った。装備はそのまま。</div>' : ''}
     </div>
     <div style="flex:1;overflow-y:auto;padding:12px 16px">
@@ -13668,8 +13786,15 @@ function renderShop(sc, ab) {
       const dispName  = isUnid ? itemDisplayName(item) : m.name;
       const dispPrice = `${itemPrice(item)}G`; // 未鑑定も謎箱価格を表示
       const demand    = isUnid ? 100 : getDemand(item);
-      const demandColor = demand>=80?"var(--green)":demand>=50?"#ffcc00":"var(--red)";
       const trendMark = (!isUnid && isTrending(item)) ? " 🔥" : "";
+      // S52: 需要バッジ（色+アイコン+テキストで直感的に）
+      const _demandBadge = (() => {
+        if(isUnid) return "";
+        if(demand >= 80) return `<div style="font-size:9px;color:var(--green);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>🔥</span><span>需要旺盛</span></div>`;
+        if(demand >= 60) return `<div style="font-size:9px;color:#88dd88;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📈</span><span>需要${demand}%</span></div>`;
+        if(demand >= 40) return `<div style="font-size:9px;color:#ffcc00;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
+        return `<div style="font-size:9px;color:var(--red);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700;animation:none"><span>⚠</span><span style="color:#ff6666">需要低下 ${demand}%</span></div>`;
+      })();
       const rarityClass = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
       const specialDef  = getShelfSpecialDef(slot.specialType);
       const isMatched    = slot.specialType && itemMatchesShelfSpecial(item, slot.specialType);
@@ -13697,7 +13822,7 @@ function renderShop(sc, ab) {
         <div style="font-size:9px;color:var(--muted);margin-top:2px">${dispPrice}</div>
         ${!isUnid?(slot.visitor
           ? `<div style="font-size:9px;color:#aaddff;margin-top:2px;font-weight:700">${slot.visitor.icon}${slot.visitor.name}が見ている…</div>`
-          : `<div style="font-size:9px;color:${demandColor};margin-top:2px">需要${demand}%</div>`
+          : _demandBadge
         ):""}
         ${specialBadge}${saleBadge}
       </div>`;
@@ -13822,8 +13947,15 @@ function updateShopTick() {
       const dispName  = isUnid ? itemDisplayName(item) : m.name;
       const dispPrice = isUnid ? "50G" : `${itemPrice(item)}G`;
       const demand    = isUnid ? 100 : getDemand(item);
-      const demandColor = demand>=80?"var(--green)":demand>=50?"#ffcc00":"var(--red)";
       const trendMark = (!isUnid && isTrending(item)) ? " 🔥" : "";
+      // S52: 需要バッジ（updateShopTick差分更新版）
+      const _demandBadge2 = (() => {
+        if(isUnid) return "";
+        if(demand >= 80) return `<div style="font-size:9px;color:var(--green);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>🔥</span><span>需要旺盛</span></div>`;
+        if(demand >= 60) return `<div style="font-size:9px;color:#88dd88;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📈</span><span>需要${demand}%</span></div>`;
+        if(demand >= 40) return `<div style="font-size:9px;color:#ffcc00;margin-top:2px;display:flex;align-items:center;gap:2px"><span>📊</span><span>需要${demand}%</span></div>`;
+        return `<div style="font-size:9px;color:var(--red);margin-top:2px;display:flex;align-items:center;gap:2px;font-weight:700"><span>⚠</span><span style="color:#ff6666">需要低下 ${demand}%</span></div>`;
+      })();
       const rarityClass   = isUnid ? "rarity-unidentified" : `rarity-${item.rarity}`;
       const _specDef2     = getShelfSpecialDef(slot.specialType);
       const _isMatched2   = slot.specialType && itemMatchesShelfSpecial(item, slot.specialType);
@@ -13841,7 +13973,7 @@ function updateShopTick() {
         <div style="font-size:9px;color:var(--muted);margin-top:2px">${dispPrice}</div>
         ${!isUnid?(slot?.visitor
           ? `<div style="font-size:9px;color:#aaddff;margin-top:2px;font-weight:700">${slot.visitor.icon}${slot.visitor.name}が見ている…</div>`
-          : `<div style="font-size:9px;color:${demandColor};margin-top:2px">需要${demand}%</div>`
+          : _demandBadge2
         ):""}`;
       const targetClass = `shelfSlot occupied ${rarityClass} ${specialClass2}`.trim();
       if(!el.classList.contains("occupied")) {
@@ -14219,6 +14351,7 @@ function openListModal(slotIdx) {
   // 等級・種別の選択肢を事前計算
   const rarityOrder = ["normal","rare","epic","legendary"];
   const rarityKeys  = rarityOrder.filter(rk => available.some(i => i.identified && i.rarity === rk));
+  const hasUnidentified = available.some(i => !i.identified); // 未鑑定品の有否
   const typeOrder   = ["weapon","head","body","legs","arms","feet","neck","bracelet","ring","consumable"];
   const typeKeys    = typeOrder.filter(tk => available.some(i => ITEM_MASTER[i.itemId]?.type === tk));
   const TYPE_ICON   = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
@@ -14228,7 +14361,7 @@ function openListModal(slotIdx) {
                          neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8" };
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
 
-  // フィルター・ソート状態
+  // フィルター・ソート状態（"unidentified" も rarity キーとして扱う）
   const activeRarities = new Set();
   const activeTypes    = new Set();
   let   sortEnhFirst   = false; // trueで強化済み優先
@@ -14236,13 +14369,20 @@ function openListModal(slotIdx) {
   // ボタンサイズ共通スタイル
   const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid #444;background:#585880;transition:background 0.1s,border 0.1s';
 
-  // 骨格を初回のみ生成
-  const rarityBtns = rarityKeys.map(rk => {
-    const rc = RARITY_MASTER[rk];
-    return `<button data-filter="rarity:${rk}" title="${rc?.label||rk}"
-      style="${BTN};color:${rc?.color||'#fff'};font-weight:700;font-size:12px"
-      >${RARITY_SHORT[rk]||rk[0].toUpperCase()}</button>`;
-  }).join('');
+  // 骨格を初回のみ生成（未鑑定ボタンを末尾に追加）
+  const rarityBtns = [
+    ...rarityKeys.map(rk => {
+      const rc = RARITY_MASTER[rk];
+      return `<button data-filter="rarity:${rk}" title="${rc?.label||rk}"
+        style="${BTN};color:${rc?.color||'#fff'};font-weight:700;font-size:12px"
+        >${RARITY_SHORT[rk]||rk[0].toUpperCase()}</button>`;
+    }),
+    // 未鑑定ボタン：未鑑定品がある場合のみ表示
+    ...(hasUnidentified
+      ? [`<button data-filter="rarity:unidentified" title="未鑑定のみ表示"
+          style="${BTN};color:#888;font-weight:700;font-size:11px;border-style:dashed">❓</button>`]
+      : []),
+  ].join('');
 
   const typeBtns = typeKeys.map(tk =>
     `<button data-filter="type:${tk}" title="${tk}" style="${BTN};color:${TYPE_COLOR[tk]||'#ccc'}">${TYPE_ICON[tk]||tk[0]}</button>`
@@ -14290,6 +14430,14 @@ function openListModal(slotIdx) {
         (f.startsWith("rarity:") && f !== "rarity:all" && activeRarities.has(f.slice(7))) ||
         (f.startsWith("type:")   && activeTypes.has(f.slice(5)));
       const isAllActive = f === "rarity:all" && activeRarities.size === 0 && activeTypes.size === 0;
+      // 未鑑定ボタン特別スタイル
+      if(f === "rarity:unidentified") {
+        const isUnidActive = activeRarities.has("unidentified");
+        btn.style.background  = isUnidActive ? '#1a1a1a' : '#1a1a2e';
+        btn.style.borderColor = isUnidActive ? '#888' : '#444';
+        btn.style.borderStyle = isUnidActive ? 'solid' : 'dashed';
+        return;
+      }
       btn.style.background  = (isActive||isAllActive) ? '#2a2a4e' : '#1a1a2e';
       btn.style.borderColor = (isActive||isAllActive) ? 'var(--accent)' : '#333';
     });
@@ -14346,8 +14494,30 @@ function openListModal(slotIdx) {
 
   // 現在のフィルター・ソートを適用したアイテムリストを返す
   const getFiltered = () => {
+    const showUnidOnly   = activeRarities.has("unidentified");
+    const hasRarityFilter = activeRarities.size > 0 && !showUnidOnly; // 通常等級フィルターがある
+    const noFilter       = activeRarities.size === 0 && activeTypes.size === 0; // [全]状態
+
     let list = available.filter(i => {
-      if(activeRarities.size > 0 && !activeRarities.has(i.rarity)) return false;
+      const isUnid = !i.identified;
+
+      // 未鑑定フィルターが有効な場合：未鑑定のみ通過
+      if(showUnidOnly) return isUnid;
+
+      // 通常等級フィルターがある場合：未鑑定を除外（鑑定済みのみ等級フィルター適用）
+      if(hasRarityFilter) {
+        if(isUnid) return false; // 等級指定中は未鑑定を非表示
+        if(!activeRarities.has(i.rarity)) return false;
+      }
+
+      // [全]状態（フィルターなし）：未鑑定を含む全アイテムを表示
+      if(noFilter && isUnid) {
+        // 部位フィルターがあれば部位チェックのみ適用
+        if(activeTypes.size > 0 && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
+        return true;
+      }
+
+      // 部位フィルター
       if(activeTypes.size > 0 && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
       return true;
     });
