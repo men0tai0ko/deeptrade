@@ -4938,8 +4938,8 @@ function generateMap(floor) {
 
   // 基本プール（shortcutを廃止しomairyに置き換え）
   let pool = hasTreasureSense
-    ? ["battle","battle","battle","treasure","treasure","trap","rest","windfall","shrine","omen","relic"]
-    : ["battle","battle","battle","treasure","trap","rest","windfall","shrine","omen","omen","relic"];
+    ? ["battle","battle","battle","treasure","treasure","trap","rest","windfall","shrine","omen","relic","merchant"]
+    : ["battle","battle","battle","treasure","trap","rest","windfall","shrine","omen","omen","relic","merchant"];
 
   // 財宝感知スキル：宝箱マス出現率+10%ごとに追加1枠
   const r = gs ? calcStats(gs) : null;
@@ -6617,6 +6617,7 @@ function handleEvent(type, depth) {
     case "rest":     handleRest(); break;
     case "shrine":   handleShrine(); break;
     case "relic":    handleRelic(); break;
+    case "merchant": handleMerchant(); break;
     case "boss":     startBossCombat(floor); break;
     case "windfall":  handleWindfall(depth, floor); break;
     case "omen":      handleOmen(); break;
@@ -7257,6 +7258,80 @@ function openCombatItemModal() {
 // 祠イベント定義テーブル（S52拡充）
 // 呪い装備がない場合にランダム抽選される拡張イベント群
 // ─────────────────────────────────────────
+// 旅の商人マス（S83）
+// ─────────────────────────────────────────
+function handleMerchant() {
+  const floor = gs.dungeon.activeFloor || gs.dungeon.floor;
+  const ng    = gs.dungeon.ng || 0;
+
+  // 販売ラインナップ（basePrice × 2倍・階層補正あり）
+  const MERCHANT_ITEMS = [
+    { itemId:"herb",     rarity:"normal", label:"薬草",   icon:"🌿", desc:"HP+15%回復" },
+    { itemId:"potion",   rarity:"normal", label:"回復薬", icon:"🧪", desc:"HP+40%回復" },
+    { itemId:"antidote", rarity:"normal", label:"解毒薬", icon:"💊", desc:"毒を解除" },
+  ];
+  const priceMul = 1 + Math.floor(floor / 3) * 0.5; // 1F=×1, 4F=×1.5, 7F=×2
+  const items = MERCHANT_ITEMS.map(it => ({
+    ...it,
+    price: Math.floor(ITEM_MASTER[it.itemId].basePrice * 2 * priceMul),
+  }));
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+  const mc = document.createElement("div");
+  mc.className = "modal-content";
+  mc.style.cssText = "text-align:center;max-width:300px";
+  overlay.appendChild(mc);
+  document.body.appendChild(overlay);
+
+  const refresh = () => {
+    mc.innerHTML = `
+      <div class="modal-title">🧳 旅の商人</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">消耗品を売っているようだ</div>
+      ${items.map((it, i) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border)">
+          <div style="text-align:left">
+            <span style="font-size:18px">${it.icon}</span>
+            <span style="font-size:13px;font-weight:700;margin-left:6px">${it.label}</span>
+            <div style="font-size:10px;color:var(--muted)">${it.desc}</div>
+          </div>
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;${gs.player.gold >= it.price ? '' : 'opacity:0.5'}"
+            ${gs.player.gold >= it.price ? '' : 'disabled'}
+            id="buy_${i}">${it.price.toLocaleString()}G</button>
+        </div>
+      `).join("")}
+      <div style="font-size:11px;color:var(--muted);margin:8px 0">所持Gold: <span style="color:var(--gold);font-weight:700">${gs.player.gold.toLocaleString()}G</span></div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:4px" id="merchantClose">閉じる</button>
+    `;
+    items.forEach((it, i) => {
+      const btn = mc.querySelector(`#buy_${i}`);
+      if(btn && !btn.disabled) {
+        btn.addEventListener("click", () => {
+          if(gs.player.gold < it.price) return;
+          gs.player.gold -= it.price;
+          // dungeon.consumables に追加
+          const cs = gs.dungeon.consumables || {};
+          const arr = cs[it.itemId] || [];
+          const ex = arr.find(s => s.rarity === it.rarity);
+          if(ex) ex.count++;
+          else arr.push({ count:1, rarity:it.rarity });
+          gs.dungeon.consumables[it.itemId] = arr;
+          addLog("item", `🧳 【${it.icon}${it.label}】を${it.price.toLocaleString()}Gで購入した`);
+          saveGame();
+          refresh();
+        });
+      }
+    });
+    mc.querySelector("#merchantClose").addEventListener("click", () => {
+      overlay.remove();
+      render();
+    });
+  };
+  refresh();
+}
+
+// ─────────────────────────────────────────
 // 遺物マス（S82）
 // ─────────────────────────────────────────
 const RELIC_EVENTS = [
@@ -7369,7 +7444,7 @@ const SHRINE_EVENTS = [
     canFire: () => !!gs.dungeon.map[gs.dungeon.progress + 1],
     fire: () => {
       const nextEv = gs.dungeon.map[gs.dungeon.progress + 1];
-      const evNames = {battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない",lava:"溶岩",relic:"遺物"};
+      const evNames = {battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない",lava:"溶岩",relic:"遺物",merchant:"商人"};
       addLog("item", `⛩ 祠を発見。導きの声が聞こえた——次のマスは【${evNames[nextEv] || "不明"}】らしい`);
     }
   },
@@ -7461,7 +7536,7 @@ const SHRINE_EVENTS = [
     canFire: () => gs.dungeon.map && gs.dungeon.progress < gs.dungeon.map.length - 3,
     fire: () => {
       // 3マス先まで全て見える（mapの次3マスをログに出力）
-      const evNames = {battle:"⚔戦闘",treasure:"💰宝箱",trap:"⚠罠",rest:"💤休息",shrine:"⛩祠",boss:"💀ボス",windfall:"✨落し物",omen:"🔮予兆",shortcut:"💨抜け道",nothing:"何もない",lava:"🌋溶岩",relic:"🏺遺物"};
+      const evNames = {battle:"⚔戦闘",treasure:"💰宝箱",trap:"⚠罠",rest:"💤休息",shrine:"⛩祠",boss:"💀ボス",windfall:"✨落し物",omen:"🔮予兆",shortcut:"💨抜け道",nothing:"何もない",lava:"🌋溶岩",relic:"🏺遺物",merchant:"🧳商人"};
       const prog = gs.dungeon.progress;
       const ahead = [1,2,3].map(n => {
         const ev = gs.dungeon.map[prog + n];

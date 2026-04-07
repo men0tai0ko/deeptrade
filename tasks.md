@@ -1,3 +1,14 @@
+## S83 完了内容（2026-04-07）
+
+### 安全性確認・機能追加（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-HUNT-S82 | autoRun 中 relic 不踏・出現率6〜9%・calcStats 統合不要 → 全項目問題なし |
+| FEATURE-MERCHANT | `merchant`（旅の商人）マス実装。3種消耗品（herb/potion/antidote）を basePrice×2×階層補正で購入可能。`handleMerchant()` 追加、`handleEvent` case追加、`generateMap` pool追加 |
+
+---
+
 ## S82 完了内容（2026-04-07）
 
 ### 機能追加（1件）
