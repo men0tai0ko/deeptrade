@@ -1657,7 +1657,7 @@ function checkRegularVisits() {
         return;
       }
       const slotIdx = gs.shop.shelves.findIndex(s =>
-        s && ITEM_MASTER[s?.item?.itemId]?.type === reg.order.itemType
+        s && s.item && ITEM_MASTER[s.item.itemId]?.type === reg.order.itemType
       );
       if(slotIdx >= 0) {
         // 注文品購入
@@ -1700,8 +1700,9 @@ function checkRegularVisits() {
 
     // 来訪購入
     const slotIdx = gs.shop.shelves.findIndex(s =>
-      s && reg.preferType && ITEM_MASTER[s?.item?.itemId]?.type === reg.preferType
+      s && s.item && reg.preferType && ITEM_MASTER[s.item.itemId]?.type === reg.preferType
     );
+    if(slotIdx < 0) return; // item:null の特化スロットのみの場合は購入しない（S65-BUG）
     const shelf = gs.shop.shelves[slotIdx];
     const item  = shelf.item;
     const basePrice = itemPrice(item);

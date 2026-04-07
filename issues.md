@@ -1,6 +1,6 @@
 # 深淵商会 — バグ・課題一覧
 
-**最終更新**: 2026-04-07（S64）
+**最終更新**: 2026-04-07（S65）
 
 ---
 
@@ -17,6 +17,23 @@
 ## 🟡 保留中の課題
 
 *現在、保留中の課題はありません。*
+
+---
+
+## ✅ 修正済み（S65）
+
+### BUG-REGULAR-FINDINDEX 🔴 クリティカル
+- **内容**: `checkRegularVisits()` 来訪購入の `findIndex` に `s.item` チェックが漏れていた
+- **症状**: `item:null` の特化スロットが棚にある状態で `preferType` 持ちの常連客が来訪すると `slotIdx = -1` → `shelves[-1] = undefined` → `shelf.item` で **TypeError クラッシュ**
+- **再現**: 特化スロット設定後に商品を出品しない状態 + 常連来訪
+- **修正**: `findIndex` 条件に `s.item &&` を追加。`slotIdx < 0` の早期 `return` ガードを追加
+- **影響範囲**: `checkRegularVisits()` 来訪購入ブロックのみ
+
+### BUG-ORDER-FINDINDEX
+- **内容**: `checkRegularOrders()` 注文購入の `findIndex` にも同様の `s.item` チェック漏れ
+- **症状**: `slotIdx >= 0` ガードが既存のため実クラッシュには至らないが条件不整合
+- **修正**: `findIndex` 条件に `s.item &&` を追加（来訪購入と統一）
+- **影響範囲**: `checkRegularOrders()` 注文購入ブロックのみ
 
 ---
 

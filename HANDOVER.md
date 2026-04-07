@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-07（S63完了）
+**最終更新**: 2026-04-07（S65完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,6 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
+> ※ 現在バージョン: **S65**（2026-04-07）
 
 ---
 
@@ -386,6 +387,17 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+## S65 完了内容（2026-04-07）
+
+### バグ修正（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-REGULAR-FINDINDEX | `checkRegularVisits()` 来訪購入 `findIndex` に `s.item` チェック追加・`slotIdx < 0` ガード追加。`item:null` 特化スロット存在時のクラッシュを修正 |
+| BUG-ORDER-FINDINDEX | `checkRegularOrders()` 注文購入 `findIndex` に `s.item` チェック追加（条件統一） |
 
 ---
 

@@ -1,3 +1,27 @@
+## S65 完了内容（2026-04-07）
+
+### バグ修正・品質改善（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-REGULAR-FINDINDEX | `checkRegularVisits()` 来訪購入の `findIndex` に `s.item` チェック漏れ。`item:null` の特化スロットが棚にある状態で常連来訪時 `shelves[-1]` 参照 → TypeError クラッシュ。`s.item &&` 追加・`slotIdx < 0` ガード追加 |
+| BUG-ORDER-FINDINDEX | `checkRegularOrders()` 注文購入の `findIndex` にも同様の `s.item` チェック漏れ。`slotIdx >= 0` ガード済みのためクラッシュには至らないが条件を統一 |
+| TASKS-S63-SYNC | tasks.md に S63 完了セクション（ドキュメント整備3件）を追記 |
+
+---
+
+## S63 完了内容（2026-04-07）
+
+### ドキュメント整備（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| ISSUES-UPDATE | issues.md を S54 止まりから S63 対応に更新。S55〜S62 の修正内容を全追記 |
+| DAILY-UX-2-CLOSE / DAILY-LOGIC-4-CLOSE | 保留課題2件を S64 にてクローズ（実害なし・根本原因修正済み） |
+| README-VERSION-SYNC | README.md バージョンを S51→S63 に更新。直近変更を S62/S63 内容に差し替え |
+
+---
+
 ## S62 完了内容（2026-04-07）
 
 ### 品質改善（2件）
