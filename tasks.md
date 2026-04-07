@@ -1,3 +1,14 @@
+## S66 完了内容（2026-04-07）
+
+### バグ修正・品質改善（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| FLUCTUATE-DEMAND-SHUFFLE | `fluctuateDemand()` のシャッフルを Fisher-Yates に置換。4カテゴリで先頭2つ（weapon/armor）が選ばれやすい偏りを修正。`initDailyMissions` と同様の問題（S54漏れ） |
+| COLOR-VAR-ALPHA-DEFER | アルファ付き3箇所（`#3498db44`/`#9b59b644`/`#27ae6044`）を設計制約として正式記録・クローズ |
+
+---
+
 ## S65 完了内容（2026-04-07）
 
 ### バグ修正・品質改善（3件）

@@ -10055,7 +10055,12 @@ function fluctuateDemand() {
   }, 0);
   const _demandMul = 1 - Math.min(80, _rbDemandStabilize) / 100; // 最大80%縮小
   // ランダムに1〜2カテゴリを選んで上下させる
-  const shuffled = cats.sort(() => Math.random() - 0.5);
+  // DAILY-RANDOMと同様にFisher-Yatesで一様分布を保証（S66）
+  const shuffled = [...cats];
+  for(let _i = shuffled.length - 1; _i > 0; _i--) {
+    const _j = Math.floor(Math.random() * (_i + 1));
+    [shuffled[_i], shuffled[_j]] = [shuffled[_j], shuffled[_i]];
+  }
   shuffled.slice(0, 2).forEach(cat => {
     // -8〜+8のランダム変動（トレンド中のカテゴリは+方向バイアス）
     const isTrend = gs.shop.trend?.type === cat && Date.now() < (gs.shop.trend?.endsAt||0);
