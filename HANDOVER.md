@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-07（S77完了）
+**最終更新**: 2026-04-07（S82完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S77**（2026-04-07）
+> ※ 現在バージョン: **S82**（2026-04-07）
 
 ---
 
@@ -21,7 +21,7 @@
 | 技術構成 | HTML / CSS / Vanilla JS のみ（単一ファイル） |
 | 対象端末 | スマホ基準レスポンシブ（最大幅480px中央寄せ） |
 | データ保存 | `localStorage["shinentrade_v1"]`（ゲーム本体）/ `localStorage["shinentrade_logs"]`（ログ）/ `localStorage["shinentrade_analytics"]`（計測） |
-| 規模 | 約16,200行 |
+| 規模 | 約16,990行 |
 | ホスティング | GitHub Pages — https://men0tai0ko.github.io/deeptrade/ |
 
 ---
@@ -59,6 +59,8 @@ gs = {
     _watcherReady, _firstHitAvoided, _omenActive, _omenType, _session,
     _shrineAtkBuff,     // 祠バフ：次の戦闘1回のみ与ダメ+30%（S52）
     _shrineLukBuff,     // 祠バフ：フロア中 LUK+5（S52）
+    _relicAtkBuff,      // 遺物バフ：次の戦闘1回のみ与ダメ+25%（S82）
+    _relicDefBuff,      // 遺物バフ：次の戦闘1回のみ被ダメ-20%（S82）
   },
   shop: {
     level, exp, nextExp, totalSales,
@@ -246,6 +248,16 @@ AUTO_RUN_CONFIG = {
 ```
 ---
 
+## 共通グローバル定数（S73〜S77追加）
+
+| 定数名 | 内容 | 追加 |
+|---|---|---|
+| `EQUIP_TYPE_COLOR` | 装備タイプ別表示カラー（weapon/#e8d5a0 等12種） | S73 |
+| `RARITY_SHORT_LABEL` | レアリティ短縮表記 `{normal:"N", rare:"R", epic:"E", legendary:"L"}` | S76 |
+| `RARITY_ORDER_MAP` | レアリティ昇順ソート用 `{normal:0, rare:1, epic:2, legendary:3}` | S77 |
+
+---
+
 ## デイリーミッションシステム（S51）
 
 ### DAILY_MISSION_TYPES（配列・5種）
@@ -387,6 +399,57 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+## S82 完了内容（2026-04-07）
+
+### 機能追加（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| relic マス実装 | `RELIC_EVENTS`(5種) + `handleRelic()` 追加。バフ2種を doBattle に統合。マイグレーション追加 |
+
+新フィールド（dungeon）:
+- `_relicAtkBuff`: boolean — 次の戦闘1回のみ与ダメ+25%
+- `_relicDefBuff`: boolean — 次の戦闘1回のみ被ダメ-20%
+
+---
+
+## S81 完了内容（2026-04-07）
+
+### 安全性確認・機能設計（コード変更なし）
+
+- leaveDungeon / startAutoRun 全ガード確認済み
+- 次期機能設計（DUNGEON-EVENT-NEW / SHOP-TIER-UNLOCK）を tasks.md に記録
+
+---
+
+## S80 完了内容（2026-04-07）
+
+### 安全性確認・ドキュメント整備（コード変更なし）
+
+- openListModal / showDungeonResult 全ガード確認済み
+- 行数を 16,990行 に更新
+- 次期機能候補を tasks.md に記録（DUNGEON-EVENT-NEW / SKILL-SITUATIONAL 等5件）
+
+---
+
+## S79 完了内容（2026-04-07）
+
+### 安全性確認・ドキュメント整備（コード変更なし）
+
+- learnRebirthSkill / buyLootSlot 全ガード確認済み
+- HANDOVER.md に共通グローバル定数一覧セクション追加
+
+---
+
+## S78 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）・重複定数整理完了
+
+- DEDUP最終スキャン: BTN は3パターン・TYPE_ICON は内容不一致のため対象外。重複整理は S73〜S77 で完了
+- openSkillTree ガード確認済み
 
 ---
 

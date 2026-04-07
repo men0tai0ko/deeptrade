@@ -1,3 +1,114 @@
+## S82 完了内容（2026-04-07）
+
+### 機能追加（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| DUNGEON-EVENT-NEW: 遺物マス実装 | `RELIC_EVENTS`（5種・重み付き抽選）+ `handleRelic()` 追加。`handleEvent()` に `case "relic"` 追加。`generateMap()` の pool に `"relic"` を追加（全フロア・1枠）。バフ2種（与ダメ+25% / 被ダメ-20%）を `doBattle()` に統合。セーブデータマイグレーション・`leaveDungeon` リセット処理追加 |
+
+### 変更箇所
+- `RELIC_EVENTS` テーブル（5種: relic_exp / relic_gold / relic_atk / relic_def / relic_material）
+- `handleRelic()` 関数追加
+- `handleEvent()` に `case "relic"` 追加
+- `generateMap()` pool に `"relic"` 1枠追加（全フロア）
+- `doBattle()` に `relicAtkMul`（与ダメ+25%）/ `_relicDefMul`（被ダメ-20%）適用
+- `loadGame()` マイグレーション補完追加
+- `leaveDungeon()` バフリセット追加
+- `evNames` 2箇所に `relic:"遺物"` / `relic:"🏺遺物"` 追加
+
+---
+
+## S81 完了内容（2026-04-07）
+
+### 安全性確認・機能設計（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-FINAL leaveDungeon | active チェック / autoRun停止 / 帰還コスト確認 完備 |
+| BUG-HUNT-FINAL startAutoRun | _autoRunTimer 多重実行防止ガード済み |
+| SPEC-SYNC | S62〜S80 は技術的変更のみ → spec.md 更新不要 |
+| 次期機能設計 | DUNGEON-EVENT-NEW / SHOP-TIER-UNLOCK の設計メモを追記 |
+
+---
+
+## 次期機能設計メモ（S81）
+
+### DUNGEON-EVENT-NEW: 新ダンジョンマス設計
+
+実装箇所:
+- `generateMap()`: pool に新タイプを追加
+- `handleEvent()`: switch に case を追加
+- 新 `handle*()` 関数を追加
+
+候補マスタイプ:
+| type | 内容 | 難度 |
+|---|---|---|
+| `relic` | 遺物発見：ランダムバフ or アイテム（祠の軽量版） | 低 |
+| `curse_chest` | 呪われた宝箱：高価値アイテムだが呪い付与リスク | 中 |
+| `merchant` | 旅の商人：消耗品を購入できる（Gold消費） | 中 |
+
+### SHOP-TIER-UNLOCK: ショップLv連動解禁設計
+
+現状:
+- Lv2: 鑑定解禁
+- Lv5: 裏取引解禁（`bmUnlocked()`）
+- Lv8〜10: 新サービス枠が空き
+
+候補:
+| Lv | 解禁内容 |
+|---|---|
+| Lv8 | 需要予報（次の需要波動をプレビュー） |
+| Lv10 | 自動鑑定スタンプ（出品時に自動鑑定） |
+
+---
+
+## S80 完了内容（2026-04-07）
+
+### 安全性確認・ドキュメント整備（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-34 openListModal | 空き棚0 / 陳列可能0 / 二重陳列（shelfUids除外）全てガード済み |
+| BUG-HUNT-35 showDungeonResult | session null 時の全プロパティに ?. / \|\| 0 完備 |
+| HANDOVER-SYNC | HANDOVER.md / README.md の行数を 16,200行 → 16,990行 に更新 |
+| CONTENT-PROPOSAL | ロードマップ方針（ループ充実・選択の意味・段階的開示）を確認。新機能候補は下記セクション参照 |
+
+### 次期機能追加候補（ロードマップ方針に沿って）
+
+| 優先 | ID | 内容 | 方針 |
+|---|---|---|---|
+| A | DUNGEON-EVENT-NEW | ダンジョン新イベントマス追加（例：隠し通路・遺物発見・呪われた宝箱） | ループ充実 |
+| B | SKILL-SITUATIONAL | 状況依存スキル追加（例：ボス戦特化・低HP発動・高階層ボーナス） | 選択の意味 |
+| C | SHOP-TIER-UNLOCK | ショップLvに応じた新サービス解禁（例：Lv8で自動鑑定・Lv10で需要予報） | 段階的開示 |
+| D | REGULAR-DEEPENING | 常連客の個性強化（固定セリフ強化・特別注文・ギフト） | ループ充実 |
+| E | COLLECTION-REWARD | コレクション達成時の演出強化（フルコンプ特別ボーナス） | 段階的開示 |
+
+---
+
+## S79 完了内容（2026-04-07）
+
+### 安全性確認・ドキュメント整備（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-32 learnRebirthSkill | includes 重複防止 / unlockRank / requires / RP不足 全ガード済み |
+| BUG-HUNT-33 openBagModal/buyLootSlot | slots>=maxSlots 上限 / Gold不足 二重ガード済み |
+| HANDOVER-FINAL | 共通グローバル定数一覧セクション（EQUIP_TYPE_COLOR/RARITY_SHORT_LABEL/RARITY_ORDER_MAP）を HANDOVER.md に追記 |
+
+---
+
+## S78 完了内容（2026-04-07）
+
+### 安全性確認・DEDUP最終スキャン（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| DEDUP-FINAL | `BTN` 3パターン・`TYPE_ICON` 内容不一致のため共通化不適切。重複定数整理は S73〜S77 で完了 |
+| BUG-HUNT-31 openSkillTree | タブ存在チェック / learnSkill 二重確認 → 安全 |
+| README-SYNC | バージョンを S78 に更新 |
+
+---
+
 ## S77 完了内容（2026-04-07）
 
 ### 品質改善（1件）
