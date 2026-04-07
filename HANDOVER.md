@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-07（S66完了）
+**最終更新**: 2026-04-07（S73完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S66**（2026-04-07）
+> ※ 現在バージョン: **S73**（2026-04-07）
 
 ---
 
@@ -390,6 +390,70 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+## S73 完了内容（2026-04-07）
+
+### 品質改善（1件）・安全性確認
+
+| 内容 | 詳細 |
+|---|---|
+| TYPE_COLOR 共通化 | 4箇所に重複コピーされていた装備タイプ別カラー定数を `EQUIP_TYPE_COLOR` グローバル定数として集約。動作変更なし |
+
+---
+
+## S72 完了内容（2026-04-07）
+
+### 安全性確認・HANDOVER最終整備（コード変更なし）
+
+- doBossAttack skill undefined / checkRegularOrders orderType fallback / openCollectionModal null参照 を確認
+- 全て問題なし。保留課題テーブル・安全性確認済み範囲を HANDOVER.md に追記
+
+---
+
+## S71 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+- identifyItem / checkQuestProgress / gainExp / openShelfSettingsModal / S62〜S66全修正反映を確認
+- 全て問題なし
+
+---
+
+## S70 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+- UX-REVIEW-PREP / learnSkill / handleTrap / openBrewModal を全スキャン
+- 全て問題なし確認
+
+---
+
+## S69 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+- calcStats 転生スキル集計 / Gold加算 NaN防止 / generateMap 境界値 / SAVEDATA-SIZE を全スキャン
+- 全て問題なし確認
+
+---
+
+## S68 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+- toggleLock / equipItemByUid / unequipItem / doRebirth / render頻度 / dungeon リセット後フィールド を全スキャン
+- 全て既存ガードで保護済みと確認
+
+---
+
+## S67 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし・全項目問題なし）
+
+- HINT-ABYSS / doBattle / openBulkModal 各種 / renderLoot / SAVEDATA-MIGRATE をスキャン
+- 全て既存ガードで保護済みと確認
+
+---
+
 ## S66 完了内容（2026-04-07）
 
 ### バグ修正（1件）
@@ -427,6 +491,19 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | # | 内容 | ステータス |
 |---|---|---|
 | DAILY-UX | 2件化への混乱懸念 | ✅ S53完了 |
-| ANALYTICS-EVAL | Analytics可視化モーダル強化・ファネル/ドロップ率/直近5セッション追加 | ✅ S52完了 |
-| COLOR-VAR | 未変数化カラーの変数化 | ✅ S62大部分完了（アルファ付き・JSデータ定義は除外） |
-| SKILL-EXPAND | worldRank100解禁転生スキル追加 | 🟢 設計待ち |
+| ANALYTICS-EVAL | Analytics可視化モーダル強化 | ✅ S52完了 |
+| COLOR-VAR | 未変数化カラーの変数化 | ✅ S62完了（アルファ付き・JSデータ定義は仕様として除外） |
+| DAILY-UX-2 / DAILY-LOGIC-4 | 保留課題 | ✅ S64クローズ |
+| SKILL-EXPAND | worldRank100解禁転生スキル追加 | 🟢 設計待ち（現状は機能として完成） |
+
+## 安全性確認済み範囲（S62〜S72）
+
+S62〜S72 の BUG-HUNT セッションで以下を全スキャン・問題なしと確認：
+
+- toggleLock / equipItemByUid / unequipItem / doRebirth / gainExp / identifyItem
+- checkRegularVisits（S65でfindIndexバグ修正）/ checkRegularOrders / processRegularPurchase
+- checkShopSales / checkBlackmarket / checkShopIncome / checkStaffIncome / checkInvestmentReturn
+- doBattle / doBossAttack / handleTrap / handleLava / generateMap
+- openBulkEnhanceModal / openBulkDecomposeModal / openBulkIdentifyModal / openBulkPurifyModal / openBrewModal
+- learnSkill / resetSkill / checkQuestProgress / openCollectionModal / openShelfSettingsModal
+- fluctuateDemand（S66でFisher-Yates修正）/ calcStats 転生スキル集計 / render() 呼び出し頻度

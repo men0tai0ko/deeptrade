@@ -1,3 +1,113 @@
+## S73 完了内容（2026-04-07）
+
+### 安全性確認・品質改善（1件）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-21 openStackDetail | allUids.length===0 で早期 return。m/r は inventory 存在確認後に参照 → 安全 |
+| BUG-HUNT-22 retroCheckAchievements | 全 check() を try/catch でガード済み → エラー耐性あり |
+| PERF-CALCSTATS | setInterval 内で直接呼ばれない。render() はユーザー操作起点のみ → キャッシュ不要 |
+| CONTENT-REVIEW | バランス調整は仕様変更につき対象外 |
+| TYPE_COLOR 共通化 | 4箇所に重複コピーされていた `TYPE_COLOR` 定数を `EQUIP_TYPE_COLOR` グローバル定数として共通化 |
+
+---
+
+## S72 完了内容（2026-04-07）
+
+### 安全性確認・ドキュメント整備（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-18 doBossAttack | skill=b.skills[action] が undefined なら else if(skill) に入らない |
+| BUG-HUNT-19 checkRegularOrders | orderType = reg.preferType \|\| types[random] フォールバック完備 |
+| BUG-HUNT-20 openCollectionModal | gs.collection?.completed \|\| [] で null 参照保護済み |
+| HANDOVER-NEXTCHAT | 保留課題テーブル・安全性確認済み範囲（S62〜S72）を HANDOVER.md に追記 |
+
+---
+
+## S71 完了内容（2026-04-07）
+
+### 安全性確認・全修正反映確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-14 identifyItem | shopLv2 / 未鑑定 / Gold 不足の各ガード完備 |
+| BUG-HUNT-15 checkQuestProgress | q.done で重複防止。daily_* の gs.quests 混入なし |
+| BUG-HUNT-16 gainExp | maxLv 上限なしは転生リセット設計による仕様 |
+| BUG-HUNT-17 openShelfSettingsModal | _shelfSetType/_shelfSetAll ともに item 存在時のみ sellDuration 再計算 |
+| FEATURE-REVIEW | S62〜S66 全修正（COLOR-VAR / 疲弊ヒント / findIndex / Fisher-Yates）の反映を確認 |
+
+---
+
+## S70 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| UX-REVIEW-PREP 疲弊中潜入 | spec.md に潜入禁止記述なし。ペナルティ付き潜入可が仕様。renderShop のバナー誘導で対処済み |
+| BUG-HUNT-11 learnSkill/resetSkill | includes() 重複防止 / requires チェック / SP・Gold 不足ガード完備 |
+| BUG-HUNT-12 handleTrap/handleLava | Math.max(0, hp-dmg) + hp<=0 → leaveDungeon(false) の死亡処理あり |
+| BUG-HUNT-13 openBrewModal | times<=0 ガード / ループ内で素材・Gold 不足時 break あり |
+
+---
+
+## S69 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| calcStats 転生スキル集計 | rb_apex/rb_hoard/rb_transcend の全 effect 適用確認済み。extraShelf は棚スロット計算で直接集計 |
+| checkShopIncome / checkStaffIncome / checkInvestmentReturn | income<=0 ガード・Math.max(1,...) で負値・NaN 発生なし |
+| generateMap 境界値 | len=14+floor×3（1F=17, 10F=44）。pool 枯渇なし。boss マスは getBossIdForFloor 判定済み |
+| SAVEDATA-SIZE | ゲームログ MAX_LOG=100・Analytics sessions 上限100 で肥大化防止済み |
+| confirmEnterDungeon UX | CP不足ダイアログ・疲弊/Gold不足は calcNextAction() による誘導で対応済み |
+
+---
+
+## S69 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-8 calcStats 転生スキル集計 | sellPct/extraShelf/extraLoot/bonusSp は各呼び出し元で個別 reduce。calcStats 内は stat.pct/maxHpPct/bossDmgPct/critRatePct を集計。分担明確・漏れなし |
+| BUG-HUNT-9 Gold加算 NaN/負値 | checkShopIncome: income<=0 ガード。checkStaffIncome: truthy 時のみ加算。checkInvestmentReturn: Math.max(1,...) で最低1G保証 |
+| BUG-HUNT-10 generateMap 境界値 | floor=1(len=17)/floor=10(len=44) 正常。getBossIdForFloor は null 返却でボスなし処理済み |
+| SAVEDATA-SIZE | ALL_LOGS: MAX_LOG=100 で pop() 制御済み。Analytics: sessions.slice(-100) で上限制御済み |
+
+---
+
+## S68 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| toggleLock / equipItemByUid / unequipItem | uid/item null ガード済み → 安全 |
+| doRebirth 重複実行 | `openRebirthModal` 冒頭 `if(!canRebirth()) return` で防止済み |
+| HINT-FULL-CLEAR | 全クリア後も `canRebirth()` → ①転生促進ヒント → 正常動作 |
+| itemPrice の onSale 整合 | `gs.shop.shelves.find` 経由で `onSale` 参照。checkShopSales・常連購入ともに整合 |
+| render() 呼び出し頻度 | setInterval 内は `sold=true` 時のみ。shop タブは `updateShopTick()` 差分更新 → 問題なし |
+| doRebirth 後 dungeon フィールド | `poisoned`/`burned`/`_omenActive` 等は全て falsy 参照のみ。`_session` は enterDungeon 内で即設定 → 安全 |
+
+---
+
+## S67 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| HINT-ABYSS | 10Fクリア後 `ng++` → `selectedFloor=1` にリセット。"11階層へ潜入" は発生しない |
+| doBattle/doBossAttack | 冒頭 `if(!c) return` ガード済み |
+| openBulkIdentifyModal/openBulkPurifyModal | フィルタ・コスト計算ともにガード済み。ゼロ除算なし |
+| renderLoot null | `loot`タブは `dungeon.active` でアクセス制限済み（16610行） |
+| SAVEDATA-MIGRATE | S62以降の新フィールドなし。全フィールドに `undefined` 補完処理あり |
+
+---
+
 ## S66 完了内容（2026-04-07）
 
 ### バグ修正・品質改善（2件）

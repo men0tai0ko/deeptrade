@@ -48,12 +48,12 @@ ogp.png         ← OGP画像（1280×640px）
 
 ## 現在のバージョン
 
-**S63**（2026-04-07 時点）
+**S70**（2026-04-07 時点）
 
-### 直近の主な変更（S62/S63）
-- CSS変数統一完了（`--rare` / `--epic` / `--green` 残存ハードコード18箇所を変数化）
-- `calcNextAction()` 疲弊ヒント優先順序修正（棚出品より先に疲弊を表示）
-- ドキュメント整備（issues.md / tasks.md / HANDOVER.md を S63 対応に更新）
+### 直近の主な変更（S65〜S70）
+- バグ修正: `checkRegularVisits()` 常連来訪購入で `item:null` 特化スロット参照 → TypeError クラッシュを修正（S65）
+- バグ修正: `fluctuateDemand()` カテゴリ選択の Fisher-Yates 置換（weapon/armor 偏り修正）（S66）
+- 安全性確認 S67〜S70: 計20+ 箇所をスキャン。既存ガードで全項目保護済みと確認
 
 → 詳細は [tasks.md](tasks.md) / [issues.md](issues.md) を参照
 

@@ -1757,6 +1757,13 @@ const EQUIP_SLOTS = [
 ];
 const EQUIP_TYPES = new Set(EQUIP_SLOTS.flatMap(s=>s.types));
 
+// 装備タイプ別表示カラー（openBulkPurifyModal 等4箇所で共用・S73で共通化）
+const EQUIP_TYPE_COLOR = {
+  weapon:"#e8d5a0", sub:"#a0c8e8", head:"#c8a0e8", body:"#a0e8b0",
+  cloak:"#e8c8a0", legs:"#e8a0a0", arms:"#a0d8e8", feet:"#e8e0a0",
+  neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8",
+};
+
 const RARITY_MASTER = {
   normal:    { label:"Normal",    multi:1.0,  dropRate:70, color:"#27ae60", affixCount:0 },
   rare:      { label:"Rare",      multi:1.8,  dropRate:20, color:"#3498db", affixCount:1 },
@@ -11246,9 +11253,7 @@ function openBulkPurifyModal() {
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
-  const TYPE_COLOR   = { weapon:"#e8d5a0", sub:"#a0c8e8", head:"#c8a0e8", body:"#a0e8b0",
-                         cloak:"#e8c8a0", legs:"#e8a0a0", arms:"#a0d8e8", feet:"#e8e0a0",
-                         neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8" };
+  const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
 
   // 存在するレアリティ・タイプのみ表示
   const rarityOrder = ["normal","rare","epic","legendary"];
@@ -11731,9 +11736,7 @@ function openBulkDecomposeModal() {
   const RARITY_ORDER = ["normal","rare","epic","legendary"];
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
                          feet:"👟", neck:"📿", bracelet:"🔗", ring:"💍", seal:"🔴" };
-  const TYPE_COLOR   = { weapon:"#e8d5a0", sub:"#a0c8e8", head:"#c8a0e8", body:"#a0e8b0",
-                         cloak:"#e8c8a0", legs:"#e8a0a0", arms:"#a0d8e8", feet:"#e8e0a0",
-                         neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8" };
+  const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
   const rarityKeys   = RARITY_ORDER.filter(rk => decomposable.some(i => i.rarity === rk));
   const typeKeys     = [...new Set(decomposable.map(i => ITEM_MASTER[i.itemId]?.type).filter(Boolean))];
 
@@ -11998,9 +12001,7 @@ function openBulkEnhanceModal() {
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
-  const TYPE_COLOR   = { weapon:"#e8d5a0", sub:"#a0c8e8", head:"#c8a0e8", body:"#a0e8b0",
-                         cloak:"#e8c8a0", legs:"#e8a0a0", arms:"#a0d8e8", feet:"#e8e0a0",
-                         neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8" };
+  const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
 
   const rarityOrder = ["normal","rare","epic","legendary"];
   const typeOrder   = ["weapon","sub","head","body","cloak","legs","arms","feet","neck","bracelet","ring","seal"];
@@ -14560,9 +14561,7 @@ function openListModal(slotIdx) {
   const typeKeys    = typeOrder.filter(tk => available.some(i => ITEM_MASTER[i.itemId]?.type === tk));
   const TYPE_ICON   = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
                         feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", consumable:"🧪", seal:"🔴" };
-  const TYPE_COLOR   = { weapon:"#e8d5a0", sub:"#a0c8e8", head:"#c8a0e8", body:"#a0e8b0",
-                         cloak:"#e8c8a0", legs:"#e8a0a0", arms:"#a0d8e8", feet:"#e8e0a0",
-                         neck:"#e8a0c8", bracelet:"#a0e8e8", ring:"#e8e8a0", seal:"#c8c8e8" };
+  const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
   const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
 
   // フィルター・ソート状態（"unidentified" も rarity キーとして扱う）
