@@ -1770,6 +1770,8 @@ const RARITY_MASTER = {
   epic:      { label:"Epic",      multi:3.5,  dropRate:8,  color:"#9b59b6", affixCount:2 },
   legendary: { label:"Legendary", multi:6.0,  dropRate:2,  color:"#e67e22", affixCount:3 },
 };
+// レアリティ短縮表記（フィルタボタン等で共用・S76で共通化）
+const RARITY_SHORT_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
 
 // ── スキルツリー マスターデータ ──
 // type: "passive"のみ（将来 "active" を追加予定）
@@ -11250,7 +11252,7 @@ function openBulkPurifyModal() {
   const activeTypes    = new Set();
 
   const BTN = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:var(--btn-default);flex-shrink:0';
-  const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+  const RARITY_SHORT = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
   const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
@@ -11448,7 +11450,7 @@ function openBrewModal() {
   document.body.appendChild(overlay);
 
   const RARITY_COLOR = { normal:"var(--text-subtle)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
-  const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+  const RARITY_LABEL = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
 
   // レシピごとの数量状態
   const qty = {};
@@ -11998,7 +12000,7 @@ function openBulkEnhanceModal() {
 
   const BTN  = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:14px;cursor:pointer;border:1px solid var(--border-subtle);background:var(--btn-default);flex-shrink:0';
   const BTN2 = 'display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border-subtle);background:var(--btn-default);flex-shrink:0';
-  const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+  const RARITY_SHORT = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥",
                          legs:"👖", arms:"🧤", feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
   const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
@@ -14562,7 +14564,7 @@ function openListModal(slotIdx) {
   const TYPE_ICON   = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
                         feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", consumable:"🧪", seal:"🔴" };
   const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
-  const RARITY_SHORT = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+  const RARITY_SHORT = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
 
   // フィルター・ソート状態（"unidentified" も rarity キーとして扱う）
   const activeRarities = new Set();
@@ -15886,7 +15888,7 @@ function openCollectionModal(initTab) {
   document.body.appendChild(overlay);
 
   const RARITIES    = ["normal","rare","epic","legendary"];
-  const RARITY_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+  const RARITY_LABEL = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
   const RARITY_COLS  = { normal:"var(--text-mid)", rare:"var(--info)", epic:"var(--epic)", legendary:"var(--legendary-bright)" };
 
   // ── 固定ヘッダー（進捗バー）──
