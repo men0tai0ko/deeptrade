@@ -1772,6 +1772,8 @@ const RARITY_MASTER = {
 };
 // レアリティ短縮表記（フィルタボタン等で共用・S76で共通化）
 const RARITY_SHORT_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+// レアリティ昇順ソート用マップ（4箇所で共用・S77で共通化）
+const RARITY_ORDER_MAP = { normal:0, rare:1, epic:2, legendary:3 };
 
 // ── スキルツリー マスターデータ ──
 // type: "passive"のみ（将来 "active" を追加予定）
@@ -7199,7 +7201,7 @@ function useConsumable(itemId, rarity) {
 // 戦闘中のアイテム選択モーダル（等級別・アイコン枠色で等級表現）
 function openCombatItemModal() {
   const cs = gs.dungeon.consumables || {};
-  const RARITY_ORDER = {normal:0,rare:1,epic:2,legendary:3};
+  const RARITY_ORDER = RARITY_ORDER_MAP; // S77: グローバル定数を参照
 
   // 等級別に全スロットを展開（高レア順）
   const btns = Object.entries(cs).flatMap(([id, arr]) =>
@@ -13240,7 +13242,7 @@ window._setAutoHealThreshold = _setAutoHealThreshold;
 function openPrepModal() {
   if(gs.dungeon.active) return;
   const USABLE_IDS   = ["herb","potion","antidote","omamori"];
-  const RARITY_ORDER = {normal:0,rare:1,epic:2,legendary:3};
+  const RARITY_ORDER = RARITY_ORDER_MAP; // S77: グローバル定数を参照
   const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
   const lootLimit    = getLootLimit();
   const lootCount    = gs.dungeon.loot.length;
@@ -14235,7 +14237,7 @@ function openBulkUnlistModal() {
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
 
-  const RARITY_ORDER = { normal:0, rare:1, epic:2, legendary:3 };
+  const RARITY_ORDER = RARITY_ORDER_MAP; // S77: グローバル定数を参照
   const TYPE_LABEL   = { weapon:"武器", sub:"サブ", head:"ヘルム", body:"トップス", cloak:"マント",
     legs:"ボトムス", arms:"グローブ", feet:"ブーツ", neck:"ネック", bracelet:"ブレスレット",
     ring:"リング", seal:"印章", consumable:"消耗品", material:"素材" };
@@ -14911,7 +14913,7 @@ function renderInventory(sc, ab) {
   }
 
   // ── ソート ──
-  const RARITY_ORDER = { normal:0, rare:1, epic:2, legendary:3 };
+  const RARITY_ORDER = RARITY_ORDER_MAP; // S77: グローバル定数を参照
   const TYPE_ORDER = { weapon:0, sub:1, head:2, body:3, cloak:4, legs:5, arms:6, feet:7, neck:8, bracelet:9, ring:10, seal:11, material:12, consumable:13 };
   // 未鑑定品はNormal(-1扱い)以下に固定
   const rarityVal = item => item.identified ? (RARITY_ORDER[item.rarity] ?? 0) : -1;
