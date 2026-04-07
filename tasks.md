@@ -1,3 +1,15 @@
+## S84 完了内容（2026-04-07）
+
+### 品質改善・機能追加（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| RELIC-SHRINE-DEDUP | `_pickWeighted(events)` ヘルパー追加。`handleRelic`・`handleShrine` の重み付き抽選ロジック（各6行）を共通化 |
+| FEATURE-DEMAND-FORECAST | ショップLv8解禁「需要動向」バナー追加。`demandHistory` 直近2スナップを比較し武器/防具/装飾品/消耗品の上昇↑/下降↓/横ばい→を表示 |
+| BUG-HUNT-S83 | merchant QA：disabled処理・consumables追加ともに問題なし |
+
+---
+
 ## S83 完了内容（2026-04-07）
 
 ### 安全性確認・機能追加（1件）

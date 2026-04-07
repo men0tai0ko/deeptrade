@@ -7257,6 +7257,21 @@ function openCombatItemModal() {
 
 // 祠イベント定義テーブル（S52拡充）
 // 呪い装備がない場合にランダム抽選される拡張イベント群
+// 重み付きランダム抽選ヘルパー（RELIC/SHRINE で共用・S84）
+// events: { weight, canFire, fire } の配列 → canFire()=true のものから重みで1件選択、なければ null
+function _pickWeighted(events) {
+  const eligible = events.filter(e => e.canFire());
+  if(eligible.length === 0) return null;
+  const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+  let rand = Math.random() * totalWeight;
+  let chosen = eligible[eligible.length - 1];
+  for(const ev of eligible) {
+    rand -= ev.weight;
+    if(rand <= 0) { chosen = ev; break; }
+  }
+  return chosen;
+}
+
 // ─────────────────────────────────────────
 // 旅の商人マス（S83）
 // ─────────────────────────────────────────
@@ -7392,18 +7407,11 @@ const RELIC_EVENTS = [
 
 function handleRelic() {
   const floor = gs.dungeon.activeFloor || gs.dungeon.floor;
-  const eligible = RELIC_EVENTS.filter(e => e.canFire());
-  if(eligible.length === 0) {
+  const chosen = _pickWeighted(RELIC_EVENTS); // S84: ヘルパー使用
+  if(!chosen) {
     addLog("item", "🏺 遺物を発見。しかし力は既に失われていた……");
     saveGame();
     return;
-  }
-  const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
-  let rand = Math.random() * totalWeight;
-  let chosen = eligible[eligible.length - 1];
-  for(const ev of eligible) {
-    rand -= ev.weight;
-    if(rand <= 0) { chosen = ev; break; }
   }
   chosen.fire(floor);
   saveGame();
@@ -7568,20 +7576,12 @@ function handleShrine() {
   }
 
   // 発火可能なイベントを重みで抽選
-  const eligible = SHRINE_EVENTS.filter(e => e.canFire());
-  if(eligible.length === 0) {
+  const chosen = _pickWeighted(SHRINE_EVENTS); // S84: ヘルパー使用
+  if(!chosen) {
     addLog("item", "⛩ 祠を発見。しかし今は何も感じない……");
     saveGame();
     return;
   }
-  const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
-  let rand = Math.random() * totalWeight;
-  let chosen = eligible[eligible.length - 1];
-  for(const ev of eligible) {
-    rand -= ev.weight;
-    if(rand <= 0) { chosen = ev; break; }
-  }
-
   chosen.fire();
   saveGame();
 }
@@ -14142,6 +14142,29 @@ function renderShop(sc, ab) {
 
   const trend = sh.trend;
   const trendNow = trend && trend.type && Date.now() < trend.endsAt;
+  // 需要動向バナー（Lv8解禁・直近スナップ比較・S84）
+  const demandForecastBanner = (() => {
+    if(sh.level < 8) return "";
+    const hist = sh.demandHistory || [];
+    if(hist.length < 2) return "";
+    const prev = hist[hist.length - 2].snap;
+    const curr = hist[hist.length - 1].snap;
+    const _FCATS = [
+      { key:"weapon",    label:"武器",   icon:"⚔" },
+      { key:"armor",     label:"防具",   icon:"🛡" },
+      { key:"accessory", label:"装飾品", icon:"💍" },
+      { key:"consumable",label:"消耗品", icon:"🧪" },
+    ];
+    const trends = _FCATS.map(c => {
+      const diff = (curr[c.key] ?? 100) - (prev[c.key] ?? 100);
+      const arrow = diff >= 5 ? "↑" : diff <= -5 ? "↓" : "→";
+      const col   = diff >= 5 ? "var(--success)" : diff <= -5 ? "var(--damage)" : "var(--muted)";
+      return `<span style="color:${col};font-size:11px">${c.icon}${c.label}<b>${arrow}</b></span>`;
+    }).join("<span style='color:var(--border-subtle);padding:0 4px'>|</span>");
+    return `<div style="background:var(--surface-deep);border:1px solid var(--border-subtle);border-radius:6px;padding:5px 10px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;color:var(--muted)">📊 需要動向</span>${trends}
+    </div>`;
+  })();
   const trendBanner = trendNow
     ? `<div class="trendBanner" style="background:var(--gold-bg);border:1px solid #aa8800;border-radius:8px;padding:5px 10px;margin-bottom:6px;font-size:11px;color:var(--alert);text-align:center">
         📣 流行中：${trend.label} <span style="color:var(--muted);font-size:10px">（販売速度+30%・売値+10%）</span>
@@ -14231,7 +14254,7 @@ function renderShop(sc, ab) {
         </div>
         <div class="barTrack"><div class="barFill" style="width:${expPct}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
       </div>
-      ${trendBanner}${buyerBanner}
+      ${demandForecastBanner}${trendBanner}${buyerBanner}
     </div>
     <div class="list-body">
       <div class="card" style="margin:0">
