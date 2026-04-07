@@ -4954,13 +4954,13 @@ function generateMap(floor) {
   } else if(floor === 3) {
     // 3階: 宝箱増・休息なし（探索報酬特化）
     pool = pool.filter(e => e !== "rest");
-    pool = [...pool, "treasure"];
+    pool = [...pool, "treasure", "curse_chest"];
   } else if(floor === 4) {
     // 4階: 罠1枠増・windfall増（厳しさの中の一筋の光）
-    pool = [...pool, "trap", "windfall"];
+    pool = [...pool, "trap", "windfall", "curse_chest"];
   } else if(floor === 5) {
     // 5階: 溶岩マス追加・罠増・宝箱増（ハイリスクハイリターン）
-    pool = [...pool, "lava", "lava", "trap", "treasure"];
+    pool = [...pool, "lava", "lava", "trap", "treasure", "curse_chest"];
     pool = pool.filter(e => e !== "rest"); // 休息なし
   } else if(floor >= 6 && floor <= 8) {
     // 6〜8階（観測外領域・前半）: 溶岩増・罠増・windfall増・休息なし
@@ -6617,7 +6617,8 @@ function handleEvent(type, depth) {
     case "rest":     handleRest(); break;
     case "shrine":   handleShrine(); break;
     case "relic":    handleRelic(); break;
-    case "merchant": handleMerchant(); break;
+    case "merchant":    handleMerchant(); break;
+    case "curse_chest": handleCurseChest(); break;
     case "boss":     startBossCombat(floor); break;
     case "windfall":  handleWindfall(depth, floor); break;
     case "omen":      handleOmen(); break;
@@ -7273,6 +7274,69 @@ function _pickWeighted(events) {
 }
 
 // ─────────────────────────────────────────
+// 呪われた宝箱マス（S85）
+// ─────────────────────────────────────────
+function handleCurseChest() {
+  const floor = gs.dungeon.activeFloor || gs.dungeon.floor;
+  const depth = gs.dungeon.progress || 0;
+  const ng    = gs.dungeon.ng || 0;
+
+  // 高品質アイテムを生成（通常より1段階高いレアリティ補正）
+  const item = generateDrop(depth + 5, floor); // depth補正で品質アップ
+  if(!item) { addLog("item", "💀 呪われた宝箱……中は空だった。"); saveGame(); return; }
+
+  // 強制的に呪い付与（通常より強い呪い）
+  const curse = rollCurse(item.rarity === "normal" ? "rare" : item.rarity, depth + 8);
+  if(curse) { item.cursed = true; item.curse = curse; }
+
+  const m = ITEM_MASTER[item.itemId];
+  const r = RARITY_MASTER[item.rarity];
+  const affixCount = item.affixes ? item.affixes.length : 0;
+  const itemSpan = rarityItemSpan(m.name, item.rarity, affixCount);
+  const curseLabel = curse ? `<div style="font-size:11px;color:var(--warning);margin-top:4px">${curse.icon} 呪い【${curse.label}】が宿っている…</div>` : "";
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const mc = document.createElement("div");
+  mc.className = "modal-content";
+  mc.style.cssText = "text-align:center;max-width:300px";
+  mc.innerHTML = `
+    <div class="modal-title" style="color:var(--warning)">💀 呪われた宝箱</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px">禍々しい気配が漂っている</div>
+    <div style="padding:10px;background:#1a0a0a;border:1px solid #663333;border-radius:8px;margin-bottom:12px">
+      <div style="font-size:22px">${m.icon}</div>
+      <div style="font-size:13px;font-weight:700;margin-top:4px">${itemSpan}</div>
+      <div style="font-size:11px;color:var(--muted)">${r.label}</div>
+      ${curseLabel}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" style="flex:1" id="_curseSkip">見逃す</button>
+      <button class="btn btn-secondary" style="flex:1;border-color:var(--warning);color:var(--warning)" id="_curseOpen">開ける</button>
+    </div>
+  `;
+  overlay.appendChild(mc);
+  document.body.appendChild(overlay);
+
+  mc.querySelector("#_curseSkip").addEventListener("click", () => {
+    overlay.remove();
+    addLog("item", "💀 呪われた宝箱を見逃した……");
+    render();
+  });
+  mc.querySelector("#_curseOpen").addEventListener("click", () => {
+    overlay.remove();
+    if(gs.dungeon.loot.length >= getLootLimit()) {
+      openLootOverflowModal(item);
+      return;
+    }
+    gs.dungeon.loot.push(item);
+    const curseMsg = curse ? ` ⛓ 呪い【${curse.label}】が宿っている！` : "";
+    addLog("item", `💀 呪われた宝箱から【${itemSpan}】を入手した！${curseMsg}`);
+    saveGame();
+    render();
+  });
+}
+
+// ─────────────────────────────────────────
 // 旅の商人マス（S83）
 // ─────────────────────────────────────────
 function handleMerchant() {
@@ -7452,7 +7516,7 @@ const SHRINE_EVENTS = [
     canFire: () => !!gs.dungeon.map[gs.dungeon.progress + 1],
     fire: () => {
       const nextEv = gs.dungeon.map[gs.dungeon.progress + 1];
-      const evNames = {battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない",lava:"溶岩",relic:"遺物",merchant:"商人"};
+      const evNames = {battle:"戦闘",treasure:"宝箱",trap:"罠",rest:"休息",shrine:"祠",boss:"ボス",windfall:"落し物",omen:"予兆",shortcut:"抜け道",nothing:"何もない",lava:"溶岩",relic:"遺物",merchant:"商人",curse_chest:"呪い箱"};
       addLog("item", `⛩ 祠を発見。導きの声が聞こえた——次のマスは【${evNames[nextEv] || "不明"}】らしい`);
     }
   },
@@ -7544,7 +7608,7 @@ const SHRINE_EVENTS = [
     canFire: () => gs.dungeon.map && gs.dungeon.progress < gs.dungeon.map.length - 3,
     fire: () => {
       // 3マス先まで全て見える（mapの次3マスをログに出力）
-      const evNames = {battle:"⚔戦闘",treasure:"💰宝箱",trap:"⚠罠",rest:"💤休息",shrine:"⛩祠",boss:"💀ボス",windfall:"✨落し物",omen:"🔮予兆",shortcut:"💨抜け道",nothing:"何もない",lava:"🌋溶岩",relic:"🏺遺物",merchant:"🧳商人"};
+      const evNames = {battle:"⚔戦闘",treasure:"💰宝箱",trap:"⚠罠",rest:"💤休息",shrine:"⛩祠",boss:"💀ボス",windfall:"✨落し物",omen:"🔮予兆",shortcut:"💨抜け道",nothing:"何もない",lava:"🌋溶岩",relic:"🏺遺物",merchant:"🧳商人",curse_chest:"💀呪い箱"};
       const prog = gs.dungeon.progress;
       const ahead = [1,2,3].map(n => {
         const ev = gs.dungeon.map[prog + n];
