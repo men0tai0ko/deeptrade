@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-07（S73完了）
+**最終更新**: 2026-04-07（S75完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S73**（2026-04-07）
+> ※ 現在バージョン: **S75**（2026-04-07）
 
 ---
 
@@ -387,6 +387,25 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+## S75 完了内容（2026-04-07）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| TYPE_ICON-BRACELET | `openBulkDecomposeModal` の `bracelet:"🔗"` を `"🔮"` に修正（他3箇所と統一） |
+
+---
+
+## S74 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+- TYPE_ICON差異確認（意図的）/ claimAchievement / gradeUpItem / openReforgeModal を全スキャン
+- 全て問題なし確認
 
 ---
 

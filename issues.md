@@ -1,6 +1,6 @@
 # 深淵商会 — バグ・課題一覧
 
-**最終更新**: 2026-04-07（S73）
+**最終更新**: 2026-04-07（S75）
 
 ---
 
@@ -17,6 +17,15 @@
 ## 🟡 保留中の課題
 
 *現在、保留中の課題はありません。*
+
+---
+
+## ✅ 修正済み（S75）
+
+### TYPE_ICON-BRACELET
+- **内容**: `openBulkDecomposeModal` の `TYPE_ICON` で `bracelet:"🔗"` が他3箇所（`openBulkPurifyModal` / `openBulkEnhanceModal` / `openShelfSettingsModal`）の `"🔮"` と不一致
+- **修正**: `"🔗"` → `"🔮"` に統一
+- **影響範囲**: 分解モーダルのタイプフィルタボタンのアイコン表示のみ。動作変更なし
 
 ---
 

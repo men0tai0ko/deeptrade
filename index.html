@@ -11735,7 +11735,7 @@ function openBulkDecomposeModal() {
 
   const RARITY_ORDER = ["normal","rare","epic","legendary"];
   const TYPE_ICON    = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
-                         feet:"👟", neck:"📿", bracelet:"🔗", ring:"💍", seal:"🔴" };
+                         feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴" };
   const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
   const rarityKeys   = RARITY_ORDER.filter(rk => decomposable.some(i => i.rarity === rk));
   const typeKeys     = [...new Set(decomposable.map(i => ITEM_MASTER[i.itemId]?.type).filter(Boolean))];

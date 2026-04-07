@@ -1,3 +1,25 @@
+## S75 完了内容（2026-04-07）
+
+### バグ修正・品質改善（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| TYPE_ICON-BRACELET | `openBulkDecomposeModal` の `bracelet:"🔗"` を他3箇所と同じ `"🔮"` に統一。フィルタボタンアイコンの UI不一致を修正 |
+
+---
+
+## S74 完了内容（2026-04-07）
+
+### 安全性確認（コード変更なし）
+
+| 確認項目 | 結論 |
+|---|---|
+| TYPE_ICON-REVIEW | 4箇所で内容が意図的に異なる（cloak有無・bracelet:🔮 vs 🔗・consumable有無）。共通化不適切 |
+| BUG-HUNT-23 claimDailyMission/claimAchievement | claimed チェックで重複防止済み。Gold加算は reward.gold truthy 時のみ |
+| BUG-HUNT-24 gradeUpItem/openReforgeModal | canGradeUp/canReforge で Gold・素材・crystal 不足を全てガード済み |
+
+---
+
 ## S73 完了内容（2026-04-07）
 
 ### 安全性確認・品質改善（1件）

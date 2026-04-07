@@ -48,12 +48,13 @@ ogp.png         ← OGP画像（1280×640px）
 
 ## 現在のバージョン
 
-**S70**（2026-04-07 時点）
+**S74**（2026-04-07 時点）
 
-### 直近の主な変更（S65〜S70）
-- バグ修正: `checkRegularVisits()` 常連来訪購入で `item:null` 特化スロット参照 → TypeError クラッシュを修正（S65）
-- バグ修正: `fluctuateDemand()` カテゴリ選択の Fisher-Yates 置換（weapon/armor 偏り修正）（S66）
-- 安全性確認 S67〜S70: 計20+ 箇所をスキャン。既存ガードで全項目保護済みと確認
+### 直近の主な変更（S65〜S74）
+- バグ修正: `checkRegularVisits()` 常連来訪購入で `item:null` 参照 → TypeError クラッシュ修正（S65）
+- バグ修正: `fluctuateDemand()` Fisher-Yates 置換で weapon/armor 偏り修正（S66）
+- リファクタ: `TYPE_COLOR` 重複定数を `EQUIP_TYPE_COLOR` グローバル定数に集約（S73）
+- 安全性確認 S67〜S74: 計30+ 箇所をスキャン済み・問題なし
 
 → 詳細は [tasks.md](tasks.md) / [issues.md](issues.md) を参照
 
