@@ -1701,10 +1701,15 @@ function checkRegularVisits() {
         saveGame(); render();
         return;
       } else {
-        const _slotLbl  = Object.fromEntries(EQUIP_SLOTS.map(s=>[s.key,s.label]));
-        const _extraLbl = { armor:"防具", accessory:"装飾品", material:"素材", consumable:"消耗品" };
-        const _typeLbl  = _slotLbl[reg.order.itemType] || _extraLbl[reg.order.itemType] || reg.order.itemType;
-        addShopLog("info", `${reg.icon}${reg.name}「${_typeLbl}を探してたんだけど…まだかな」`);
+        // S114: 「まだかな」ログは5分に1回まで（スパム抑制）
+        const _nagInterval = 5 * 60 * 1000;
+        if(!reg.order.lastNagAt || now - reg.order.lastNagAt >= _nagInterval) {
+          const _slotLbl  = Object.fromEntries(EQUIP_SLOTS.map(s=>[s.key,s.label]));
+          const _extraLbl = { armor:"防具", accessory:"装飾品", material:"素材", consumable:"消耗品" };
+          const _typeLbl  = _slotLbl[reg.order.itemType] || _extraLbl[reg.order.itemType] || reg.order.itemType;
+          addShopLog("info", `${reg.icon}${reg.name}「${_typeLbl}を探してたんだけど…まだかな」`);
+          reg.order.lastNagAt = now;
+        }
         return;
       }
     }
@@ -10933,7 +10938,7 @@ function openRegularsModal() {
   document.querySelector('.regulars-modal')?.remove();
   const modal = document.createElement('div');
   modal.className = 'regulars-modal modal-overlay';
-  modal.onclick = e => { if(e.target === modal) modal.remove(); };
+  modal.onclick = e => { if(e.target === modal) { modal.remove(); window._regRefresh = null; } }; // S114: クローズ時にクロージャをクリア
 
   window._regCat = "all";
   const REG_CATS = [

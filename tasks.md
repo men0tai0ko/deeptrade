@@ -159,6 +159,17 @@ function updateShopTick() {
 
 ---
 
+## S114 完了内容（2026-04-08）
+
+### バグ修正（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| _REGREFRESH-LEAK | モーダルクローズ時に window._regRefresh = null を追加 |
+| REGULAR-VISIT-NAG-THROTTLE | 「まだかな」ログを lastNagAt で5分スロットル |
+
+---
+
 ## S113 完了内容（2026-04-08）
 
 ### バグ修正（1件）
