@@ -12671,12 +12671,18 @@ function hireMercenary(mercId, floor, cost) {
 
 
 let currentTab = "dungeon";
+let _lastRenderedTab = null; // スクロール位置保持用（S96）
 let selectedItem = null;
 let invSortKey    = "default"; // 格納庫ソートキー（セッション中保持）
 let invSortAsc    = false;     // true=昇順 false=降順
 let invFilterKey  = "all";     // 格納庫フィルターキー（セッション中保持）
 
 function render() {
+  // スクロール位置を保持（同一タブ内アクション時のみ・S96）
+  const _sc = document.getElementById("screen");
+  const _savedScrollTop = (_sc && currentTab === _lastRenderedTab) ? _sc.scrollTop : 0;
+  _lastRenderedTab = currentTab;
+
   updateTabVisibility();
   renderTopBar();
   renderScreen();
@@ -12686,6 +12692,8 @@ function render() {
   // メッセージ枠を常に最新（上端）へ
   document.querySelectorAll(".eventBox").forEach(el=>{ el.scrollTop = 0; });
   if(pendingLvUp) renderLvUp();
+  // スクロール位置を復元（タブ切替時は _savedScrollTop=0 なのでリセット）
+  if(_sc && _savedScrollTop > 0) _sc.scrollTop = _savedScrollTop;
 }
 
 function renderTopBar() {

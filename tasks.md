@@ -49,6 +49,53 @@ function _showLegendaryShareModal(item) {
 
 ---
 
+## UI改善候補（S95追加）
+
+### SCROLL-RESET: アクション後の縦スクロールリセット問題
+
+**現象**:
+- 格納庫・ダンジョン等で何かアクション（ロック/強化/鑑定等）を行うと `render()` が呼ばれる
+- `renderScreen()` で `sc.innerHTML` が全書き換えされるため `sc.scrollTop` が 0 にリセット
+- 特に格納庫（inventory）でアイテムが多い場合、操作後に最上部へ戻る
+
+**原因**:
+- `render()` → `renderScreen()` → `sc.innerHTML = ...` → DOM再構築 → scrollTop=0
+
+**修正候補（最小変更）**:
+```diff
+function render() {
++  const sc = document.getElementById("screen");
++  const _prevTab = _lastRenderedTab;
++  const _savedTop = (sc && currentTab === _prevTab) ? sc.scrollTop : 0;
++  _lastRenderedTab = currentTab;
+  updateTabVisibility();
+  renderTopBar();
+  renderScreen();
+  document.querySelectorAll(".eventBox").forEach(el=>{ el.scrollTop = 0; });
+  if(pendingLvUp) renderLvUp();
++  if(sc && currentTab === _prevTab && _savedTop > 0) sc.scrollTop = _savedTop;
+}
+```
+
+**注意点**:
+- タブ切替時（currentTab 変更）はリセットが正しいため条件分岐が必要
+- ショップタブは `updateShopTick` による差分更新があり、全書き換えは少ない
+- `_lastRenderedTab` をグローバル変数として保持する必要あり
+
+**影響範囲**: render() のみ（全タブに影響するが、同一タブ内アクションのスクロール位置のみ保持）
+
+---
+
+## S96 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| SCROLL-RESET 修正 | `render()` に `_lastRenderedTab` を追加し、同一タブ内アクション時のみ `sc.scrollTop` を保存・復元。タブ切替時は `_savedScrollTop=0` → リセット（正しい動作を維持） |
+
+---
+
 ## S95 完了内容（2026-04-08）
 
 ### UX改善（2件）
