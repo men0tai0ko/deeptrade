@@ -1,3 +1,49 @@
+## S86 完了内容（2026-04-07）
+
+### バグ修正・UX改善（3件）
+
+| 内容 | 詳細 |
+|---|---|
+| STAFF-SPEEDBONUS-BUG | `alchemist`/`antiquarian` の `speedBonus` が `base` に未定義で `getStaffEffect` に計算されずLv上昇が効かなかった。`base` に `speedBonus:0` を追加し `gain`/`cap` を整合 |
+| STAFF-STOCKMANAGER-FIX | `stockManager` の `autoShelfSpeed` が tick 間隔に未反映でLv上昇無効だった。`_shelfInterval = Math.max(1, Math.round(2/eff.autoShelfSpeed))` に修正 |
+| STAFF-EFFECT-DISPLAY | スタッフモーダルの効果表示を「消耗品自動生成（N分/個）」等の具体的な間隔表示に変更 |
+
+---
+
+## スタッフ改善候補（S85追加）
+
+### 現状の問題：レベル効果が UI 上で不明瞭
+
+以下3スタッフはレベルアップ時の効果変化が説明文・雇用モーダルに表示されていない。
+
+#### 錬金術師（alchemist）
+- `base.alchemyIntervalMin: 5`（5分ごとに1個生成）
+- `gain.alchemySpeedBonus: 2`/Lv（生産間隔を最大80%短縮）
+- Lv1=5分、Lv10≒4分、Lv20≒3分、Lv40=1分（上限Lv50で80%短縮→1分）
+- **問題**: 何分ごとに生成するか・Lv上昇で何が変わるか UI に未表示
+
+#### 商品管理人（stockManager）
+- `base.autoShelfSpeed: 1`、`gain.autoShelfSpeed: 0.02`/Lv
+- 実際の動作: `shelfTick >= 2`（2分ごとにチェック）→ `autoShelfSpeed` は現在**未使用**
+- **問題**: Lv上昇の効果が実装されていない（speed 係数を参照するコードがない）
+- **改善候補**: `shelfTick >= Math.max(1, Math.round(2 / eff.autoShelfSpeed))` にして高Lvで頻度アップ
+
+#### 古物商（antiquarian）
+- `base.autoIdentifyIntervalMin: 3`（3分ごとに1個鑑定）
+- `gain.autoIdentifySpeedBonus: 2`/Lv（鑑定間隔を最大80%短縮）
+- Lv1=3分、Lv20≒2分、Lv40=0.6分（最速 `Math.max(1,...)` で1分）
+- **問題**: 何分ごとに鑑定するか UI に未表示
+
+### 改善タスク
+
+| 優先 | ID | 内容 | コスト |
+|---|---|---|---|
+| 高 | STAFF-STOCKMANAGER-FIX | `stockManager` の `autoShelfSpeed` を実際の tick 間隔に反映（Lv効果の空実装を修正） | 低 |
+| 中 | STAFF-EFFECT-DISPLAY | 3スタッフの雇用モーダル・スタッフモーダルにレベル別効果（N分ごと・次のLvで○分）を表示 | 中 |
+| 低 | STAFF-DESC-UPDATE | `desc` 文字列に「Lv1: 5分ごと」等の具体的な数値を追記 | 極低 |
+
+---
+
 ## S85 完了内容（2026-04-07）
 
 ### 機能追加（1件）

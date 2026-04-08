@@ -3363,9 +3363,9 @@ const STAFF_MASTER = {
     id:"alchemist", name:"錬金術師", icon:"🧪",
     desc:"放置中にポーションや薬草を自動生成する",
     hireCost: 4000, maxCount: 1, requireShopLv: 3,
-    base: { alchemyIntervalMin: 5 },
-    gain: { alchemySpeedBonus: 2 },  // Lv上昇で生産間隔短縮（2%/Lv）
-    cap:  { alchemySpeedBonus: 80 },
+    base: { alchemyIntervalMin: 5, alchemySpeedBonus: 0 }, // S86: speedBonus を base に追加し getStaffEffect で計算
+    gain: { alchemyIntervalMin: 0, alchemySpeedBonus: 2 },  // Lv上昇で生産間隔短縮（2%/Lv）
+    cap:  { alchemyIntervalMin: 5, alchemySpeedBonus: 80 },
   },
   // watcher: 初撃回避率UP（ダンジョン最初の1撃をLv依存確率で無効化）
   watcher: {
@@ -3417,9 +3417,9 @@ const STAFF_MASTER = {
     id:"antiquarian", name:"古物商", icon:"🏺",
     desc:"放置中に未鑑定のアイテムを自動で鑑定する",
     hireCost: 4500, maxCount: 1, requireShopLv: 5,
-    base: { autoIdentifyIntervalMin: 3 },
-    gain: { autoIdentifySpeedBonus: 2 },
-    cap:  { autoIdentifySpeedBonus: 80 },
+    base: { autoIdentifyIntervalMin: 3, autoIdentifySpeedBonus: 0 }, // S86: speedBonus を base に追加
+    gain: { autoIdentifyIntervalMin: 0, autoIdentifySpeedBonus: 2 },
+    cap:  { autoIdentifyIntervalMin: 3, autoIdentifySpeedBonus: 80 },
   },
   // diviner: 市場需要の予測精度UP（需要グラフに予測線を表示）
   diviner: {
@@ -10518,7 +10518,8 @@ function checkStaffIncome() {
       if(_rarities.length > 0) {
         if(!s.shelfTick) s.shelfTick = 0;
         s.shelfTick++;
-        if(s.shelfTick >= 2) {  // 2分ごとにチェック
+        const _shelfInterval = Math.max(1, Math.round(2 / (eff.autoShelfSpeed || 1))); // S86: Lv効果を反映
+        if(s.shelfTick >= _shelfInterval) {
           s.shelfTick = 0;
           const emptySlots = gs.shop.shelves.filter(sl => sl === null || (sl && !sl.item)).length;
           if(emptySlots > 0) {
@@ -13307,9 +13308,18 @@ function openStaffModal() {
       if(eff.mercCostReduce)        effParts.push(`傭兵費-${Math.floor(eff.mercCostReduce)}%`);
       if(eff.purifySuccessBonus)    effParts.push(`解呪成功+${Math.floor(eff.purifySuccessBonus)}%`);
       if(eff.returnHealPct)         effParts.push(`帰還時HP+${Math.floor(eff.returnHealPct)}%`);
-      if(eff.alchemyIntervalMin)    effParts.push(`消耗品自動生成`);
-      if(eff.autoIdentifyIntervalMin) effParts.push(`未鑑定品自動鑑定`);
-      if(eff.autoShelfSpeed)        effParts.push(`棚の自動補充`);
+      if(eff.alchemyIntervalMin) {
+        const _alchInterval = Math.max(1, Math.floor(eff.alchemyIntervalMin * (1 - (eff.alchemySpeedBonus||0) / 100)));
+        effParts.push(`消耗品自動生成（${_alchInterval}分/個）`);
+      }
+      if(eff.autoIdentifyIntervalMin) {
+        const _identInterval = Math.max(1, Math.floor(eff.autoIdentifyIntervalMin * (1 - (eff.autoIdentifySpeedBonus||0) / 100)));
+        effParts.push(`未鑑定品自動鑑定（${_identInterval}分/個）`);
+      }
+      if(eff.autoShelfSpeed) {
+        const _shelfInt = Math.max(1, Math.round(2 / eff.autoShelfSpeed));
+        effParts.push(`棚の自動補充（${_shelfInt}分/回）`);
+      }
       if(eff.demandForecastTurns)   effParts.push(`需要予測+${Math.floor(eff.demandForecastTurns)}ターン`);
       const effDesc = effParts.join(' / ');
       // 商品管理人：等級・種別設定UI
