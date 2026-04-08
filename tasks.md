@@ -49,6 +49,17 @@ function _showLegendaryShareModal(item) {
 
 ---
 
+## S95 完了内容（2026-04-08）
+
+### UX改善（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| REGULAR-SERIF-EXPAND | `REGULAR_SERIFS` を各Lvティア3→6種に拡充。`gift` 専用セリフ5種を追加し、ギフトログに `_giftSerif` を使用 |
+| HINT-SHOP-LV | `calcNextAction` の③.25にショップLv7→Lv8（需要動向）・Lv9→Lv10（自動鑑定スタンプ）解禁ヒントを追加（EXP残り30%以下で表示） |
+
+---
+
 ## S94 完了内容（2026-04-08）
 
 ### バグ修正（1件）
