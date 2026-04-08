@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S50
-**最終更新**: 2026-03-29
+**バージョン**: S105
+**最終更新**: 2026-04-08（S105）
 
 ---
 
@@ -991,3 +991,160 @@ gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
 ```
 
 対象外カラー（誤置換リスクで保留）: `#e74c3c`・`#88ff88`・`#ff8888`・`#555`・`#666`・`#444` 等
+
+---
+
+## S55〜S104 追加アーキテクチャ（2026-04-06〜08）
+
+**バージョン**: S105（2026-04-08 更新）
+
+---
+
+### 共通グローバル定数（S73〜S77）
+
+重複コピーされていた定数を1箇所に集約。
+
+```javascript
+// S73: 装備タイプ別表示カラー（4箇所の重複を解消）
+const EQUIP_TYPE_COLOR = { weapon:"#e8d5a0", sub:"#e8d5a0", ... };
+
+// S76: レアリティ短縮表記（5箇所の重複を解消）
+const RARITY_SHORT_LABEL = { normal:"N", rare:"R", epic:"E", legendary:"L" };
+
+// S77: レアリティ昇順ソート用（4箇所の重複を解消）
+const RARITY_ORDER_MAP = { normal:0, rare:1, epic:2, legendary:3 };
+```
+
+---
+
+### スクロール位置保持アーキテクチャ（S96〜S99）
+
+```javascript
+let _lastRenderedTab = null; // グローバル変数（S96追加）
+
+function render() {
+  const _sc = document.getElementById("screen");
+  // 同一タブ内アクション時のみ scrollTop を保存・復元
+  const _savedScrollTop = (_sc && currentTab === _lastRenderedTab) ? _sc.scrollTop : 0;
+  _lastRenderedTab = currentTab;
+  // ... renderScreen() ...
+  if(_sc && _savedScrollTop > 0) _sc.scrollTop = _savedScrollTop;
+}
+```
+
+**ショップタブの特殊対応（S99）:**
+- `#screen` は `list-scroll-mode` により `overflow:hidden` → `sc.scrollTop` は常に0
+- 実際のスクロール要素は `.list-body`
+- `renderShop()` 内で `.list-body.scrollTop` を保存・復元
+- `updateShopTick()` のフォールバック（骨格なし時）を `renderScreen()` → `render()` に変更
+
+**ソート/フィルタ変更時（S97）:**
+- 変更ボタンの onclick に `_lastRenderedTab=null` を追加
+- → 次回 `render()` でスクロールリセット（変更後は先頭表示が正しい）
+
+---
+
+### 名前順ソートヘルパー（S100）
+
+```javascript
+// 格納庫・一括モーダルの共通ソート関数
+const _compareItemName = (a, b) => {
+  const na = ITEM_MASTER[a.itemId]?.name || "";
+  const nb = ITEM_MASTER[b.itemId]?.name || "";
+  return na.localeCompare(nb, "ja");
+};
+```
+
+適用箇所: 格納庫（デフォルト）/ 一括強化・分解（enhLv の二次キー）/ 一括解呪・出品 / 一括出品 available リスト
+
+---
+
+### 重み付きランダム抽選ヘルパー（S84）
+
+```javascript
+// RELIC_EVENTS / SHRINE_EVENTS で共用
+function _pickWeighted(events) {
+  // events: { weight, canFire(), fire() }[]
+  const eligible = events.filter(e => e.canFire());
+  if(eligible.length === 0) return null;
+  const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
+  let rand = Math.random() * totalWeight;
+  for(const e of eligible) {
+    rand -= e.weight;
+    if(rand <= 0) return e;
+  }
+  return eligible[eligible.length - 1];
+}
+```
+
+---
+
+### 新ダンジョンマス（S82〜S85）
+
+```javascript
+// 遺物マス（S82）
+function handleRelic()      // RELIC_EVENTS 5種・_pickWeighted で抽選
+                             // バフ: gs.dungeon._relicAtkBuff / _relicDefBuff
+
+// 旅の商人マス（S83）
+function handleMerchant()   // herb/potion/antidote を basePrice×2×階層補正で販売
+                             // 購入モーダル・Gold消費・consumables追加
+
+// 呪われた宝箱マス（S85）
+function handleCurseChest() // generateDrop(depth+5) で高品質ドロップ + rollCurse 強制付与
+                             // 「開ける/見逃す」選択モーダル（3F以上で出現）
+```
+
+`handleEvent()` の switch に各 case を追加。`generateMap()` の pool に追加。
+
+---
+
+### コレクション登録・フルコンプアーキテクチャ（S93〜S103）
+
+```javascript
+function registerCollection(item)        // identifyItem/gradeUpItem/leaveDungeon 等6経路から呼び出し
+                                          // 末尾で _checkCollectionFullComplete() を呼び出し（S101）
+
+function retroCheckCollection()          // loadGame() 時に1回実行（S94）
+                                          // 既存セーブの格納庫・装備中を遡及登録
+
+function _checkCollectionFullComplete()  // S101追加
+  // 全36テーマ×part×rarity★0 が completed に揃ったら祝福モーダル表示
+  // gs.achievements.stats.collectionFullCompleted フラグで1回限り
+  // abyssThemes は abyssFloorCleared >= 6 解禁後に判定対象に追加
+  // worldRank100（真エンド解禁）時にフラグをリセット → 再挑戦可能（S103）
+```
+
+**フルコンプボーナス（S103）:**
+```javascript
+// itemPrice() 内
+const colFullSellPct = gs?.achievements?.stats?.collectionFullCompleted ? 3 : 0;
+const sellMul = 1 + (rbSellPct + staffSellPct + colFullSellPct) / 100;
+```
+
+---
+
+### CSS変数追加（S55〜S62）
+
+S54以降に追加されたCSS変数（:root）:
+
+```css
+/* S55 */ --danger: #e74c3c;  --success: #88ff88;
+/* S56 */ --damage: #ff8888;  --warning: #ff9999;  --filter-active: #2a2a4e;  --unidentified: #cccc00;
+/* S57 */ --border-subtle: #444;  --text-disabled: #555;  --info: #4488ff;  --accent-bg: #1a2a3a;
+/* S58 */ --border-dark: #333;  --text-faint: #666;  --text-mid: #888;
+          --text-white: #fff;  --text-light: #ccc;  --text-subtle: #aaa;
+/* S59 */ --bg-darker: #1a1a1a;  --border-list: #1a1a2a;
+/* S60 */ --boss: #ff2244;  --alert: #ffcc00;  --twitter: #1da1f2;
+          --track-bg: #1e1e2e;  --accent-light: #aaaaff;
+          --border-success: #226622;  --text-muted-blue: #aaaadd;
+          --unid-bg: #1a1a00;  --unid-border: #888800;
+/* S61 */ --gold-dark: #886600;  --bg-canvas: #0a0a14;  --gold-bg: #1a1200;
+          --dmg-text: #ff6666;  --danger-dark: #8a2a2a;  --success-bright: #44dd88;
+          --surface-alt: #0d0d1a;  --btn-default: #585880;
+          --legendary-bright: #e6ac2e;  --green-bright: #2ecc71;
+          --text-strike: #888888;  --blackmarket: #ff6688;
+```
+
+設計制約（変数化不可）: アルファ付き3色（`#3498db44` 等）/ RARITY_MASTER・SHELF_CATEGORY の color フィールド
+
