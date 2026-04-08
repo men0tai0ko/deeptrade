@@ -1674,6 +1674,7 @@ function checkRegularVisits() {
         addShopLog("info", `${reg.icon}${reg.name}「しばらく待ったけど…今回は諦めるよ」`);
         reg.order = null;
         saveGame();
+        window._regRefresh?.(); // S113: モーダル開放中に注文バッジを即時更新
         return;
       }
       const slotIdx = gs.shop.shelves.findIndex(s =>
