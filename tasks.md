@@ -159,6 +159,28 @@ function updateShopTick() {
 
 ---
 
+## S108 完了内容（2026-04-08）
+
+### 機能追加（1件）・修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| SKILL-SITUATIONAL: boss_slayer | 「討魔の心得」スキル追加（atk・cost:3・requires:[execution]・ボス与ダメ+15%）。calcStats/doBattle への統合済み |
+| balance.md RELIC_EVENTS修正 | weight実値に修正（exp=25/gold=25/atk=20/def=20/material=10） |
+
+---
+
+## S107 完了内容（2026-04-08）
+
+### 機能改善（1件）・確認（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| COLLECTION-BONUS UI | フルコンプ時に棚の価格横に 🏆 バッジ表示（renderShop/updateShopTick 2箇所追加・2行変更）|
+| BUG-HUNT-S106 | sellMul加算順確認・items.md SET_MASTER全13種確認 → 問題なし |
+
+---
+
 ## S106 完了内容（2026-04-08）
 
 ### ドキュメント整備（コード変更なし）

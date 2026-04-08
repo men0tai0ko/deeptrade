@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S106完了）
+**最終更新**: 2026-04-08（S108完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S106**（2026-04-08）
+> ※ 現在バージョン: **S108**（2026-04-08）
 
 ---
 
@@ -432,6 +432,29 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S108 完了内容（2026-04-08）
+
+### 機能追加（1件）・バグ修正（1件）・確認（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| SKILL-SITUATIONAL: boss_slayer | `SKILL_MASTER` に「討魔の心得」追加（category:atk・cost:3・requires:[execution]・ボス与ダメ+15%）。`calcStats` に `skillBossDmgPct` 集計3箇所追加。`doBattle()` に `en.isBoss` 条件で適用追加。スキルツリー atk タブに自動表示 |
+| balance.md RELIC_EVENTS weight修正 | 「均等分布」→ 実値（exp=25/gold=25/atk=20/def=20/material=10）に修正 |
+| BUG-HUNT-S107 | `_colBonus` バッジが `dispPrice` の innerHTML に正しくレンダリングされることを確認。XSSリスクなし（固定HTML文字列）|
+
+---
+
+## S107 完了内容（2026-04-08）
+
+### 機能改善（1件）・確認（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| COLLECTION-BONUS UI | フルコンプ達成時に棚の価格横に `🏆` バッジを表示（8px・legendary-bright色・title属性でコレクション+3%を説明）。renderShop/updateShopTick の dispPrice 2箇所に追加。未鑑定品・未達成時は非表示 |
+| BUG-HUNT-S106 | sellMul 加算順（rbSellPct + staffSellPct + colFullSellPct）確認 → 整合済み。items.md SET_MASTER 全13種確認 → コードと一致 |
+
+---
 
 ## S106 完了内容（2026-04-08）
 

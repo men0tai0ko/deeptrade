@@ -1815,6 +1815,11 @@ const SKILL_MASTER = {
     desc:"敵HP30%以下に与ダメ +30%",
     effect:{ executeMul:0.3 },
   },
+  boss_slayer: {
+    name:"討魔の心得", icon:"👁️", category:"atk", cost:3, requires:["execution"],
+    desc:"ボスへの与ダメ +15%",
+    effect:{ bossDmgPct:15 },
+  }, // S108
   blood_frenzy: {
     name:"血の昂り", icon:"🩸", category:"atk", cost:3, requires:["crit_up"],
     desc:"自HP30%以下のとき与ダメ +40%",
@@ -3840,6 +3845,7 @@ function calcStats(gs) {
   // スキルパッシブ補正（装備補正と分離して管理）
   const skillBonus = {str:0,def:0,agi:0,vit:0,int:0,luk:0};
   let skillExecuteMul=0, skillLowHpAtkMul=0, skillCounterRate=0, skillThornPct=0;
+  let skillBossDmgPct=0; // S108: ボス戦特化スキル
   let skillStatusResist=0, skillTreasureBonus=0, skillDropLukBonus=0;
   let skillMaterialDropBonus=0, skillMoveBonus=0, skillCurseAutoIdent=0;
   let skillPoisonDmgMul=0, skillDoubleStrikePct=0;
@@ -3864,6 +3870,7 @@ function calcStats(gs) {
     if(sk.effect.doubleStrike)       skillDoubleStrikePct    += sk.effect.doubleStrike;
     if(sk.effect.dmgReducePct)       skillDmgReducePct       += sk.effect.dmgReducePct;
     if(sk.effect.escapeBonus)        skillEscapeBonus        += sk.effect.escapeBonus;
+    if(sk.effect.bossDmgPct)         skillBossDmgPct         += sk.effect.bossDmgPct; // S108
   });
   Object.keys(skillBonus).forEach(k=>{ total[k] += skillBonus[k]; });
 
@@ -4001,6 +4008,7 @@ function calcStats(gs) {
     setSovereignDoubleStrike,
     setWillBossDmgBonus, setWillBossGoldBonus,
     skillExecuteMul, skillLowHpAtkMul, skillCounterRate, skillThornPct,
+    skillBossDmgPct,
     skillStatusResist, skillTreasureBonus, skillDropLukBonus,
     skillMaterialDropBonus, skillMoveBonus, skillCurseAutoIdent,
     skillPoisonDmgMul, skillDoubleStrikePct,
@@ -8799,6 +8807,10 @@ function doBattle(action) {
     // rb_apex: ボス与ダメ+N%（S53）
     if((r.rbBossDmgPct||0) > 0 && en.isBoss) {
       dmg = Math.floor(dmg * (1 + r.rbBossDmgPct / 100));
+    }
+    // S108: 通常スキル ボス戦特化ダメージ補正
+    if((r.skillBossDmgPct||0) > 0 && en.isBoss) {
+      dmg = Math.floor(dmg * (1 + r.skillBossDmgPct / 100));
     }
     // specter_set 8部位：回避後の次攻撃が確定クリティカル（通常戦）
     // ボス戦では回避判定がないため、代わりに攻撃時10%で確定クリティカルを付与
@@ -14443,7 +14455,8 @@ function renderShop(sc, ab) {
       const isUnid = !item.identified;
       const dispIcon  = isUnid ? "📦" : m.icon;
       const dispName  = isUnid ? itemDisplayName(item) : m.name;
-      const dispPrice = `${itemPrice(item)}G`; // 未鑑定も謎箱価格を表示
+      const _colBonus1 = (!isUnid && gs.achievements?.stats?.collectionFullCompleted) ? ` <span style="font-size:8px;color:var(--legendary-bright)" title="コレクション+3%">🏆</span>` : ""; // S107
+      const dispPrice = `${itemPrice(item)}G${_colBonus1}`; // 未鑑定も謎箱価格を表示
       const demand    = isUnid ? 100 : getDemand(item);
       const trendMark = (!isUnid && isTrending(item)) ? " 🔥" : "";
       // S52: 需要バッジ（色+アイコン+テキストで直感的に）
@@ -14613,7 +14626,8 @@ function updateShopTick() {
       const isUnid = !item.identified;
       const dispIcon  = isUnid ? "📦" : m.icon;
       const dispName  = isUnid ? itemDisplayName(item) : m.name;
-      const dispPrice = isUnid ? "50G" : `${itemPrice(item)}G`;
+      const _colBonus2 = (!isUnid && gs.achievements?.stats?.collectionFullCompleted) ? ` <span style="font-size:8px;color:var(--legendary-bright)" title="コレクション+3%">🏆</span>` : ""; // S107
+      const dispPrice = isUnid ? "50G" : `${itemPrice(item)}G${_colBonus2}`;
       const demand    = isUnid ? 100 : getDemand(item);
       const trendMark = (!isUnid && isTrending(item)) ? " 🔥" : "";
       // S52: 需要バッジ（updateShopTick差分更新版）
