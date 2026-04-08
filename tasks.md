@@ -1,3 +1,14 @@
+## S87 完了内容（2026-04-07）
+
+### UX改善（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| STAFF-NEXT-LV-HINT | スタッフモーダルに「▲ 次Lv: N分→M分」ヒントを追加（alchemist/antiquarian/stockManager の3スタッフ・上限時は非表示） |
+| STAFF-DESC-UPDATE | 3スタッフの `desc` に「Lv1: N分/個・Lv上昇で短縮」を追記 |
+
+---
+
 ## S86 完了内容（2026-04-07）
 
 ### バグ修正・UX改善（3件）

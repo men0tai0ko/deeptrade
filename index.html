@@ -3361,7 +3361,7 @@ const STAFF_MASTER = {
   // alchemist: 消耗品自動生成（tick毎に確率でポーション等を生産）
   alchemist: {
     id:"alchemist", name:"錬金術師", icon:"🧪",
-    desc:"放置中にポーションや薬草を自動生成する",
+    desc:"放置中にポーションや薬草を自動生成する（Lv1: 5分/個・Lv上昇で短縮）",
     hireCost: 4000, maxCount: 1, requireShopLv: 3,
     base: { alchemyIntervalMin: 5, alchemySpeedBonus: 0 }, // S86: speedBonus を base に追加し getStaffEffect で計算
     gain: { alchemyIntervalMin: 0, alchemySpeedBonus: 2 },  // Lv上昇で生産間隔短縮（2%/Lv）
@@ -3379,7 +3379,7 @@ const STAFF_MASTER = {
   // stockManager: 等級指定自動陳列（設定した等級のアイテムを棚に自動補充）
   stockManager: {
     id:"stockManager", name:"商品管理人", icon:"📦",
-    desc:"指定した等級のアイテムを自動で棚に補充する",
+    desc:"指定した等級のアイテムを自動で棚に補充する（Lv1: 2分/回・Lv上昇で短縮）",
     hireCost: 5000, maxCount: 1, requireShopLv: 4,
     base: { autoShelfSpeed: 1 },  // 速度係数（将来拡張用）
     gain: { autoShelfSpeed: 0.02 },
@@ -3415,7 +3415,7 @@ const STAFF_MASTER = {
   // antiquarian: 未鑑定品を放置中に自動鑑定（tick毎に1個）
   antiquarian: {
     id:"antiquarian", name:"古物商", icon:"🏺",
-    desc:"放置中に未鑑定のアイテムを自動で鑑定する",
+    desc:"放置中に未鑑定のアイテムを自動で鑑定する（Lv1: 3分/個・Lv上昇で短縮）",
     hireCost: 4500, maxCount: 1, requireShopLv: 5,
     base: { autoIdentifyIntervalMin: 3, autoIdentifySpeedBonus: 0 }, // S86: speedBonus を base に追加
     gain: { autoIdentifyIntervalMin: 0, autoIdentifySpeedBonus: 2 },
@@ -13369,6 +13369,24 @@ function openStaffModal() {
             </div>
             <div style="font-size:10px;color:var(--muted)">${def.desc}</div>
             ${hiredS ? `<div style="font-size:10px;color:var(--text-muted-blue);margin-top:2px">${effDesc}</div>` : ''}
+            ${hiredS && curLv < maxLv && ["alchemist","antiquarian","stockManager"].includes(def.id) ? (() => {
+              const nextEff = getStaffEffect({id: def.id, lv: curLv + 1});
+              let hint = "";
+              if(def.id === "alchemist") {
+                const cur = Math.max(1, Math.floor(eff.alchemyIntervalMin * (1 - (eff.alchemySpeedBonus||0)/100)));
+                const nxt = Math.max(1, Math.floor(nextEff.alchemyIntervalMin * (1 - (nextEff.alchemySpeedBonus||0)/100)));
+                if(cur !== nxt) hint = `次Lv: ${cur}分→${nxt}分/個`;
+              } else if(def.id === "antiquarian") {
+                const cur = Math.max(1, Math.floor(eff.autoIdentifyIntervalMin * (1 - (eff.autoIdentifySpeedBonus||0)/100)));
+                const nxt = Math.max(1, Math.floor(nextEff.autoIdentifyIntervalMin * (1 - (nextEff.autoIdentifySpeedBonus||0)/100)));
+                if(cur !== nxt) hint = `次Lv: ${cur}分→${nxt}分/個`;
+              } else if(def.id === "stockManager") {
+                const cur = Math.max(1, Math.round(2 / (eff.autoShelfSpeed||1)));
+                const nxt = Math.max(1, Math.round(2 / (nextEff.autoShelfSpeed||1)));
+                if(cur !== nxt) hint = `次Lv: ${cur}分→${nxt}分/回`;
+              }
+              return hint ? `<div style="font-size:9px;color:var(--gold);margin-top:1px">▲ ${hint}</div>` : "";
+            })() : ''}
             ${autoShelfUI}
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
