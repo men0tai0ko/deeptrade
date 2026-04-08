@@ -10102,6 +10102,15 @@ function listItem(item, slotIdx) {
   if(inv<0) return;
   gs.inventory.splice(inv,1);
 
+  // ショップLv10: 自動鑑定スタンプ（S88）
+  if(!item.identified && gs.shop.level >= 10) {
+    item.identified = true;
+    if(!item.statOverride && ITEM_MASTER[item.itemId]?.stats) {
+      item.statOverride = { ...ITEM_MASTER[item.itemId].stats };
+    }
+    addShopLog("item", `🔍 鑑定スタンプ：${itemDisplayName(item)} を自動鑑定した`);
+  }
+
   // 装備してたら外す
   Object.entries(gs.equipped).forEach(([slot,uid])=>{
     if(uid===item.uid) gs.equipped[slot]=null;
@@ -14341,7 +14350,7 @@ function renderShop(sc, ab) {
       </div>
       <div class="shopExpBar">
         <div class="shopExpLabel">
-          <span>Lv.${sh.level}</span>
+          <span>Lv.${sh.level}${sh.level >= 10 ? ' <span style="font-size:9px;color:var(--gold);background:#1a1200;border:1px solid #553300;border-radius:4px;padding:1px 4px">🔍鑑定スタンプ</span>' : sh.level >= 8 ? ' <span style="font-size:9px;color:var(--accent2);background:var(--surface-deep);border:1px solid var(--border-subtle);border-radius:4px;padding:1px 4px">📊需要動向</span>' : ''}</span>
           <span>${sh.exp.toLocaleString()} / ${sh.nextExp.toLocaleString()} EXP</span>
         </div>
         <div class="barTrack"><div class="barFill" style="width:${expPct}%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
