@@ -1,6 +1,6 @@
 # 深淵商会 — バグ・課題一覧
 
-**最終更新**: 2026-04-08（S103）
+**最終更新**: 2026-04-08（S104）
 
 ---
 
@@ -19,6 +19,17 @@
 *現在、保留中の課題はありません。*
 
 ---
+
+## ✅ 修正済み（S103）
+
+### ABYSS-FULL-COMPLETE（S103）
+- **内容**: 真エンド解禁（worldRank100）後、`collectionFullCompleted=true` のプレイヤーが abyssテーマ追加後も再フルコンプ判定を受けられなかった
+- **原因**: `collectionFullCompleted` フラグが立ったまま解禁テーマが増えても `_checkCollectionFullComplete()` の冒頭 early return で即終了していた
+- **修正**: `doRebirth()` の `abyssFloorCleared=6` セット直後に `collectionFullCompleted=false` リセットを1行追加
+- **影響範囲**: `doRebirth()` の真エンド解禁ブロックのみ
+
+---
+
 
 ## ✅ 修正済み（S99〜S101）
 
