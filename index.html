@@ -10996,8 +10996,10 @@ function openRegularsModal() {
           </div>
           <div style="font-size:10px;color:var(--text-disabled);margin-bottom:6px">次のLvまで あと${nextLvNeed}回</div>
           ${hasOrder
-            ? `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold)">
+            ? `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold);cursor:pointer"
+                onclick="this.closest('.modal-overlay').remove(); openListModal(null,'${reg.order.itemType}')">
                 📋 注文中：<strong>${orderTl}</strong> を棚に出してください
+                <span style="font-size:9px;color:var(--text-disabled);display:block;margin-top:2px">▶ タップして出品モーダルを開く</span>
                </div>`
             : canOrder
               ? `<div style="font-size:11px;color:var(--text-disabled)">注文機能解放済み（ランダムで注文が来ます）</div>`
@@ -14985,7 +14987,7 @@ function openShelfSettingsModal() {
   renderModal();
 }
 
-function openListModal(slotIdx) {
+function openListModal(slotIdx, filterType) { // S109: filterType で初期タイプフィルタ指定
   const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
   const emptySlots = gs.shop.shelves.filter(s => s === null || (s && !s.item)).length;
   if(emptySlots === 0) {
@@ -15306,10 +15308,14 @@ function openListModal(slotIdx) {
     };
   };
 
+  // S109: filterType が指定された場合、タイプフィルタを初期選択状態にする
+  if(filterType && typeKeys.includes(filterType)) {
+    activeTypes.add(filterType);
+  }
   renderModal();
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
-  refreshFilterUI(); // DOM追加後に初期ハイライトを適用（「全」のみ）
+  refreshFilterUI(); // DOM追加後に初期ハイライトを適用
 }
 
 // ── 所持品画面 ──
