@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S114
-**最終更新**: 2026-04-08（S114）
+**バージョン**: S115
+**最終更新**: 2026-04-08（S115）
 
 ---
 
@@ -996,7 +996,7 @@ gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
 
 ## S55〜S104 追加アーキテクチャ（2026-04-06〜08）
 
-**バージョン**: S114（2026-04-08 更新）
+**バージョン**: S115（2026-04-08 更新）
 
 ---
 
@@ -1152,7 +1152,7 @@ S54以降に追加されたCSS変数（:root）:
 
 ## S107〜S111 追加アーキテクチャ（2026-04-08）
 
-**バージョン**: S114（2026-04-08 更新）
+**バージョン**: S115（2026-04-08 更新）
 
 ---
 
@@ -1236,4 +1236,53 @@ const isOrderFilled = hasOrder && (gs.shop.shelves||[]).some(
 ```
 
 性能: `shelves.some()` はショートサーキット。棚最大15本で問題なし。
+
+
+---
+
+## S113〜S115 追加アーキテクチャ（2026-04-08）
+
+### 注文タイムアウト モーダル即時更新（S113）
+
+```javascript
+// checkRegularVisits() タイムアウト処理
+reg.order = null;
+saveGame();
+window._regRefresh?.(); // モーダル開放中に注文バッジを即時更新
+```
+
+### _regRefresh クロージャリーク修正（S114）
+
+```javascript
+// openRegularsModal() モーダルクローズハンドラ
+modal.onclick = e => {
+  if(e.target === modal) { modal.remove(); window._regRefresh = null; }
+};
+```
+
+`window._regRefresh` はモーダル open 時にセット、close 時に null クリア。
+`setInterval` の `checkRegularVisits()` からは `?.()` で安全呼び出し。
+
+### 「まだかな」ログ スロットル（S114）
+
+```javascript
+// reg.order オブジェクトに lastNagAt を動的追加
+const _nagInterval = 5 * 60 * 1000;
+if(!reg.order.lastNagAt || now - reg.order.lastNagAt >= _nagInterval) {
+  addShopLog(...);
+  reg.order.lastNagAt = now;
+}
+```
+
+セーブデータ互換: `lastNagAt` は動的追加のため旧セーブでは undefined → `!reg.order.lastNagAt` が true → 初回は正常にログ出力。マイグレーション不要。
+
+### 注文タイムアウト残り時間表示（S115）
+
+```javascript
+// 常連客カード内変数
+const _orderExpireMs = 10 * 60 * 1000;
+const _orderRemainMs = hasOrder ? Math.max(0, _orderExpireMs - (Date.now() - reg.order.requestedAt)) : 0;
+const _orderRemainMin = Math.ceil(_orderRemainMs / 60000); // 最小1分
+// 残り2分以内 → 赤色表示
+```
 

@@ -10993,6 +10993,10 @@ function openRegularsModal() {
         const isOrderFilled = hasOrder && (gs.shop.shelves||[]).some(
           s => s && s.item && s.item.identified && ITEM_MASTER[s.item.itemId]?.type === reg.order.itemType
         );
+        // S115: 注文タイムアウト残り時間（分）を計算
+        const _orderExpireMs = 10 * 60 * 1000;
+        const _orderRemainMs = hasOrder ? Math.max(0, _orderExpireMs - (Date.now() - reg.order.requestedAt)) : 0;
+        const _orderRemainMin = Math.ceil(_orderRemainMs / 60000);
         const canOrder = regularCanOrder(reg.lv);
         const fastVisit = regularCanFastVisit(reg.lv);
         const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? 'var(--epic)' : 'var(--rare)';
@@ -11023,7 +11027,10 @@ function openRegularsModal() {
               : `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold);cursor:pointer"
                   onclick="this.closest('.modal-overlay').remove(); openListModal(null,'${reg.order.itemType}')">
                   📋 注文中：<strong>${orderTl}</strong> を棚に出してください
-                  <span style="font-size:9px;color:var(--text-disabled);display:block;margin-top:2px">▶ タップして出品モーダルを開く</span>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+                    <span style="font-size:9px;color:var(--text-disabled)">▶ タップして出品モーダルを開く</span>
+                    <span style="font-size:9px;color:${_orderRemainMin <= 2 ? 'var(--danger)' : 'var(--text-disabled)'}">⏱ あと${_orderRemainMin}分</span>
+                  </div>
                  </div>`
             : canOrder
               ? `<div style="font-size:11px;color:var(--text-disabled)">注文機能解放済み（ランダムで注文が来ます）</div>`
