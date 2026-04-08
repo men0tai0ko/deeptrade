@@ -4505,6 +4505,7 @@ function loadGame() {
       gs.inventory = gs.inventory.filter(i => !listedUids.has(i.uid));
 
       retroCheckAchievements();
+      retroCheckCollection(); // S94: 既存セーブの遡及コレクション登録
       // 既存セーブにisFirstPlayがない場合はfalseを補完（既存プレイヤーはガイド不要）
       if(gs.meta.isFirstPlay === undefined) gs.meta.isFirstPlay = false;
       // B1-DAILY: デイリーミッション補完（旧セーブ互換）
@@ -5430,6 +5431,20 @@ function hasUnclaimedAchievement() {
 
 // ─────────────────────────────────────────
 // 実績解除トースト (S49-ACH)
+// コレクション遡及登録（S94: 既存セーブの格納庫・装備中アイテムを retroCheck）
+function retroCheckCollection() {
+  // 格納庫の鑑定済み装備品を全て登録
+  (gs.inventory || []).forEach(item => {
+    if(item.identified) registerCollection(item);
+  });
+  // 装備中アイテムを登録
+  Object.values(gs.equipped || {}).forEach(uid => {
+    if(!uid) return;
+    const item = gs.inventory.find(i => i.uid === uid);
+    if(item && item.identified) registerCollection(item);
+  });
+}
+
 // claimAchievement から呼ぶ。retroCheckAchievements（起動時サイレント付与）からは呼ばない。
 // キュー制で複数同時解除を順次表示。上限3件でスパムを防止。
 // ─────────────────────────────────────────

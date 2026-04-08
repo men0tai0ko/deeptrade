@@ -49,6 +49,16 @@ function _showLegendaryShareModal(item) {
 
 ---
 
+## S94 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| retroCheckCollection 追加 | 既存セーブデータの格納庫・装備中アイテムを loadGame 時に遡及コレクション登録。`retroCheckCollection()` を追加し `retroCheckAchievements()` の直後で実行 |
+
+---
+
 ## S93 完了内容（2026-04-08）
 
 ### バグ修正（1件: 6箇所追加）
