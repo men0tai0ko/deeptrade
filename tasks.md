@@ -1,3 +1,64 @@
+## 調査メモ（S91）: Legendary売却シェアモーダル
+
+### 実装状況: 既に実装済み（`_showLegendaryShareModal`）
+
+`notifySale()` 内で `rarity === "legendary"` のとき 1秒後に自動表示される。
+
+**抑制ガード（意図的なもの）**:
+- ショップタブ以外では非表示
+- `.modal-overlay` / `.boss-result-overlay` / `.lvup-overlay` が出ている間は非表示
+
+**「見えない」ケースの原因候補**:
+1. LvUP演出・ボス結果等のモーダルと重なって抑制される
+2. 1秒遅延中にタブ切替した場合に抑制される
+3. ガードが過剰に機能している可能性
+
+**改善候補**: ガードの緩和（モーダルがある場合でもキューに積んで後から表示、等）
+
+---
+
+## UI改善候補（S91追加）
+
+### LEGENDARY-SHARE-MODAL: ✅ S91で削除済み
+
+**対応**: `_showLegendaryShareModal()` 関数を完全削除。`notifySale()` の呼び出し（setTimeout）も削除。
+legendary 売却時は `_showSaleBanner` + `_showLegendaryFlash` のみ残存。
+
+**現象**:
+- legendary アイテムが売却されるたびに `_showLegendaryShareModal()` が呼ばれる
+- 既存ガード: currentTab !== "shop" 時・他モーダル表示中は抑制されるが「毎回」の制限なし
+
+**修正候補**:
+- **C案（推奨）**: `achievements.stats.legendaryShareShown` フラグで初回のみ表示
+- A案: モーダル完全廃止（シェアボタンを売却バナーに組み込む）
+- D案: 10回に1回等の間引き
+
+**実装（C案）**:
+```diff
+function _showLegendaryShareModal(item) {
+  if(currentTab !== "shop") return;
+  if(document.querySelector(".modal-overlay, ...")) return;
++ // 初回のみ表示（S92）
++ if(gs.achievements?.stats?.legendaryShareShown) return;
++ if(gs.achievements?.stats) gs.achievements.stats.legendaryShareShown = true;
+  ...
+}
+```
+
+**影響範囲**: `_showLegendaryShareModal` のみ。既存 stats への追記のみ。
+
+---
+
+## S91追加完了（2026-04-08）
+
+### バグ修正・削除（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| LEGENDARY-SHARE-MODAL 削除 | legendary 売却ごとに出ていた SNS シェアモーダルを完全削除。`_showLegendaryShareModal()` 関数本体 + `notifySale()` の setTimeout 呼び出しを削除 |
+
+---
+
 ## S91 完了内容（2026-04-08）
 
 ### バグ修正（1件）

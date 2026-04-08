@@ -11303,7 +11303,7 @@ function notifySale(item, finalPrice) {
   _showGoldPopFixed(finalPrice);       // ① 位置固定goldPop
   _flashGoldDisplay(finalPrice);       // ② topBar発光+カウントアップ
   const rarity = item.identified ? item.rarity : "normal";
-  if     (rarity === "legendary") { _showSaleBanner(item, finalPrice, "legendary"); _showLegendaryFlash(); setTimeout(() => _showLegendaryShareModal(item), 1000); }
+  if     (rarity === "legendary") { _showSaleBanner(item, finalPrice, "legendary"); _showLegendaryFlash(); }
   else if(rarity === "epic")      { _showSaleBanner(item, finalPrice, "epic"); }
   else if(rarity === "rare")      { _showSaleBanner(item, finalPrice, "rare"); }
   // ③ 他タブにいる時はバッジ表示（rare以上のみ）
@@ -17171,52 +17171,6 @@ function openShareDialog(type, payload) {
 }
 
 // legendary販売後のシェア誘導モーダル（バナーはpointer-events:noneのため独立モーダルで表示）
-function _showLegendaryShareModal(item) {
-  // ショップタブ以外では出さない（1秒遅延中にタブ切替された場合の対策）
-  if(currentTab !== "shop") return;
-  // LvUp演出・ボスイントロ・他モーダルが出ている間は表示しない（体験を汚さない）
-  if(document.querySelector(".modal-overlay, .boss-result-overlay, .lvup-overlay, .boss-intro-overlay")) return;
-  const m = item ? ITEM_MASTER[item.itemId] : null;
-  if(!m) return;
-  const baseName = item.identified ? m.name : "謎の品";
-  const enhSuffix = (item.identified && item.enhLv > 0) ? `+${item.enhLv}` : "";
-  const displayName = baseName + enhSuffix;
-
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.style.cssText = "z-index:8500;align-items:center;background:rgba(0,0,0,0.6);";
-  const mc = document.createElement("div");
-  mc.className = "modal-content";
-  mc.style.cssText = [
-    "max-width:320px", "width:calc(100% - 32px)", "margin:auto",
-    "border-radius:16px", "padding:24px 20px 20px", "text-align:center",
-    "border:1px solid var(--legendary)",
-  ].join(";");
-  mc.innerHTML = `
-    <div style="font-size:36px;margin-bottom:8px">💎</div>
-    <div style="font-size:12px;letter-spacing:1px;color:var(--legendary);margin-bottom:4px">LEGENDARY</div>
-    <div style="font-size:16px;font-weight:700;color:var(--gold);margin-bottom:16px">${displayName}</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <button id="_lgShareBtn" class="btn btn-secondary"
-        style="border-color:var(--twitter);color:var(--twitter);font-size:13px">
-        𝕏 シェアする
-      </button>
-      <button id="_lgCloseBtn" class="btn btn-secondary"
-        style="font-size:12px;color:var(--muted)">
-        閉じる
-      </button>
-    </div>
-  `;
-  overlay.appendChild(mc);
-  document.body.appendChild(overlay);
-
-  mc.querySelector("#_lgShareBtn").addEventListener("click", () => {
-    openShareDialog("legendary", { name: displayName });
-  });
-  mc.querySelector("#_lgCloseBtn").addEventListener("click", () => overlay.remove());
-  // 背景クリックでも閉じる
-  overlay.addEventListener("click", e => { if(e.target === overlay) overlay.remove(); });
-}
 
 function init() {
   if(!loadGame()) {
