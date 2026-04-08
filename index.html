@@ -10108,7 +10108,8 @@ function listItem(item, slotIdx) {
     if(!item.statOverride && ITEM_MASTER[item.itemId]?.stats) {
       item.statOverride = { ...ITEM_MASTER[item.itemId].stats };
     }
-    addShopLog("item", `🔍 鑑定スタンプ：${itemDisplayName(item)} を自動鑑定した`);
+    const _curseNote = item.cursed && item.curse ? ` ⚠ 呪い【${item.curse.label}】が判明！` : "";
+    addShopLog("item", `🔍 鑑定スタンプ：${itemDisplayName(item)} を自動鑑定した${_curseNote}`);
   }
 
   // 装備してたら外す

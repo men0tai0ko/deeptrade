@@ -1,3 +1,16 @@
+## S89 完了内容（2026-04-08）
+
+### バグ修正・安全性確認（1件）
+
+| 確認項目 | 結論 |
+|---|---|
+| BUG-HUNT-S88 自動鑑定スタンプ | 呪い付きアイテム鑑定時のログに `_curseNote`（「⚠ 呪い【label】が判明！」）を追加 |
+| REGULAR-DEEPENING | 常連客: `processRegularPurchase` / `regularSerif` 構造確認。gift/特別注文は未実装 |
+| BALANCE-NEW-CELLS | 確認済み（S88）|
+| HINT-SHOP-LV | calcNextAction のLv8/10 ヒント追加は効果薄→ 保留 |
+
+---
+
 ## S88 完了内容（2026-04-07）
 
 ### 機能追加・確認（3件）
