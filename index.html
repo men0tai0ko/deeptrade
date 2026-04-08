@@ -10285,6 +10285,16 @@ function listItem(item, slotIdx) {
     sellDuration: calcSellDuration(item),
     ...(specialType ? { specialType } : {}),
   };
+
+  // S110: 常連客の注文品と一致する場合にフィードバックログを出力
+  if(item.identified) {
+    const m = ITEM_MASTER[item.itemId];
+    const matchedReg = (gs.shop.regulars||[]).find(r => r.order && r.order.itemType === m?.type);
+    if(matchedReg) {
+      addShopLog("good", `⭐ ${matchedReg.icon}${matchedReg.name}の注文品（${m.name}）を棚に出した！`);
+    }
+  }
+
   saveGame();
 }
 

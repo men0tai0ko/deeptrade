@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S109完了）
+**最終更新**: 2026-04-08（S110完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S109**（2026-04-08）
+> ※ 現在バージョン: **S110**（2026-04-08）
 
 ---
 
@@ -432,6 +432,18 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S110 完了内容（2026-04-08）
+
+### UX改善（1件）・確認（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| REGULAR-ORDER-FEEDBACK | `listItem()` に常連注文チェックを追加（S110）。出品時に `reg.order.itemType === m.type` の常連客がいれば「⭐ [客名]の注文品（[アイテム名]）を棚に出した！」をショップログに出力。識別済み品のみ対象 |
+| BUG-HUNT-S109 | filterType が typeKeys にない場合は activeTypes 空でフォールバック全表示 → 正しい動作。filterType→renderModal の順序確認 → 問題なし |
+| BUG-HUNT-S108 | boss_slayer(requires:[execution]) の resetSkill 連鎖動作確認 → Object.entries(SKILL_MASTER) 動的スキャンで正常に依存検出 |
+
+---
 
 ## S109 完了内容（2026-04-08）
 
