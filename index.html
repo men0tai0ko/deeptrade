@@ -14406,6 +14406,9 @@ function renderShop(sc, ab) {
     </div>`;
   }).join("");
 
+  // list-body のスクロール位置を保存（S99: shop タブは .list-body がスクロール要素）
+  const _prevListBody = sc.querySelector(".list-body");
+  const _shopScrollTop = _prevListBody ? _prevListBody.scrollTop : 0;
   sc.className = "list-scroll-mode";
   sc.innerHTML = fatigueBanner + `
     <div class="list-header" style="padding:12px 14px 8px">
@@ -14431,6 +14434,12 @@ function renderShop(sc, ab) {
     <button class="btn btn-secondary" style="border-color:var(--green);color:var(--green)" onclick="leaveDungeon(true)">↩ 帰還する</button>
     <div></div>
   ` : `<div></div><div></div>`;
+
+  // list-body のスクロール位置を復元（S99）
+  if(_shopScrollTop > 0) {
+    const _newListBody = sc.querySelector(".list-body");
+    if(_newListBody) _newListBody.scrollTop = _shopScrollTop;
+  }
 }
 
 

@@ -121,6 +121,16 @@ function updateShopTick() {
 
 ---
 
+## S99追加完了（2026-04-08）
+
+### バグ修正（根本原因修正）
+
+| 内容 | 詳細 |
+|---|---|
+| SCROLL-SHOPTICK 根本修正 | S99修正（`renderScreen()→render()`）は表面的対処だった。真因は `renderShop()` が `sc.className="list-scroll-mode"` を設定することで `#screen` が `overflow:hidden` になり、S96の `sc.scrollTop` 保存が常に0になっていたこと。`renderShop()` に `.list-body` の `scrollTop` 保存・復元を追加して根本修正 |
+
+---
+
 ## S99 完了内容（2026-04-08）
 
 ### バグ修正（1件）

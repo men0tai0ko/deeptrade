@@ -431,6 +431,16 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+## S99追加完了（2026-04-08）
+
+### バグ修正（根本修正）
+
+| 内容 | 詳細 |
+|---|---|
+| SCROLL-SHOPTICK 根本修正 | `renderShop()` 内の `_shopScrollTop`（`.list-body.scrollTop`）保存・復元を追加。`sc.scrollTop`ではなく`.list-body`が実際のスクロール要素 |
+
+---
+
 ## S99 完了内容（2026-04-08）
 
 ### バグ修正（1件）
