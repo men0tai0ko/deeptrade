@@ -7310,6 +7310,13 @@ function openCombatItemModal() {
 
 // 祠イベント定義テーブル（S52拡充）
 // 呪い装備がない場合にランダム抽選される拡張イベント群
+// アイテム名前順ソート比較関数（一括系モーダル・格納庫で共用・S100）
+const _compareItemName = (a, b) => {
+  const na = ITEM_MASTER[a.itemId]?.name || "";
+  const nb = ITEM_MASTER[b.itemId]?.name || "";
+  return na.localeCompare(nb, "ja");
+};
+
 // 重み付きランダム抽選ヘルパー（RELIC/SHRINE で共用・S84）
 // events: { weight, canFire, fire } の配列 → canFire()=true のものから重みで1件選択、なければ null
 function _pickWeighted(events) {
@@ -11569,7 +11576,7 @@ function openBulkPurifyModal() {
     if(activeRarities.size > 0 && !activeRarities.has(i.rarity)) return false;
     if(activeTypes.size > 0 && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
     return true;
-  });
+  }).sort(_compareItemName); // S100: 名前順
 
   const render = () => {
     if(cursedItems.length === 0) {
@@ -12111,8 +12118,8 @@ function openBulkDecomposeModal() {
       if(activeTypes.size > 0 && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
       return true;
     });
-    if(sortEnhFirst) list = [...list].sort((a,b) => (b.enhLv||0) - (a.enhLv||0));
-    else             list = [...list].sort((a,b) => (a.enhLv||0) - (b.enhLv||0));
+    if(sortEnhFirst) list = [...list].sort((a,b) => ((b.enhLv||0) - (a.enhLv||0)) || _compareItemName(a,b));
+    else             list = [...list].sort((a,b) => ((a.enhLv||0) - (b.enhLv||0)) || _compareItemName(a,b)); // S100: 同Lv内は名前順
     return list;
   };
 
@@ -12317,7 +12324,7 @@ function openBulkEnhanceModal() {
       if(activeTypes.size > 0    && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
       if((i.enhLv||0) >= goal) return false; // 目標値に達しているものは除外
       return true;
-    });
+    }).sort(_compareItemName); // S100: 名前順
   };
 
   // 選択中アイテムの最大コスト（全成功想定）
@@ -14903,7 +14910,7 @@ function openListModal(slotIdx) {
   });
   // 陳列中でないものに絞る
   const shelfUids = new Set(gs.shop.shelves.filter(s => s && s.item).map(s => s.item.uid));
-  const available = sellable.filter(i => !shelfUids.has(i.uid));
+  const available = sellable.filter(i => !shelfUids.has(i.uid)).sort(_compareItemName); // S100: 名前順
 
   if(available.length === 0) {
     setInventoryMsg("damage", "✕ 陳列できるアイテムがありません（ロック中は除外）");
@@ -15093,8 +15100,8 @@ function openListModal(slotIdx) {
       if(activeTypes.size > 0 && !activeTypes.has(ITEM_MASTER[i.itemId]?.type)) return false;
       return true;
     });
-    if(sortEnhFirst) list = [...list].sort((a,b) => (b.enhLv||0) - (a.enhLv||0));
-    else             list = [...list].sort((a,b) => (a.enhLv||0) - (b.enhLv||0));
+    if(sortEnhFirst) list = [...list].sort((a,b) => ((b.enhLv||0) - (a.enhLv||0)) || _compareItemName(a,b));
+    else             list = [...list].sort((a,b) => ((a.enhLv||0) - (b.enhLv||0)) || _compareItemName(a,b)); // S100: 同Lv内は名前順
     return list;
   };
 
@@ -15284,7 +15291,7 @@ function renderInventory(sc, ab) {
   const rarityVal = item => item.identified ? (RARITY_ORDER[item.rarity] ?? 0) : -1;
   const dir = invSortAsc ? 1 : -1;
   const sortFn = {
-    default:     () => 0,
+    default:     (a,b) => _compareItemName(a,b), // S100: 名前順
     rarity_desc: (a,b) => (rarityVal(b) - rarityVal(a)) * dir,
     type:        (a,b) => {
       const uA = a.identified ? 0 : 1, uB = b.identified ? 0 : 1;
