@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S100完了）
+**最終更新**: 2026-04-08（S101完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S100**（2026-04-08）
+> ※ 現在バージョン: **S101**（2026-04-08）
 
 ---
 
@@ -21,7 +21,7 @@
 | 技術構成 | HTML / CSS / Vanilla JS のみ（単一ファイル） |
 | 対象端末 | スマホ基準レスポンシブ（最大幅480px中央寄せ） |
 | データ保存 | `localStorage["shinentrade_v1"]`（ゲーム本体）/ `localStorage["shinentrade_logs"]`（ログ）/ `localStorage["shinentrade_analytics"]`（計測） |
-| 規模 | 約16,990行 |
+| 規模 | 約17,380行 |
 | ホスティング | GitHub Pages — https://men0tai0ko.github.io/deeptrade/ |
 
 ---
@@ -79,7 +79,8 @@ gs = {
     stats: { enemyKills, bossKills, totalEnhance, totalPurify, totalReforge,
              totalGradeUp, mercUsed, totalBrew, totalDungeonEnter, totalBmSales,
              poisonKills, legendaryFound, totalRegularBuys,
-             totalBulkEnhance, totalColStar },
+             totalBulkEnhance, totalColStar,
+             collectionFullCompleted },  // S101: フルコンプ達成フラグ（true=演出済み）
   },
   quests: [],
   meta: {
@@ -428,6 +429,16 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+## S101 完了内容（2026-04-08）
+
+### 機能追加（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| COLLECTION-REWARD フルコンプ演出 | `_checkCollectionFullComplete()` を新規追加。全36テーマ × part × rarity の★0基本達成で1回限り祝福モーダルを表示。真エンド未解禁テーマ（10種）はスキップ。`collectionFullCompleted` フラグ（`gs.achievements.stats`）で多重表示防止。`registerCollection()` 末尾から自動呼び出し |
 
 ---
 

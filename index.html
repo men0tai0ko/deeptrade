@@ -2641,7 +2641,67 @@ function registerCollection(item) {
       }
     }
   }
+  // フルコンプ判定（S101）
+  _checkCollectionFullComplete();
   return true;
+}
+
+// コレクション全テーマ★0基本達成のフルコンプ判定（S101）
+function _checkCollectionFullComplete() {
+  if(!gs.achievements?.stats) return;
+  if(gs.achievements.stats.collectionFullCompleted) return; // 1回限り
+
+  const done = gs.collection?.completed || [];
+  const abyssUnlocked = (gs.player?.abyssFloorCleared || 0) >= 6;
+  const abyssThemes = new Set([
+    "void_tier","specter_tier","colossus_tier","sovereign_tier","will_tier",
+    "void_jewelry","specter_jewelry","colossus_jewelry","sovereign_jewelry","will_jewelry",
+  ]);
+  const RARITIES = ["normal","rare","epic","legendary"];
+
+  // 全テーマ × 全part × 全rarity の★0（step=0）がすべて completed にあるかチェック
+  for(const [themeId, theme] of Object.entries(COLLECTION_THEME)) {
+    // 真エンド未解禁テーマはスキップ
+    if(abyssThemes.has(themeId) && !abyssUnlocked) continue;
+    const parts = (theme.isAcc || theme.isSlot) ? ["all"] : ["weapon","armor","acc","all"];
+    for(const rarity of RARITIES) {
+      for(const part of parts) {
+        if(part === "acc" && !theme.acc) continue;
+        const colId = makeColId(themeId, part, rarity, 0);
+        if(!done.includes(colId)) return; // 1つでも未達成なら終了
+      }
+    }
+  }
+
+  // 全達成 → フラグ立て → 演出
+  gs.achievements.stats.collectionFullCompleted = true;
+  saveGame();
+
+  // モーダル表示（_showRebirthMilestoneModal流用・シェアなし）
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+  const mc = document.createElement("div");
+  mc.className = "modal-content";
+  mc.style.cssText = "max-height:85vh;display:flex;flex-direction:column;overflow:hidden;padding:0;text-align:center;";
+  mc.innerHTML = `
+    <div style="flex-shrink:0;padding:28px 20px 16px">
+      <div style="font-size:48px;margin-bottom:12px">📖</div>
+      <div style="font-size:18px;font-weight:700;color:var(--legendary-bright);margin-bottom:16px">冒険録 コンプリート！</div>
+      <div style="font-size:13px;color:var(--muted);line-height:2;margin-bottom:16px">
+        <div>すべての装備を収集した。</div>
+        <div>深淵商会の歴史に、</div>
+        <div>あなたの名が刻まれた。</div>
+      </div>
+      <div style="display:inline-block;padding:4px 14px;border-radius:20px;border:1px solid var(--legendary-bright);color:var(--legendary-bright);font-size:12px;margin-bottom:16px">🏆 真のコレクター</div>
+    </div>
+    <div style="flex-shrink:0;padding:8px 16px 20px">
+      <button class="btn" style="border-color:var(--legendary-bright);color:var(--legendary-bright);width:100%" id="colCompleteOkBtn">深淵へ戻る</button>
+    </div>
+  `;
+  mc.querySelector("#colCompleteOkBtn").addEventListener("click", () => overlay.remove());
+  overlay.appendChild(mc);
+  document.body.appendChild(overlay);
 }
 
 const UNSELLABLE_ITEMS = new Set(["gem","ancient_coin","dragon_fang","magic_crystal"]);
