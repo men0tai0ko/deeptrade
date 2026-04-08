@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S89完了）
+**最終更新**: 2026-04-08（S90完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S89**（2026-04-07）
+> ※ 現在バージョン: **S90**（2026-04-07）
 
 ---
 
@@ -248,6 +248,17 @@ AUTO_RUN_CONFIG = {
 ```
 ---
 
+## ショップLv解禁機能一覧（S84〜S90）
+
+| Lv | 機能 | 実装 |
+|---|---|---|
+| Lv2 | 鑑定機能解禁 | `identifyItem()` |
+| Lv5 | 裏取引解禁 | `bmUnlocked()` |
+| Lv8 | 需要動向バナー | `demandForecastBanner`（renderShop 内）|
+| Lv10 | 自動鑑定スタンプ | `listItem()` 内で `!item.identified && gs.shop.level >= 10` |
+
+---
+
 ## 共通グローバル定数（S73〜S77追加）
 
 | 定数名 | 内容 | 追加 |
@@ -399,6 +410,17 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+## S90 完了内容（2026-04-08）
+
+### 機能追加（1件）・ドキュメント整備（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| 常連客ギフト | `processRegularPurchase` に20回購入ごとのギフト処理追加（gem/ancient_coin ランダム） |
+| ショップLv解禁一覧 | HANDOVER.md に Lv2/5/8/10 解禁機能テーブルを追加 |
 
 ---
 

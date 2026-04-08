@@ -1633,6 +1633,19 @@ function processRegularPurchase(customer, item) {
     addShopLog("good", `⬆️ ${reg.icon}${reg.name} が常連Lv${reg.lv}になった！ 売値ボーナス+${reg.bonusPct}%`);
   }
 
+  // 常連ギフト：20回購入ごとに素材1個をプレゼント（S90）
+  if(reg.purchases > 0 && reg.purchases % 20 === 0) {
+    const _giftPool = ["gem", "ancient_coin"];
+    const _giftId = _giftPool[Math.floor(Math.random() * _giftPool.length)];
+    const _giftM = ITEM_MASTER[_giftId];
+    gs.inventory.push({
+      uid:uuid(), itemId:_giftId, rarity:materialRarity(_giftId),
+      demand:100, affixes:[], cursed:false, curse:null,
+      identified:true, enhLv:0, statOverride:null, locked:false
+    });
+    addShopLog("good", `🎁 ${reg.icon}${reg.name}「${_giftM.icon}${_giftM.name}を持ってきたよ」（${reg.purchases}回目）`);
+  }
+
   // 定期来訪タイマー更新
   reg.nextVisitAt = Date.now() + regularVisitInterval(reg.lv);
 }
