@@ -159,6 +159,32 @@ function updateShopTick() {
 
 ---
 
+## S103 完了内容（2026-04-08）
+
+### バグ修正・機能改善（1件）・確認（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| ABYSS-FULL-COMPLETE | `doRebirth()` 真エンド解禁ブロックに `collectionFullCompleted=false` リセット1行追加。worldRank100時にabyssテーマ10種が再判定対象に加わる |
+| COLLECTION-BONUS確認 | `itemPrice()` の `colFullSellPct=3` 実装確認。null安全・既存sellMul加算で問題なし |
+| HINT-COLLECTION確認 | `calcNextAction()` ③.6 実装確認。達成率30%未満+Lv10以上でコレクション誘導。計算正確・軽量 |
+
+---
+
+
+## S102 完了内容（2026-04-08）
+
+### ドキュメント整備（コード変更なし）
+
+| 内容 | 詳細 |
+|---|---|
+| issues.md 更新 | S77 止まりから S102 へ更新。S86〜S99 のバグ修正8件を追記 |
+| BUG-HUNT-S101確認 | `_checkCollectionFullComplete` の parts ロジックが既存実装と完全一致を確認 |
+| HINT-SHOP-LV クローズ | S95 実装済み（Lv7/9 × EXP70%超）と確認 |
+| README / HANDOVER 同期 | バージョン S102 に更新 |
+
+---
+
 ## S101 完了内容（2026-04-08）
 
 ### 機能追加（1件）

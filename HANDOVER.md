@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S101完了）
+**最終更新**: 2026-04-08（S103完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S101**（2026-04-08）
+> ※ 現在バージョン: **S103**（2026-04-08）
 
 ---
 
@@ -429,6 +429,34 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 | DAILY-RANDOM | デイリーシャッフルをFisher-Yatesに置換（一様分布保証） |
 | SKILL-EXPAND補足 | `rb_apex` ボス与ダメ適用箇所を確認（`doBattle` 統合処理で正しく動作・変更なし） |
 | COLOR-VAR | `--surface-deep`（#1a1a2e）・`--surface-base`（#0d0d18）をCSS変数化。計39箇所置換 |
+
+---
+
+
+## S103 完了内容（2026-04-08）
+
+### バグ修正・機能改善（2件）・確認（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| ABYSS-FULL-COMPLETE | `doRebirth()` の真エンド解禁ブロック（`abyssFloorCleared=6` 直後）に `collectionFullCompleted=false` リセットを1行追加。worldRank100到達時にabyssテーマ10種が判定対象に加わり再フルコンプ挑戦が可能になる |
+| COLLECTION-BONUS確認 | `itemPrice()` の `colFullSellPct=3`（フルコンプ時売値+3%）: null安全・既存 sellMul への加算で問題なし（前チャット実装済み） |
+| HINT-COLLECTION確認 | `calcNextAction()` ③.6（達成率30%未満 + Lv10以上でコレクション誘導）: 計算正確・軽量・ロジック正常（前チャット実装済み） |
+
+---
+
+## S102 完了内容（2026-04-08）
+
+### ドキュメント整備（コード変更なし）
+
+| 内容 | 詳細 |
+|---|---|
+| issues.md 更新 | S77 止まりだった issues.md を S102 に更新。S86〜S99 のバグ修正（スタッフLv無効・常連ギフトmodulo・コレクション登録漏れ・遡及登録・スクロールリセット5件）を追記 |
+| tasks.md S101追記 | S101 完了セクション（COLLECTION-REWARD フルコンプ演出）を tasks.md に追記 |
+| SCROLL-QA 手順追記 | S96〜S99 スクロール保持修正の動作確認手順4項目 + コンソールコマンドを tasks.md に追記 |
+| README-SYNC | README.md をバージョン S101・行数 17,380行・直近変更一覧に更新 |
+| BUG-HUNT-S101確認 | `_checkCollectionFullComplete` の parts+ガードが `registerCollection`・`openCollectionModal` の既存ロジックと完全一致を確認。問題なし |
+| HINT-SHOP-LV クローズ | S95 で Lv7/9 × EXP70%超時に表示済みと確認。追加実装不要 |
 
 ---
 

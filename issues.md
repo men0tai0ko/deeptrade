@@ -1,6 +1,6 @@
 # 深淵商会 — バグ・課題一覧
 
-**最終更新**: 2026-04-07（S77）
+**最終更新**: 2026-04-08（S103）
 
 ---
 
@@ -17,6 +17,59 @@
 ## 🟡 保留中の課題
 
 *現在、保留中の課題はありません。*
+
+---
+
+## ✅ 修正済み（S99〜S101）
+
+### SCROLL-SHOPTICK-ROOT（S99追加・S99根本修正）
+- **内容**: ショップ売却時に `.list-body` スクロールが最上部にリセットされる
+- **原因**: `renderShop()` が `sc.className="list-scroll-mode"` を設定し `#screen` が `overflow:hidden` になるため、`sc.scrollTop` 保存が常に0だった
+- **修正**: `renderShop()` に `.list-body.scrollTop` の保存・復元を追加（根本修正）。`updateShopTick()` のフォールバックを `renderScreen()` → `render()` に変更（S99初期修正）
+- **影響範囲**: `renderShop()` / `updateShopTick()` のみ
+
+### SCROLL-SORTFILTER（S97）
+- **内容**: ソート/フィルタ変更後もスクロール位置が保持され、先頭に戻らなかった
+- **修正**: ソート/フィルタ変更時の onclick に `_lastRenderedTab=null` を追加（変更後は先頭表示）
+- **影響範囲**: 格納庫ソート・フィルタボタン3箇所のみ
+
+### SCROLL-RESET（S96）
+- **内容**: 格納庫等で操作後 `render()` が呼ばれると `sc.scrollTop` が 0 にリセットされる
+- **修正**: `render()` に `_lastRenderedTab` 変数を追加。同一タブ内の `render()` 呼び出し時のみスクロール位置を保存・復元
+- **影響範囲**: `render()` のみ
+
+---
+
+## ✅ 修正済み（S92〜S94）
+
+### BUG-REGULAR-GIFT-MODULO（S92）
+- **内容**: 常連ギフト判定 `purchases % 20 === 0` が `unidBonus=1` 等で20を飛び越した場合に未発火
+- **修正**: `Math.floor(purchases/20) > Math.floor(prev/20)` に変更（飛び越し対応）
+- **影響範囲**: `processRegularPurchase()` の gifting 判定のみ
+
+### COLLECTION-REGISTER-FIX（S93）
+- **内容**: コレクション登録が `listItem()` 経由でしか行われず、他経路で格納庫に入ったアイテムが未登録
+- **修正**: `identifyItem` / `gradeUpItem` / `leaveDungeon`（loot→inventory）/ ボスクリア / autoRun / 古物商自動鑑定の6経路に `registerCollection()` を追加
+- **影響範囲**: 各関数末尾への追加のみ
+
+### COLLECTION-RETRO（S94）
+- **内容**: 既存セーブデータの格納庫・装備中アイテムがコレクション未登録
+- **修正**: `retroCheckCollection()` を追加し `loadGame()` の `retroCheckAchievements()` 直後で実行
+- **影響範囲**: `loadGame()` の初期化フローのみ
+
+---
+
+## ✅ 修正済み（S86）
+
+### STAFF-SPEEDBONUS-BUG（S86）
+- **内容**: `alchemist` / `antiquarian` の `speedBonus` が `base` に未定義で `getStaffEffect` に計算されずLv上昇が完全に無効だった
+- **修正**: `base` に `speedBonus:0` を追加し `gain` / `cap` を整合
+- **影響範囲**: スタッフデータ定義のみ
+
+### STAFF-STOCKMANAGER-FIX（S86）
+- **内容**: `stockManager` の `autoShelfSpeed` が tick 間隔に未反映でLv上昇無効（空実装）
+- **修正**: `_shelfInterval = Math.max(1, Math.round(2/eff.autoShelfSpeed))` に変更
+- **影響範囲**: `checkStaffIncome()` の棚自動補充 tick 計算のみ
 
 ---
 

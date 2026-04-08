@@ -4091,7 +4091,8 @@ function itemPrice(item) {
     return acc + (sk?.effect?.sellPct || 0);
   }, 0);
   const staffSellPct = (gs?.shop?.staff||[]).reduce((acc,s) => acc + (getStaffEffect(s).sellPctBonus||0), 0);
-  const sellMul = 1 + (rbSellPct + staffSellPct) / 100;
+  const colFullSellPct = gs?.achievements?.stats?.collectionFullCompleted ? 3 : 0; // S103: フルコンプ売値+3%
+  const sellMul = 1 + (rbSellPct + staffSellPct + colFullSellPct) / 100;
   // 棚特化ボーナス（流行一致でさらに強化）
   const shelf = gs?.shop?.shelves?.find(s => s?.item?.uid === item.uid);
   const isSpecialMatch = shelf?.specialType && itemMatchesShelfSpecial(item, shelf.specialType);
@@ -5338,6 +5339,8 @@ function doRebirth() {
     // 初めてworldRank100に到達 → 真エンドフェーズ解禁
     gs.player.abyssFloorCleared = 6; // 6階を解禁
     gs.dungeon.floor = Math.max(gs.dungeon.floor, 6);
+    // S103: フルコンプフラグをリセット（abyssテーマが判定対象に加わるため再挑戦可能に）
+    if(gs.achievements?.stats) gs.achievements.stats.collectionFullCompleted = false;
     saveGame();
     _showRebirthMilestoneModal({
       icon: "🌌",
@@ -6326,6 +6329,30 @@ function calcNextAction() {
       sub:   `worldRank ${gs.player.worldRank + 1} へ——ステータスタブで転生`,
       action: () => switchTab("status"),
     };
+  }
+
+  // ③.6 コレクション達成率が低い → 冒険録へ誘導（S103）
+  if(!gs.achievements?.stats?.collectionFullCompleted) {
+    const _done = gs.collection?.completed?.length || 0;
+    // ★0基本達成のみカウント（abyss除外・軽量計算）
+    const _abyssUnlocked = (gs.player?.abyssFloorCleared || 0) >= 6;
+    const _abyssSet = new Set(["void_tier","specter_tier","colossus_tier","sovereign_tier","will_tier",
+      "void_jewelry","specter_jewelry","colossus_jewelry","sovereign_jewelry","will_jewelry"]);
+    const _colTotal = Object.entries(COLLECTION_THEME).reduce((acc, [tid, theme]) => {
+      if(_abyssSet.has(tid) && !_abyssUnlocked) return acc;
+      const parts = (theme.isAcc || theme.isSlot) ? 1 : (theme.acc ? 4 : 3);
+      return acc + parts * 4 * (ENHANCE_MAX + 1);
+    }, 0);
+    const _pct = _colTotal > 0 ? Math.floor(_done / _colTotal * 100) : 0;
+    if(_pct < 30 && gs.player.level >= 10) {
+      return {
+        icon:  "📖",
+        label: "NEXT ACTION",
+        text:  `冒険録を埋めよう（${_pct}%達成）`,
+        sub:   "装備を収集してコレクションを完成させよう",
+        action: () => { switchTab("status"); setTimeout(() => openCollectionModal(), 100); },
+      };
+    }
   }
 
   // ④ 次の階へGoldが少し足りない目安（潜入コスト = 傭兵代）
