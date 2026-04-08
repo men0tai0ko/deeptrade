@@ -14063,16 +14063,15 @@ function renderDungeon(sc, ab) {
     <div class="eventBox" style="text-align:left;margin-top:8px;flex:1;height:auto;min-height:60px">${renderLogs()}</div>
   `;
 
-  // 現在地セルを中央付近にスクロール
+  // 現在地セルを中央付近にスクロール（S91: double rAF + scrollIntoView で layout 確定後に中央配置）
   requestAnimationFrame(() => {
-    const row = document.getElementById("dungeonMapRow");
-    if(!row) return;
-    const cell = row.children[prog];
-    if(!cell) return;
-    const rowW  = row.offsetWidth;
-    const cellL = cell.offsetLeft;
-    const cellW = cell.offsetWidth;
-    row.scrollLeft = cellL - rowW / 2 + cellW / 2;
+    requestAnimationFrame(() => {
+      const row = document.getElementById("dungeonMapRow");
+      if(!row) return;
+      const cell = row.children[prog];
+      if(!cell) return;
+      cell.scrollIntoView({ inline:"center", block:"nearest", behavior:"auto" });
+    });
   });
 
   if(prog >= total-1) {

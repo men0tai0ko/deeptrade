@@ -1,3 +1,53 @@
+## S91 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| DUNGEON-MAP-SCROLL-FIX | `requestAnimationFrame` を double rAF に変更し `scrollIntoView({inline:"center", block:"nearest"})` で現在地マスを中央表示。layout 未確定によるスクロール右端固定を修正 |
+
+---
+
+## UI改善候補（S90追加）
+
+### DUNGEON-MAP-SCROLL: マップスクロール位置が現在地を隠す問題
+
+**現象**:
+- 冒険中のマス表示スクロールバーが常に右端固定になる
+- 現在位置マスが画面外に隠れて見えない
+
+**原因調査**:
+- `sc.innerHTML = ...` の直後に `requestAnimationFrame` でスクロール位置を計算している
+- `row.offsetWidth` が layout 未確定（0）のまま計算される場合がある
+- `scrollLeft = cellL - 0/2 + cellW/2 = cellL + cellW/2` → 最大値 → 右端固定
+
+**修正候補**:
+```diff
+- requestAnimationFrame(() => {
+-   const row = document.getElementById("dungeonMapRow");
+-   if(!row) return;
+-   const cell = row.children[prog];
+-   if(!cell) return;
+-   const rowW  = row.offsetWidth;
+-   const cellL = cell.offsetLeft;
+-   const cellW = cell.offsetWidth;
+-   row.scrollLeft = cellL - rowW / 2 + cellW / 2;
+- });
++ requestAnimationFrame(() => {
++   requestAnimationFrame(() => {
++     const row = document.getElementById("dungeonMapRow");
++     if(!row) return;
++     const cell = row.children[prog];
++     if(!cell) return;
++     cell.scrollIntoView({ inline: "center", behavior: "auto", block: "nearest" });
++   });
++ });
+```
+
+**影響範囲**: renderScreen のダンジョン表示のみ
+
+---
+
 ## S90 完了内容（2026-04-08）
 
 ### 機能追加・ドキュメント整備（2件）
