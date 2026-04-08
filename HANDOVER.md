@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S111完了）
+**最終更新**: 2026-04-08（S112完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S111**（2026-04-08）
+> ※ 現在バージョン: **S112**（2026-04-08）
 
 ---
 
@@ -432,6 +432,19 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S112 完了内容（2026-04-08）
+
+### ドキュメント整備・確認（コード変更なし）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-HUNT-S111 | isOrderFilled: shelves.some() のショートサーキット確認。棚最大15本・常連客上限なし設計でも問題なし |
+| REGULAR-ORDER-CLEAR確認 | reg.order = null は checkRegularVisits() 内の2箇所（購入時・10分タイムアウト時）で正常処理されることを確認 |
+| arch.md S107〜S111更新 | コレクションボーナスバッジ・boss_slayer・常連注文UX（filterType/listItemフィードバック/isOrderFilled）のアーキテクチャを追記 |
+| issues.md S107〜S111追記 | COLLECTION-BONUS-UI / SKILL-SITUATIONAL-boss_slayer / REGULAR-ORDER-UX の3件を改善済みとして追記 |
+
+---
 
 ## S111 完了内容（2026-04-08）
 

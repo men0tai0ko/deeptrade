@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S108
-**最終更新**: 2026-04-08（S108）
+**バージョン**: S112
+**最終更新**: 2026-04-08（S112）
 
 ---
 
@@ -996,7 +996,7 @@ gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
 
 ## S55〜S104 追加アーキテクチャ（2026-04-06〜08）
 
-**バージョン**: S108（2026-04-08 更新）
+**バージョン**: S112（2026-04-08 更新）
 
 ---
 
@@ -1147,4 +1147,93 @@ S54以降に追加されたCSS変数（:root）:
 ```
 
 設計制約（変数化不可）: アルファ付き3色（`#3498db44` 等）/ RARITY_MASTER・SHELF_CATEGORY の color フィールド
+
+---
+
+## S107〜S111 追加アーキテクチャ（2026-04-08）
+
+**バージョン**: S112（2026-04-08 更新）
+
+---
+
+### コレクションフルコンプ 売値ボーナスバッジ（S107）
+
+```javascript
+// renderShop() / updateShopTick() の dispPrice 行
+const _colBonus = (!isUnid && gs.achievements?.stats?.collectionFullCompleted)
+  ? ` <span style="font-size:8px;color:var(--legendary-bright)" title="コレクション+3%">🏆</span>`
+  : "";
+const dispPrice = `${itemPrice(item)}G${_colBonus}`;
+```
+
+フルコンプ達成時のみ棚の価格横に 🏆 バッジを表示。未達成・未鑑定時は空文字。
+
+---
+
+### 通常スキル「討魔の心得」アーキテクチャ（S108）
+
+```javascript
+// calcStats() の追加変数
+let skillBossDmgPct = 0;
+
+// スキル集計ループ内
+if(sk.effect.bossDmgPct) skillBossDmgPct += sk.effect.bossDmgPct;
+
+// return オブジェクト
+{ ..., skillBossDmgPct }
+
+// doBattle() の適用箇所（rbBossDmgPct の直後）
+if((r.skillBossDmgPct||0) > 0 && en.isBoss) {
+  dmg = Math.floor(dmg * (1 + r.skillBossDmgPct / 100));
+}
+```
+
+`SKILL_MASTER` に `boss_slayer`（ボス与ダメ+15%・requires:[execution]）を追加。
+
+---
+
+### 常連注文 UX 改善アーキテクチャ（S109〜S111）
+
+#### openListModal の filterType 引数（S109）
+
+```javascript
+function openListModal(slotIdx, filterType) {
+  // ...
+  // filterType が typeKeys に含まれる場合のみ初期フィルタをセット
+  if(filterType && typeKeys.includes(filterType)) {
+    activeTypes.add(filterType);
+  }
+  renderModal();
+}
+```
+
+常連注文バッジのタップで `openListModal(null, reg.order.itemType)` を呼び出し。
+
+#### listItem() の注文フィードバック（S110）
+
+```javascript
+// listItem() の shelf 登録後
+if(item.identified) {
+  const m = ITEM_MASTER[item.itemId];
+  const matchedReg = (gs.shop.regulars||[]).find(r => r.order && r.order.itemType === m?.type);
+  if(matchedReg) {
+    addShopLog("good", `⭐ ${matchedReg.icon}${matchedReg.name}の注文品（${m.name}）を棚に出した！`);
+  }
+}
+```
+
+**注意**: `quickListAfterReturn()` は `listItem()` を呼ばないため、フィードバックは発火しない（設計上の制約）。
+
+#### isOrderFilled バッジ状態（S111）
+
+```javascript
+// 常連客カード内で注文タイプが棚に出品済みか確認
+const isOrderFilled = hasOrder && (gs.shop.shelves||[]).some(
+  s => s && s.item && s.item.identified && ITEM_MASTER[s.item.itemId]?.type === reg.order.itemType
+);
+// 出品済み: 緑バッジ「✅ 棚に出品中」
+// 未出品: 金バッジ「📋 注文中」（タップで出品モーダル起動）
+```
+
+性能: `shelves.some()` はショートサーキット。棚最大15本で問題なし。
 
