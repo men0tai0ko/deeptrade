@@ -1633,8 +1633,9 @@ function processRegularPurchase(customer, item) {
     addShopLog("good", `⬆️ ${reg.icon}${reg.name} が常連Lv${reg.lv}になった！ 売値ボーナス+${reg.bonusPct}%`);
   }
 
-  // 常連ギフト：20回購入ごとに素材1個をプレゼント（S90）
-  if(reg.purchases > 0 && reg.purchases % 20 === 0) {
+  // 常連ギフト：20回購入ごとに素材1個をプレゼント（S90・S92修正: unidBonusで20を飛び越す問題を修正）
+  const _giftPrev = reg.purchases - (1 + unidBonus);
+  if(Math.floor(reg.purchases / 20) > Math.floor(Math.max(0, _giftPrev) / 20)) {
     const _giftPool = ["gem", "ancient_coin"];
     const _giftId = _giftPool[Math.floor(Math.random() * _giftPool.length)];
     const _giftM = ITEM_MASTER[_giftId];
@@ -5888,6 +5889,7 @@ function _autoRunTick() {
     if(item) {
       // 周回は直接格納庫（inventory）へ送る
       gs.inventory.push(item);
+      if(item.identified) registerCollection(item); // S93
       ar.totalDrops++;
       const _m = ITEM_MASTER[item.itemId];
       const _affixCount = item.affixes ? item.affixes.length : 0;
@@ -6002,6 +6004,7 @@ function leaveDungeon(keepLoot, skipCostCheck) {
     if(gs.dungeon.loot.length > 0) {
       gs.dungeon.loot.forEach(item=>{
         gs.inventory.push(item);
+        if(item.identified) registerCollection(item); // S93
       });
       addLog("item", `✦ ${gs.dungeon.loot.length}個のアイテムを持ち帰った`);
       gs.dungeon.loot = [];
@@ -8082,6 +8085,7 @@ function gradeUpItem(uid, backFn) {
   render();
   const enhNote = absorbedEnh > 0 ? `（強化+${absorbedEnh}をベースに吸収）` : "";
   if(newRar === "legendary" && gs.achievements?.stats) gs.achievements.stats.totalGradeUp = (gs.achievements.stats.totalGradeUp||0) + 1;
+  registerCollection(item); // S93: 昇級後の新レアリティで登録
   addLog("item", `✨ 【${m.name}】が ${RARITY_MASTER[oldRar].label} → ${RARITY_MASTER[newRar].label} に昇級！${enhNote}`);
   if(typeof backFn === "function") backFn();
   else openItemDetail(uid);
@@ -8757,6 +8761,7 @@ function doBattle(action) {
         const _bossResultItems = [...gs.dungeon.loot]; // リザルト用にコピー
         gs.dungeon.loot.forEach(item => {
           gs.inventory.push(item);
+          if(item.identified) registerCollection(item); // S93
         });
         gs.dungeon.loot = [];
 
@@ -10524,6 +10529,7 @@ function checkStaffIncome() {
         if(unidentified.length > 0) {
           const target = unidentified[0];
           target.identified = true;
+          registerCollection(target); // S93: 自動鑑定時に格納庫登録
           if(!target.statOverride && ITEM_MASTER[target.itemId]?.stats) {
             target.statOverride = { ...ITEM_MASTER[target.itemId].stats };
           }
@@ -11478,6 +11484,7 @@ function identifyItem(uid) {
   }
   gs.player.gold -= cost;
   item.identified = true;
+  registerCollection(item); // S93: 格納庫にある時点で登録
   const m = ITEM_MASTER[item.itemId];
   const curseMsg = item.cursed ? `⚠ 呪い【${item.curse.label}】が判明！` : "呪いなし";
   addLog("item", `🔍 【${m.name}】を鑑定した。${curseMsg}`);

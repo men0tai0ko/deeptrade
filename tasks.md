@@ -49,6 +49,27 @@ function _showLegendaryShareModal(item) {
 
 ---
 
+## S93 完了内容（2026-04-08）
+
+### バグ修正（1件: 6箇所追加）
+
+| 内容 | 詳細 |
+|---|---|
+| COLLECTION-REGISTER-FIX | 格納庫にある時点でコレクション登録する仕様を徹底。`identifyItem`・`gradeUpItem`・`leaveDungeon`（loot→inventory）・ボスクリア時・autoRun・古物商スタッフ自動鑑定の6経路に `registerCollection` を追加 |
+
+---
+
+## S92 完了内容（2026-04-08）
+
+### バグ修正・ドキュメント整備（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-HUNT-S90 常連ギフト修正 | `purchases % 20 === 0` を `Math.floor(purchases/20) > Math.floor(prev/20)` に変更。unidBonus=1 で20を飛び越す問題を修正 |
+| HANDOVER-FINAL | S82〜S91 の実装済み機能一覧テーブルを HANDOVER.md に追加 |
+
+---
+
 ## S91追加完了（2026-04-08）
 
 ### バグ修正・削除（1件）
