@@ -10983,6 +10983,10 @@ function openRegularsModal() {
         const barPct = ((reg.purchases % REGULAR_LV_THRESHOLD) / REGULAR_LV_THRESHOLD * 100).toFixed(0);
         const hasOrder = !!reg.order;
         const orderTl  = reg.order ? typeLabel(reg.order.itemType) : null;
+        // S111: 注文タイプのアイテムが既に棚に出品済みか確認
+        const isOrderFilled = hasOrder && (gs.shop.shelves||[]).some(
+          s => s && s.item && s.item.identified && ITEM_MASTER[s.item.itemId]?.type === reg.order.itemType
+        );
         const canOrder = regularCanOrder(reg.lv);
         const fastVisit = regularCanFastVisit(reg.lv);
         const borderColor = hasOrder ? 'var(--gold)' : reg.lv >= 10 ? 'var(--danger)' : reg.lv >= 5 ? 'var(--epic)' : 'var(--rare)';
@@ -11006,11 +11010,15 @@ function openRegularsModal() {
           </div>
           <div style="font-size:10px;color:var(--text-disabled);margin-bottom:6px">次のLvまで あと${nextLvNeed}回</div>
           ${hasOrder
-            ? `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold);cursor:pointer"
-                onclick="this.closest('.modal-overlay').remove(); openListModal(null,'${reg.order.itemType}')">
-                📋 注文中：<strong>${orderTl}</strong> を棚に出してください
-                <span style="font-size:9px;color:var(--text-disabled);display:block;margin-top:2px">▶ タップして出品モーダルを開く</span>
-               </div>`
+            ? isOrderFilled
+              ? `<div style="background:#002a00;border:1px solid var(--green);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--green)">
+                  ✅ 注文品「<strong>${orderTl}</strong>」を棚に出品中
+                 </div>`
+              : `<div style="background:#2a2000;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;font-size:12px;color:var(--gold);cursor:pointer"
+                  onclick="this.closest('.modal-overlay').remove(); openListModal(null,'${reg.order.itemType}')">
+                  📋 注文中：<strong>${orderTl}</strong> を棚に出してください
+                  <span style="font-size:9px;color:var(--text-disabled);display:block;margin-top:2px">▶ タップして出品モーダルを開く</span>
+                 </div>`
             : canOrder
               ? `<div style="font-size:11px;color:var(--text-disabled)">注文機能解放済み（ランダムで注文が来ます）</div>`
               : `<div style="font-size:11px;color:var(--border-subtle)">Lv3で注文機能が解放されます</div>`
@@ -15085,6 +15093,7 @@ function openListModal(slotIdx, filterType) { // S109: filterType で初期タ�
     <div style="flex-shrink:0;padding:14px 16px 8px;border-bottom:1px solid var(--border)">
       <div class="modal-title" style="text-align:center;margin-bottom:4px">一括出品${targetSpecial?` <span style="font-size:11px;color:var(--accent2)">${targetSpecialDef.icon}${targetSpecialDef.label}専用</span>`:""}</div>
       <div id="listSelectCount" style="font-size:11px;color:var(--muted);margin-bottom:6px;text-align:center"></div>
+      ${(filterType && !typeKeys.includes(filterType)) ? `<div style="font-size:11px;color:var(--alert);background:var(--surface-deep);border-radius:4px;padding:4px 8px;margin-bottom:4px;text-align:center">⚠ 注文品の在庫がありません（他の種類を出品できます）</div>` : ""}
       <div style="background:var(--surface-alt);border-radius:6px;padding:4px 6px">
         <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
           <button data-filter="select" title="表示中を上から選択" style="${BTN};font-size:14px">✅</button>
