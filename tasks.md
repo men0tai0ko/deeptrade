@@ -86,6 +86,64 @@ function render() {
 
 ---
 
+## UI改善候補（S98追加）
+
+### SCROLL-SHOPTICK: 売却テロップ時にスクロール最上部へ移動する問題
+
+**現象**:
+- アイテムが売れた際にテロップ（saleBanner）が表示されると同時に縦スクロールが最上部へ移動する
+
+**原因（調査済み）**:
+- `setInterval(1秒)` 内で `checkShopSales()` → `sold=true` → `render()` が呼ばれる
+- S96 の `_savedScrollTop` 保存・復元は `render()` 経由なので正常に動作するはず
+- しかし同じ setInterval 内で `updateShopTick()` も呼ばれ、`.shelfGrid` がない場合 `render()` を経由せずに `renderScreen()` を直接呼ぶ
+- `renderScreen()` は `_savedScrollTop` の保存・復元ロジックを持たない → scroll リセット
+
+```javascript
+// setInterval 内の処理順（問題あり）
+checkShopSales();              // sold=true → render() ← スクロール保持あり
+...
+if(currentTab==="shop") updateShopTick(); // shelfGrid なし → renderScreen() ← 保持なし
+```
+
+**修正箇所**（1行のみ）:
+```diff
+function updateShopTick() {
+  const sc = document.getElementById("screen");
+  if(!sc || !sc.querySelector(".shelfGrid")) {
+-   renderScreen();
++   render(); // S99: render() 経由でスクロール位置を保持
+    return;
+  }
+```
+
+**影響範囲**: `updateShopTick()` の骨格なし時のフォールバックのみ。通常の差分更新パスには影響なし。
+
+---
+
+## S99 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| SCROLL-SHOPTICK | `updateShopTick()` の骨格なし時フォールバックを `renderScreen()` → `render()` に変更。`render()` 経由にすることで `_savedScrollTop` の保存・復元が効き、売却時のスクロールリセットを修正 |
+
+---
+
+## S98 完了内容（2026-04-08）
+
+### ドキュメント整備（コード変更なし）
+
+| 内容 | 詳細 |
+|---|---|
+| HANDOVER-S97 | HANDOVER.md のバージョン日付を S97/2026-04-08 に更新 |
+| README-SYNC | README.md を S97 に更新（直近変更を S79〜S97 の主要機能に差し替え） |
+| BUG-HUNT-FINAL | `% N === 0` 残存3箇所を確認。worldRank/enhLv は1ずつ増加のため飛び越しなし → 安全 |
+| COLLECTION-REWARD | フルコンプ判定が未実装のため実施保留 |
+
+---
+
 ## S97 完了内容（2026-04-08）
 
 ### バグ修正・改善（1件）

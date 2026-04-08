@@ -14447,8 +14447,8 @@ function checkFatigueExpiry() {
 function updateShopTick() {
   const sc = document.getElementById("screen");
   if(!sc || !sc.querySelector(".shelfGrid")) {
-    // 骨格がなければフル再描画
-    renderScreen();
+    // 骨格がなければフル再描画（S99: render()経由でスクロール位置を保持）
+    render();
     return;
   }
   const sh = gs.shop;

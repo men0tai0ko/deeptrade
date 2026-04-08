@@ -22,7 +22,7 @@
 | 構成 | 単一ファイル（index.html）+ manifest.json + sw.js |
 | データ保存 | localStorage |
 | ホスティング | GitHub Pages |
-| 規模 | 約16,200行 |
+| 規模 | 約16,990行 |
 
 ## ファイル構成
 
@@ -48,13 +48,14 @@ ogp.png         ← OGP画像（1280×640px）
 
 ## 現在のバージョン
 
-**S74**（2026-04-07 時点）
+**S97**（2026-04-08 時点）
 
-### 直近の主な変更（S65〜S74）
-- バグ修正: `checkRegularVisits()` 常連来訪購入で `item:null` 参照 → TypeError クラッシュ修正（S65）
-- バグ修正: `fluctuateDemand()` Fisher-Yates 置換で weapon/armor 偏り修正（S66）
-- リファクタ: `TYPE_COLOR` 重複定数を `EQUIP_TYPE_COLOR` グローバル定数に集約（S73）
-- 安全性確認 S67〜S74: 計30+ 箇所をスキャン済み・問題なし
+### 直近の主な変更（S79〜S97）
+- 新ダンジョンマス: `relic`（遺物）/ `merchant`（商人）/ `curse_chest`（呪い箱）追加（S82〜S85）
+- スタッフ修正: alchemist/antiquarian の Lv効果バグ修正・表示改善（S86〜S87）
+- ショップ Lv8「需要動向」・Lv10「自動鑑定スタンプ」解禁（S84/S88）
+- コレクション登録漏れ修正（6経路追加・遡及登録）（S93〜S94）
+- スクロール位置保持・ソート/フィルタ時リセット（S96〜S97）
 
 → 詳細は [tasks.md](tasks.md) / [issues.md](issues.md) を参照
 
