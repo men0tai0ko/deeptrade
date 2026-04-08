@@ -15374,7 +15374,7 @@ function renderInventory(sc, ab) {
     { key:"consumable", label:"回復" },
   ];
   const filterTabs = filterDefs.map(f => `
-    <button onclick="invFilterKey='${f.key}';render()"
+    <button onclick="invFilterKey='${f.key}';_lastRenderedTab=null;render()"
       style="padding:4px 12px;font-size:12px;border-radius:12px;border:1px solid ${invFilterKey===f.key?'var(--accent)':'var(--border-subtle)'};background:${invFilterKey===f.key?'var(--accent-bg)':'transparent'};color:${invFilterKey===f.key?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
       ${f.label}
     </button>`).join("");
@@ -15391,8 +15391,8 @@ function renderInventory(sc, ab) {
     const active = invSortKey === s.key;
     const arrow = active ? (invSortAsc ? " ↑" : " ↓") : "";
     const onclick = active
-      ? `invSortAsc=!invSortAsc;render()`
-      : `invSortKey='${s.key}';invSortAsc=false;render()`;
+      ? `invSortAsc=!invSortAsc;_lastRenderedTab=null;render()`
+      : `invSortKey='${s.key}';invSortAsc=false;_lastRenderedTab=null;render()`;
     return `<button onclick="${onclick}"
       style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid ${active?'var(--accent)':'var(--border-subtle)'};background:${active?'var(--accent-bg)':'var(--bg-deep)'};color:${active?'var(--accent)':'var(--muted)'};cursor:pointer;white-space:nowrap">
       ${s.label}${arrow}
