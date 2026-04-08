@@ -10935,10 +10935,12 @@ function claimGuildReward() {
 
 // ── 常連客モーダル ──
 function openRegularsModal() {
+  clearInterval(window._regAutoTimer); // S117: 旧タイマーを確実に停止
   document.querySelector('.regulars-modal')?.remove();
   const modal = document.createElement('div');
   modal.className = 'regulars-modal modal-overlay';
-  modal.onclick = e => { if(e.target === modal) { modal.remove(); window._regRefresh = null; } }; // S114: クローズ時にクロージャをクリア
+  window._regAutoTimer = null; // S117: window に格納して旧タイマー停止を確実に
+  modal.onclick = e => { if(e.target === modal) { modal.remove(); window._regRefresh = null; clearInterval(window._regAutoTimer); window._regAutoTimer = null; } }; // S114/S116/S117
 
   window._regCat = "all";
   const REG_CATS = [
@@ -11071,6 +11073,11 @@ function openRegularsModal() {
 
   window._regRefresh = refresh;
   refresh();
+  // S116: 30秒ごとに残り時間を自動更新（注文タイムアウトカウントダウン）
+  window._regAutoTimer = setInterval(() => {
+    if(window._regRefresh) window._regRefresh();
+    else { clearInterval(window._regAutoTimer); window._regAutoTimer = null; }
+  }, 30000);
   document.body.appendChild(modal);
 }
 

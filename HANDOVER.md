@@ -1,6 +1,6 @@
 # 深淵商会 — 技術引き継ぎ設計書
 
-**最終更新**: 2026-04-08（S115完了）
+**最終更新**: 2026-04-08（S117完了）
 **対象**: 次チャットへの完全引き継ぎ用
 
 ---
@@ -8,7 +8,7 @@
 ## 次チャットへの指示
 
 > 「HANDOVER.mdを読んで。深淵商会（index.html）の開発を続けたい。index.htmlも添付する。」
-> ※ 現在バージョン: **S115**（2026-04-08）
+> ※ 現在バージョン: **S117**（2026-04-08）
 
 ---
 
@@ -432,6 +432,29 @@ _analyticsReport()  // 詳細ファネルをconsole.tableで表示
 
 ---
 
+
+## S117 完了内容（2026-04-08）
+
+### バグ修正（1件）・ドキュメント（2件）
+
+| 内容 | 詳細 |
+|---|---|
+| BUG-HUNT-S116: _regAutoTimer ローカルスコープ問題 | `_regAutoTimer` をローカル変数から `window._regAutoTimer` に変更。`openRegularsModal()` 冒頭で旧タイマーを `clearInterval` して確実に停止。クローズ時も `window._regAutoTimer = null` でクリーンアップ |
+| arch.md S116〜S117更新 | 常連モーダル自動更新アーキテクチャを追記 |
+| README 直近変更更新 | S113〜S116 の常連注文UX改善シリーズを反映 |
+
+---
+
+## S116 完了内容（2026-04-08）
+
+### UX改善（1件）・確認（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| ORDER-AUTO-REFRESH | `openRegularsModal()` に `setInterval(30000)` を追加。30秒ごとに `_regRefresh()` を自動呼び出しして残り時間を更新。クローズ時 `clearInterval`・`_regRefresh=null` 後は自動停止 |
+| BUG-HUNT-S115 | `_orderRemainMin` は `refresh()` 呼び出し時に `Date.now()` で再計算されることを確認。`_regRefresh()` 呼び出しごとに最新値を使用 → 問題なし |
+
+---
 
 ## S115 完了内容（2026-04-08）
 

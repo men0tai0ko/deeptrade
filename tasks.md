@@ -159,6 +159,26 @@ function updateShopTick() {
 
 ---
 
+## S117 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| _regAutoTimer スコープ修正 | ローカル変数 → window._regAutoTimer に変更。冒頭 clearInterval で旧タイマー確実停止 |
+
+---
+
+## S116 完了内容（2026-04-08）
+
+### UX改善（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| ORDER-AUTO-REFRESH | 常連モーダルに 30秒ごとの _regRefresh() 自動呼び出しを追加。クローズ時に clearInterval |
+
+---
+
 ## S115 完了内容（2026-04-08）
 
 ### UX改善（1件）

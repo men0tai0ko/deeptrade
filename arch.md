@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S115
-**最終更新**: 2026-04-08（S115）
+**バージョン**: S117
+**最終更新**: 2026-04-08（S117）
 
 ---
 
@@ -996,7 +996,7 @@ gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
 
 ## S55〜S104 追加アーキテクチャ（2026-04-06〜08）
 
-**バージョン**: S115（2026-04-08 更新）
+**バージョン**: S117（2026-04-08 更新）
 
 ---
 
@@ -1152,7 +1152,7 @@ S54以降に追加されたCSS変数（:root）:
 
 ## S107〜S111 追加アーキテクチャ（2026-04-08）
 
-**バージョン**: S115（2026-04-08 更新）
+**バージョン**: S117（2026-04-08 更新）
 
 ---
 
@@ -1285,4 +1285,40 @@ const _orderRemainMs = hasOrder ? Math.max(0, _orderExpireMs - (Date.now() - reg
 const _orderRemainMin = Math.ceil(_orderRemainMs / 60000); // 最小1分
 // 残り2分以内 → 赤色表示
 ```
+
+
+---
+
+## S116〜S117 追加アーキテクチャ（2026-04-08）
+
+### 常連モーダル 残り時間自動更新（S116・S117）
+
+```javascript
+// openRegularsModal()
+function openRegularsModal() {
+  clearInterval(window._regAutoTimer); // S117: 旧タイマーを確実に停止
+  document.querySelector('.regulars-modal')?.remove();
+  // ...
+  window._regAutoTimer = null;
+  modal.onclick = e => {
+    if(e.target === modal) {
+      modal.remove();
+      window._regRefresh = null;
+      clearInterval(window._regAutoTimer);
+      window._regAutoTimer = null;
+    }
+  };
+  // ...
+  window._regAutoTimer = setInterval(() => {
+    if(window._regRefresh) window._regRefresh();
+    else { clearInterval(window._regAutoTimer); window._regAutoTimer = null; }
+  }, 30000);
+}
+```
+
+**設計方針:**
+- `window._regAutoTimer` に格納することで複数呼び出し時の旧タイマー停止を保証
+- `clearInterval(null)` は無害なため初回呼び出しも安全
+- 30秒間隔で `_orderRemainMin` を自動再計算・表示更新
+- `_regRefresh = null` 後はコールバック内の else で自動停止
 
