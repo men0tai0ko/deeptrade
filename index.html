@@ -16469,11 +16469,15 @@ function openCollectionModal(initTab) {
       return acc + parts * 4 * (ENHANCE_MAX + 1);
     }, 0);
     const progPct = total > 0 ? Math.min(100, done.length / total * 100).toFixed(1) : 0;
+    const _colFull = gs.achievements?.stats?.collectionFullCompleted; // S123: フルコンプ達成フラグ
     header.innerHTML = `
-      <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--accent2);margin-bottom:2px">📖 冒険録</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+        <div style="font-family:'Cinzel',serif;font-size:16px;color:var(--accent2)">📖 冒険録</div>
+        ${_colFull ? `<span style="font-size:10px;background:#1a1200;border:1px solid var(--legendary-bright);color:var(--legendary-bright);border-radius:10px;padding:1px 7px">🏆 コンプリート済</span>` : ""}
+      </div>
       <div style="display:flex;align-items:center;gap:8px;margin:4px 0 8px">
         <div style="flex:1;background:var(--surface-deep);border-radius:6px;height:7px;overflow:hidden">
-          <div style="height:100%;width:${progPct}%;background:var(--accent2);border-radius:6px;transition:width 0.4s"></div>
+          <div style="height:100%;width:${progPct}%;background:${_colFull ? 'var(--legendary-bright)' : 'var(--accent2)'};border-radius:6px;transition:width 0.4s"></div>
         </div>
         <span style="font-size:11px;color:var(--muted);white-space:nowrap">${done.length} / ${total}</span>
       </div>`;

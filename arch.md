@@ -1,7 +1,7 @@
 # 深淵商会 — 技術アーキテクチャ仕様書
 
-**バージョン**: S118
-**最終更新**: 2026-04-08（S118）
+**バージョン**: S123
+**最終更新**: 2026-04-08（S123）
 
 ---
 
@@ -996,7 +996,7 @@ gs.meta.dailyMissions = _pool.slice(0, 2).map(d => d.gen());
 
 ## S55〜S104 追加アーキテクチャ（2026-04-06〜08）
 
-**バージョン**: S118（2026-04-08 更新）
+**バージョン**: S123（2026-04-08 更新）
 
 ---
 
@@ -1152,7 +1152,7 @@ S54以降に追加されたCSS変数（:root）:
 
 ## S107〜S111 追加アーキテクチャ（2026-04-08）
 
-**バージョン**: S118（2026-04-08 更新）
+**バージョン**: S123（2026-04-08 更新）
 
 ---
 
@@ -1321,4 +1321,31 @@ function openRegularsModal() {
 - `clearInterval(null)` は無害なため初回呼び出しも安全
 - 30秒間隔で `_orderRemainMin` を自動再計算・表示更新
 - `_regRefresh = null` 後はコールバック内の else で自動停止
+
+
+---
+
+## S122〜S123 追加アーキテクチャ（2026-04-08）
+
+### コレクションフルコンプ SP ボーナス（S122）
+
+```javascript
+// _checkCollectionFullComplete() 内
+gs.achievements.stats.collectionFullCompleted = true;
+gs.player.skillPoints = (gs.player.skillPoints || 0) + 3; // SP+3
+addLog("item", "📖 冒険録コンプリート！SP+3 を獲得した");
+saveGame();
+```
+
+多重付与防止: フラグ先立て → 次回以降は冒頭 early return。  
+真エンド解禁後（S103フラグリセット）時は再付与される。
+
+### コレクションモーダル フルコンプバッジ（S123）
+
+```javascript
+// openCollectionModal() の renderHeader() 内
+const _colFull = gs.achievements?.stats?.collectionFullCompleted;
+// ヘッダーに「🏆 コンプリート済」バッジを表示（optional chaining で null安全）
+// プログレスバー色: 未達=var(--accent2) / 達成=var(--legendary-bright)
+```
 
