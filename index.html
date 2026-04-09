@@ -1823,10 +1823,12 @@ function checkIdleTraining() {
   // 疲弊チェック
   if(it.cycleCount >= IDLE_TRAINING_FATIGUE_AT) {
     gs.player.fatigue = { expiresAt: Date.now() + 30 * 60 * 1000 };
+    stopIdleTraining(); // S125: render()・状態クリアを一元化
     addLog("item", `😓 長時間の修行で疲弊した…${IDLE_TRAINING_FATIGUE_AT}サイクル達成。30分の休息が必要`);
-    gs.player.idleTraining = null;
+    saveGame(); render(); // S125: 疲弊後の追加ログ・状態を即反映
+    return;
   }
-  saveGame();
+  saveGame(); render(); // S125: EXP獲得・LvUP即反映
 }
 
 function checkRegularOrders() {
