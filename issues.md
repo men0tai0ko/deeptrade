@@ -40,6 +40,15 @@
 
 ---
 
+## ✅ 改善済み（S122）
+
+### COLLECTION-REWARD拡充（S122）
+- **内容**: フルコンプ達成時に演出のみでボーナスがなかった
+- **修正**: `_checkCollectionFullComplete()` でフラグ立て直後に `gs.player.skillPoints += 3` を追加。モーダルに「✨ ボーナス SP+3」を表示
+- **影響範囲**: `_checkCollectionFullComplete()` のフラグ立て処理のみ。多重付与なし（フラグ先立てで防止）
+
+---
+
 ## ✅ 改善済み（S120〜S121）
 
 ### REGULAR-DEEPENING: 注文セリフ拡充（S120〜S121）

@@ -2703,8 +2703,10 @@ function _checkCollectionFullComplete() {
     }
   }
 
-  // 全達成 → フラグ立て → 演出
+  // 全達成 → フラグ立て → ボーナス付与 → 演出（S122）
   gs.achievements.stats.collectionFullCompleted = true;
+  gs.player.skillPoints = (gs.player.skillPoints || 0) + 3; // S122: フルコンプボーナス SP+3
+  addLog("item", "📖 冒険録コンプリート！SP+3 を獲得した");
   saveGame();
 
   // モーダル表示（_showRebirthMilestoneModal流用・シェアなし）
@@ -2723,7 +2725,8 @@ function _checkCollectionFullComplete() {
         <div>深淵商会の歴史に、</div>
         <div>あなたの名が刻まれた。</div>
       </div>
-      <div style="display:inline-block;padding:4px 14px;border-radius:20px;border:1px solid var(--legendary-bright);color:var(--legendary-bright);font-size:12px;margin-bottom:16px">🏆 真のコレクター</div>
+      <div style="display:inline-block;padding:4px 14px;border-radius:20px;border:1px solid var(--legendary-bright);color:var(--legendary-bright);font-size:12px;margin-bottom:8px">🏆 真のコレクター</div>
+      <div style="font-size:13px;color:var(--success-bright);font-weight:700;margin-bottom:16px">✨ ボーナス SP +3 を獲得！</div>
     </div>
     <div style="flex-shrink:0;padding:8px 16px 20px">
       <button class="btn" style="border-color:var(--legendary-bright);color:var(--legendary-bright);width:100%" id="colCompleteOkBtn">深淵へ戻る</button>
