@@ -15074,10 +15074,10 @@ function openListModal(slotIdx, filterType) { // S109: filterType で初期タ�
   const rarityOrder = ["normal","rare","epic","legendary"];
   const rarityKeys  = rarityOrder.filter(rk => available.some(i => i.identified && i.rarity === rk));
   const hasUnidentified = available.some(i => !i.identified); // 未鑑定品の有否
-  const typeOrder   = ["weapon","head","body","legs","arms","feet","neck","bracelet","ring","consumable"];
+  const typeOrder   = ["weapon","sub","head","body","cloak","legs","arms","feet","neck","bracelet","ring","seal","consumable"]; // S119: sub/cloak/seal を追加
   const typeKeys    = typeOrder.filter(tk => available.some(i => ITEM_MASTER[i.itemId]?.type === tk));
-  const TYPE_ICON   = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", legs:"👖", arms:"🧤",
-                        feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", consumable:"🧪", seal:"🔴" };
+  const TYPE_ICON   = { weapon:"🗡", sub:"🛡", head:"🪖", body:"🥋", cloak:"🧥", legs:"👖", arms:"🧤",
+                        feet:"👟", neck:"📿", bracelet:"🔮", ring:"💍", seal:"🔴", consumable:"🧪" }; // S119: cloak/seal 追加
   const TYPE_COLOR = EQUIP_TYPE_COLOR; // S73: グローバル定数を参照
   const RARITY_SHORT = RARITY_SHORT_LABEL; // S76: グローバル定数を参照
 

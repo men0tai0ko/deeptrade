@@ -159,6 +159,16 @@ function updateShopTick() {
 
 ---
 
+## S119 完了内容（2026-04-08）
+
+### バグ修正（1件）
+
+| 内容 | 詳細 |
+|---|---|
+| openListModal typeOrder修正 | sub/cloak/seal を typeOrder に追加。TYPE_ICON に cloak:"🧥" を追加 |
+
+---
+
 ## S118 完了内容（2026-04-08）
 
 ### ドキュメント整備（コード変更なし）
