@@ -1767,6 +1767,68 @@ function checkRegularVisits() {
 }
 
 // 常連が注文を出す（Lv3以上でランダムに発動）
+// ── IDLE-TRAINING（放置修行） S124 ──
+const IDLE_TRAINING_CYCLE_MS  = 5 * 60 * 1000; // 5分サイクル
+const IDLE_TRAINING_FATIGUE_AT = 10;             // 10サイクルで疲弊付与
+
+// 修行モード解禁条件
+function canIdleTraining() {
+  return (gs.player.worldRank || 0) >= 1
+    && !gs.dungeon.active
+    && !gs.dungeon.autoRun?.active
+    && !(gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now());
+}
+
+// 修行モード開始
+function startIdleTraining() {
+  if(!canIdleTraining()) return;
+  if(gs.player.idleTraining) return; // 多重起動防止
+  gs.player.idleTraining = {
+    mode: "exp",
+    startedAt: Date.now(),
+    lastCycleAt: Date.now(),
+    cycleCount: 0,
+  };
+  addLog("item", "🧘 修行を開始した（5分ごとにEXPを獲得する）");
+  saveGame(); render();
+}
+
+// 修行モード停止
+function stopIdleTraining() {
+  if(!gs.player.idleTraining) return;
+  gs.player.idleTraining = null;
+  addLog("item", "🧘 修行を終了した");
+  saveGame(); render();
+}
+
+// 修行サイクルチェック（1秒ごとに呼び出し）
+function checkIdleTraining() {
+  const it = gs.player.idleTraining;
+  if(!it) return;
+  // ダンジョン中・周回中・疲弊中は停止
+  if(gs.dungeon.active || gs.dungeon.autoRun?.active
+    || (gs.player.fatigue && gs.player.fatigue.expiresAt > Date.now())) {
+    stopIdleTraining();
+    return;
+  }
+  const now = Date.now();
+  if(now - it.lastCycleAt < IDLE_TRAINING_CYCLE_MS) return; // 5分未経過
+  // ── サイクル処理 ──
+  it.lastCycleAt = now;
+  it.cycleCount++;
+  const floor = Math.max(1, gs.dungeon.clearedFloor || 1);
+  const expGain = 10 + floor * 5;
+  gainExp(expGain);
+  addLog("item", `🧘 修行サイクル ${it.cycleCount}：EXP +${expGain}（${floor}F基準）`);
+  // 疲弊チェック
+  if(it.cycleCount >= IDLE_TRAINING_FATIGUE_AT) {
+    gs.player.fatigue = { expiresAt: Date.now() + 30 * 60 * 1000 };
+    addLog("item", `😓 長時間の修行で疲弊した…${IDLE_TRAINING_FATIGUE_AT}サイクル達成。30分の休息が必要`);
+    gs.player.idleTraining = null;
+  }
+  saveGame();
+}
+
 function checkRegularOrders() {
   if(!gs.shop.regulars) return;
   gs.shop.regulars.forEach(reg => {
@@ -3644,6 +3706,7 @@ const DEFAULT_STATE = () => ({
     lootSlots:0,       // 鞄の拡張段階（1段階=+2枠、最大4）
     fatigue: null,     // 疲弊状態 { expiresAt: timestamp } or null
     abyssFloorCleared: 0, // 真エンドフェーズ解禁済み最大階層（0=未解禁、6〜10）
+    idleTraining: null,   // S124: 放置修行状態 { mode, startedAt, lastCycleAt, cycleCount } or null
   },
   equipped:{ weapon:null, sub:null, head:null, body:null, cloak:null, legs:null, arms:null, feet:null, neck:null, bracelet:null, ring:null, seal:null },
   inventory:[],
@@ -4519,7 +4582,8 @@ function loadGame() {
       if(_achStats.totalColStar    === undefined) _achStats.totalColStar    = 0;
       // 新装備スロットのマイグレーション（旧セーブデータ互換）
       if(gs.equipped.sub      === undefined) gs.equipped.sub      = null;
-      if(gs.player.fatigue     === undefined) gs.player.fatigue    = null;
+      if(gs.player.fatigue       === undefined) gs.player.fatigue      = null;
+      if(gs.player.idleTraining  === undefined) gs.player.idleTraining = null; // S124
       if(gs.dungeon.omamoriPriority === undefined) gs.dungeon.omamoriPriority = "low";
       if(gs.dungeon.autoHeal          === undefined) gs.dungeon.autoHeal = { enabled:false, threshold:30 };
       // S52: 祠バフフィールドのマイグレーション
@@ -13379,6 +13443,11 @@ function updateIconDock(tab) {
     { icon:'📥', label:'一括取下', fn:'openBulkUnlistModal()', disabledFn: ()=> !gs.shop.shelves.some(s=>s?.item) },
     { icon:'📊', label:'市場',     fn:'openMarketModal()' },
     { icon:'💰', label:'放置収入', fn:'openPassiveIncomeModal()' },
+    // S124: 修行モードボタン（worldRank>=1・非ダンジョン中・非疲弊時に有効）
+    { icon:'🧘', label: gs.player.idleTraining ? '修行中▶' : '修行',
+      fn: gs.player.idleTraining ? 'stopIdleTraining()' : 'startIdleTraining()',
+      disabledFn: () => !gs.player.idleTraining && !canIdleTraining(),
+      alertFn: () => !!gs.player.idleTraining },
   ];
 
   const configs = {
@@ -17476,6 +17545,7 @@ function init() {
   // 常連客：定期来訪（5秒ごとにチェック）・注文発生（1秒ごと）
   setInterval(checkRegularVisits, 5000);
   setInterval(checkRegularOrders, 1000);
+  setInterval(checkIdleTraining, 1000); // S124: 放置修行チェック
 
   // オートセーブ（30秒ごと）
   setInterval(saveGame, 30000);
