@@ -1556,6 +1556,15 @@ const REGULAR_SERIFS = {
     "実は%sが必要でね。あれば出しておいてほしい",
     "%sを一本見繕ってもらえないか",
   ],
+  // S121: 注文成功時のセリフバリエーション
+  orderSuccess: [
+    "注文の品、確かに！",
+    "これを待ってたんだ！",
+    "助かった、ありがとう！",
+    "これだよ、これ！さすが！",
+    "期待どおりだ！",
+    "よし、これで完璧だ！",
+  ],
 };
 
 // 好みタイプ（固定タイプ）の割り当て
@@ -1700,7 +1709,8 @@ function checkRegularVisits() {
         gs.shop.totalSales++;
         if(gs.achievements?.stats) gs.achievements.stats.totalRegularBuys = (gs.achievements.stats.totalRegularBuys||0) + 1;
         const _rc2 = item.identified ? (RARITY_MASTER[item.rarity]?.color || 'var(--text-light)') : 'var(--unidentified)';
-        addShopLog("gold", `📦 ${reg.icon}${reg.name}「注文の品、確かに！」→【<span style="color:${_rc2};font-weight:700">${itemDisplayName(item)}</span>】${price}G（+${bonus}G 常連ボーナス）`);
+        const _orderSuccessSerif = REGULAR_SERIFS.orderSuccess[Math.floor(Math.random() * REGULAR_SERIFS.orderSuccess.length)]; // S121
+        addShopLog("gold", `📦 ${reg.icon}${reg.name}「${_orderSuccessSerif}」→【<span style="color:${_rc2};font-weight:700">${itemDisplayName(item)}</span>】${price}G（+${bonus}G 常連ボーナス）`);
         notifySale(item, price); // 売却快感演出（S48-SALE）
         reduceDemand(item);
         gs.shop.shelves[slotIdx] = null;
