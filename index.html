@@ -1548,6 +1548,14 @@ const REGULAR_SERIFS = {
          "あんたの目利きは本物だよ", "この店だけが頼りだ", "また良い品に会えそうだ"],
   gift: ["これ、お世話になってるお礼だよ", "いつもありがとう、受け取ってくれ",
          "つまらないものだけど", "感謝の気持ちだよ", "役に立てば嬉しいんだけど"],
+  // S120: 注文発生時のセリフバリエーション（%sにtypeLabelが入る）
+  order: [
+    "%sを探してるんだけど、棚に出してもらえる？",
+    "%sが欲しいんだ。取り置きしてくれると助かる",
+    "ちょうど%sを探してたところだ。出してもらえるかな",
+    "実は%sが必要でね。あれば出しておいてほしい",
+    "%sを一本見繕ってもらえないか",
+  ],
 };
 
 // 好みタイプ（固定タイプ）の割り当て
@@ -1761,7 +1769,8 @@ function checkRegularOrders() {
     const slotLabelMap = Object.fromEntries(EQUIP_SLOTS.map(s=>[s.key, s.label]));
     const extraLabel   = { armor:"防具", accessory:"装飾品", material:"素材", consumable:"消耗品" };
     const typeLabel = slotLabelMap[orderType] || extraLabel[orderType] || orderType;
-    addShopLog("item", `📋 ${reg.icon}${reg.name}「${typeLabel}を取り置きしてほしいんだけど、棚に出してもらえる？」`);
+    const _orderSerif = REGULAR_SERIFS.order[Math.floor(Math.random() * REGULAR_SERIFS.order.length)].replace('%s', typeLabel); // S120
+    addShopLog("item", `📋 ${reg.icon}${reg.name}「${_orderSerif}」`);
     saveGame();
   });
 }
