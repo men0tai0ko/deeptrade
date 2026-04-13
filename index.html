@@ -6233,6 +6233,19 @@ function leaveDungeon(keepLoot, skipCostCheck) {
     addLog("item", `✕ 倒れた。鞄の中身は失ったが装備はそのまま`);
     // 鞄（loot）は常に失う
     gs.dungeon.loot = [];
+    // 消耗品スロットは格納庫に返却（ダウン時もロストしない）
+    const _cs = gs.dungeon.consumables || {};
+    Object.entries(_cs).forEach(([itemId, arr]) => {
+      arr.forEach(slot => {
+        for(let i = 0; i < slot.count; i++) {
+          gs.inventory.push({
+            uid: uuid(), itemId, rarity: slot.rarity,
+            demand:100, affixes:[], cursed:false, curse:null,
+            identified: true, enhLv: 0, statOverride: null, locked: false
+          });
+        }
+      });
+    });
   }
   // 傭兵は探索終了で解散
   if(gs.dungeon.mercenary) {
@@ -7625,44 +7638,65 @@ function handleMerchant() {
   overlay.appendChild(mc);
   document.body.appendChild(overlay);
 
+  // 各アイテムの購入数量
+  const qtys = items.map(() => 0);
+
   const refresh = () => {
+    const totalCost = items.reduce((s, it, i) => s + it.price * qtys[i], 0);
     mc.innerHTML = `
       <div class="modal-title">🧳 旅の商人</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px">消耗品を売っているようだ</div>
       ${items.map((it, i) => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--border)">
-          <div style="text-align:left">
+          <div style="text-align:left;flex:1">
             <span style="font-size:18px">${it.icon}</span>
             <span style="font-size:13px;font-weight:700;margin-left:6px">${it.label}</span>
-            <div style="font-size:10px;color:var(--muted)">${it.desc}</div>
+            <div style="font-size:10px;color:var(--muted)">${it.desc} / ${it.price.toLocaleString()}G</div>
           </div>
-          <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;${gs.player.gold >= it.price ? '' : 'opacity:0.5'}"
-            ${gs.player.gold >= it.price ? '' : 'disabled'}
-            id="buy_${i}">${it.price.toLocaleString()}G</button>
+          <div style="display:flex;align-items:center;gap:4px">
+            <button class="btn btn-secondary" style="padding:2px 8px;font-size:14px" id="dec_${i}">－</button>
+            <span style="min-width:20px;text-align:center;font-size:13px">${qtys[i]}</span>
+            <button class="btn btn-secondary" style="padding:2px 8px;font-size:14px" id="inc_${i}">＋</button>
+          </div>
         </div>
       `).join("")}
-      <div style="font-size:11px;color:var(--muted);margin:8px 0">所持Gold: <span style="color:var(--gold);font-weight:700">${gs.player.gold.toLocaleString()}G</span></div>
-      <button class="btn btn-secondary" style="width:100%;margin-top:4px" id="merchantClose">閉じる</button>
+      <div style="font-size:11px;color:var(--muted);margin:8px 0">
+        所持Gold: <span style="color:var(--gold);font-weight:700">${gs.player.gold.toLocaleString()}G</span>
+        　合計: <span style="color:var(--gold);font-weight:700">${totalCost.toLocaleString()}G</span>
+      </div>
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:6px${totalCost === 0 || gs.player.gold < totalCost ? ';opacity:0.4' : ''}"
+        id="merchantBuy" ${totalCost === 0 || gs.player.gold < totalCost ? 'disabled' : ''}>購入する</button>
+      <button class="btn btn-secondary" style="width:100%;opacity:0.7" id="merchantClose">閉じる</button>
     `;
     items.forEach((it, i) => {
-      const btn = mc.querySelector(`#buy_${i}`);
-      if(btn && !btn.disabled) {
-        btn.addEventListener("click", () => {
-          if(gs.player.gold < it.price) return;
-          gs.player.gold -= it.price;
-          // dungeon.consumables に追加
+      mc.querySelector(`#inc_${i}`).addEventListener("click", () => {
+        const total = items.reduce((s, it2, j) => s + it2.price * qtys[j], 0);
+        if(gs.player.gold >= total + it.price) { qtys[i]++; refresh(); }
+      });
+      mc.querySelector(`#dec_${i}`).addEventListener("click", () => {
+        if(qtys[i] > 0) { qtys[i]--; refresh(); }
+      });
+    });
+    const buyBtn = mc.querySelector("#merchantBuy");
+    if(buyBtn) {
+      buyBtn.addEventListener("click", () => {
+        if(gs.player.gold < totalCost) return;
+        gs.player.gold -= totalCost;
+        items.forEach((it, i) => {
+          if(qtys[i] <= 0) return;
           const cs = gs.dungeon.consumables || {};
           const arr = cs[it.itemId] || [];
           const ex = arr.find(s => s.rarity === it.rarity);
-          if(ex) ex.count++;
-          else arr.push({ count:1, rarity:it.rarity });
+          if(ex) ex.count += qtys[i];
+          else arr.push({ count: qtys[i], rarity: it.rarity });
           gs.dungeon.consumables[it.itemId] = arr;
-          addLog("item", `🧳 【${it.icon}${it.label}】を${it.price.toLocaleString()}Gで購入した`);
-          saveGame();
-          refresh();
+          addLog("item", `🧳 【${it.icon}${it.label}】を${qtys[i]}個（${(it.price * qtys[i]).toLocaleString()}G）購入した`);
         });
-      }
-    });
+        saveGame();
+        overlay.remove();
+        render();
+      });
+    }
     mc.querySelector("#merchantClose").addEventListener("click", () => {
       overlay.remove();
       render();
