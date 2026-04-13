@@ -1314,6 +1314,7 @@ const ITEM_MASTER = {
   // 消耗品・素材
   potion:         { name:"回復薬",        icon:"🧪",  type:"consumable", basePrice:50, stats:{} },
   antidote:       { name:"解毒薬",        icon:"💊",  type:"consumable", basePrice:40, stats:{} },
+  salve:          { name:"鎮火薬",        icon:"🧯",  type:"consumable", basePrice:60, stats:{} },
   dragon_fang:    { name:"竜の牙",        icon:"🦷",  type:"material", basePrice:600, stats:{} },
   ancient_coin:   { name:"古代金貨",      icon:"🪙",  type:"material", basePrice:400, stats:{} },
   magic_crystal:  { name:"魔晶石",        icon:"🔷",  type:"material", basePrice:800, stats:{} },
@@ -3070,6 +3071,9 @@ const BREW_MASTER = [
   // 解毒薬 昇格（5個）
   { id:"brew_anti_nr",  icon:"💊", fromId:"antidote",fromRarity:"normal", fromCount:5,  toId:"antidote", toRarity:"rare",   gold:200,  label:"解毒薬×5 → 解毒薬(R)" },
   { id:"brew_anti_re",  icon:"💊", fromId:"antidote",fromRarity:"rare",   fromCount:5,  toId:"antidote", toRarity:"epic",   gold:800,  label:"解毒薬(R)×5 → 解毒薬(E)" },
+  // 鎮火薬 昇格（5個）
+  { id:"brew_salve_nr", icon:"🧯", fromId:"salve", fromRarity:"normal", fromCount:5,  toId:"salve", toRarity:"rare",   gold:200,  label:"鎮火薬×5 → 鎮火薬(R)" },
+  { id:"brew_salve_re", icon:"🧯", fromId:"salve", fromRarity:"rare",   fromCount:5,  toId:"salve", toRarity:"epic",   gold:800,  label:"鎮火薬(R)×5 → 鎮火薬(E)" },
   // お守り 昇格（10個）
   { id:"brew_oma_nr",   icon:"🪬", fromId:"omamori", fromRarity:"normal", fromCount:10, toId:"omamori",  toRarity:"rare",   gold:1000, label:"お守り×10 → お守り(R)" },
 ];
@@ -4533,7 +4537,7 @@ function loadGame() {
       if(!gs.dungeon.consumables) gs.dungeon.consumables = {};
       // consumables を新構造（等級別配列）に変換
       // 旧: { herb:{count,rarity} } → 新: { herb:[{count,rarity},...] }
-      const CARRY_SET = new Set(["herb","potion","antidote","omamori"]);
+      const CARRY_SET = new Set(["herb","potion","antidote","salve","omamori"]);
       Object.keys(gs.dungeon.consumables).forEach(id => {
         const v = gs.dungeon.consumables[id];
         if(!Array.isArray(v)) {
@@ -5278,7 +5282,7 @@ function enterDungeon(floor) {
   const targetFloor = floor || gs.dungeon.selectedFloor || gs.dungeon.floor;
   const prevAttempts = gs.dungeon.attempts || {};
   // consumables は別スロット管理のためlootから除外（既存lootからも除去）
-  const CARRY_IDS = new Set(["herb","potion","antidote","omamori"]);
+  const CARRY_IDS = new Set(["herb","potion","antidote","salve","omamori"]);
   const prevLoot = (gs.dungeon.loot || []).filter(i => !CARRY_IDS.has(i.itemId));
   const prevConsumables = gs.dungeon.consumables || {};
   // 傭兵雇用コスト徴収（出発時）
@@ -7431,6 +7435,12 @@ function useConsumable(itemId, rarity) {
     const bonus = rarity !== "normal" ? Math.floor(r.maxHp * 0.10 * rarityMul) : 0;
     if(bonus > 0) p.hp = Math.min(r.maxHp, p.hp + bonus);
     addLog("item", `💊 ${rarityLabel}解毒薬を使用。${statusSpan("毒")}を解除${bonus > 0 ? `・${healSpan(bonus)} 回復` : ""}`);
+  } else if(itemId === "salve") {
+    if(!gs.dungeon.burned) { addLog("item", `🧯 ${statusSpan("熱傷状態")}ではない`); render(); return; }
+    gs.dungeon.burned = false;
+    const bonus = rarity !== "normal" ? Math.floor(r.maxHp * 0.10 * rarityMul) : 0;
+    if(bonus > 0) p.hp = Math.min(r.maxHp, p.hp + bonus);
+    addLog("item", `🧯 ${rarityLabel}鎮火薬を使用。${statusSpan("熱傷")}を解除${bonus > 0 ? `・${healSpan(bonus)} 回復` : ""}`);
   } else if(itemId === "omamori") {
     // 潜入時に自動使用されるため戦闘中の手動使用は不可
     addLog("item", `🪬 お守りは潜入時に自動発動します（手動使用不可）`);
@@ -7464,8 +7474,11 @@ function openCombatItemModal() {
            ? `<span style="font-size:11px;color:var(--muted)">潜入時自動発動</span>`
            : healPct
              ? `<span style="font-size:11px;color:var(--muted)">HP +${Math.round(healPct*mul)}%</span>`
-             : (slot.rarity!=="normal"
-               ? `<span style="font-size:11px;color:var(--muted)">解毒+回復</span>` : `<span style="font-size:11px;color:var(--muted)">解毒</span>`);
+             : id==="salve"
+               ? (slot.rarity!=="normal"
+                 ? `<span style="font-size:11px;color:var(--muted)">鎮火+回復</span>` : `<span style="font-size:11px;color:var(--muted)">鎮火</span>`)
+               : (slot.rarity!=="normal"
+                 ? `<span style="font-size:11px;color:var(--muted)">解毒+回復</span>` : `<span style="font-size:11px;color:var(--muted)">解毒</span>`);
          return `<button class="btn btn-secondary"
            style="width:100%;margin-bottom:6px;display:flex;align-items:center;gap:10px;text-align:left;padding:8px 12px"
            onclick="useConsumable('${id}','${slot.rarity}')">
@@ -10184,7 +10197,7 @@ function generateDrop(depth, floor) {
   } else if(floor >= 4) {
     // 4階専用ドロッププール：新アイテムを中心に
     unique = ["poison_blade","swamp_hood","toxin_bangle","serpent_ring",
-              "iron_armor","iron_gauntlets","speed_boots","dragon_fang","antidote","gem",
+              "iron_armor","iron_gauntlets","speed_boots","dragon_fang","antidote","salve","gem",
               "iron_shield","parry_blade","shadow_cloak","shadow_seal","magic_crystal"];
   } else {
     const candidates = [];
@@ -10754,7 +10767,7 @@ function checkStaffIncome() {
       s.alchTick++;
       if(s.alchTick >= interval) {
         s.alchTick = 0;
-        const pool = ["herb", "potion", "antidote"];
+        const pool = ["herb", "potion", "antidote", "salve"];
         const picked = pool[Math.floor(Math.random() * pool.length)];
         const m = ITEM_MASTER[picked];
         if(m) {
@@ -13457,7 +13470,7 @@ function updateIconDock(tab) {
       { icon:'🎒', label:'持ち物',   fn:'openPrepModal()',
         disabledFn: ()=> !!gs.dungeon.autoRun?.active,
         alertFn: ()=> {
-          const USABLE_IDS = ["herb","potion","antidote","omamori"];
+          const USABLE_IDS = ["herb","potion","antidote","salve","omamori"];
           const inInv = gs.inventory.filter(i => USABLE_IDS.includes(i.itemId) && !Object.values(gs.equipped).includes(i.uid)).length;
           const inPrep = Object.values(gs.dungeon.consumables||{}).some(s=>s.count>0);
           return !gs.dungeon.active && (inInv > 0 || inPrep);
@@ -13814,7 +13827,7 @@ window._setAutoHealThreshold = _setAutoHealThreshold;
 
 function openPrepModal() {
   if(gs.dungeon.active) return;
-  const USABLE_IDS   = ["herb","potion","antidote","omamori"];
+  const USABLE_IDS   = ["herb","potion","antidote","salve","omamori"];
   const RARITY_ORDER = RARITY_ORDER_MAP; // S77: グローバル定数を参照
   const equippedUids = new Set(Object.values(gs.equipped).filter(Boolean));
   const lootLimit    = getLootLimit();
@@ -14214,7 +14227,7 @@ function renderDungeon(sc, ab) {
     const ngMulLabel = ng > 0 ? `<div style="font-size:11px;color:#ffaa44;margin-top:4px">⚠ 敵強化中（×${(1+ng*0.3).toFixed(1)}）</div>` : "";
 
     // 持ち物準備：格納庫の消耗品を鞄へ持ち出す
-    const USABLE_IDS = ["herb", "potion", "antidote"];
+    const USABLE_IDS = ["herb", "potion", "antidote", "salve"];
     const lootLimit = getLootLimit();
     const lootCount = gs.dungeon.loot.length;
     const lootSpace = lootLimit - lootCount;
